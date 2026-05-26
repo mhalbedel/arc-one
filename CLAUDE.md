@@ -1,15 +1,22 @@
-# AI Coding Starter Kit
+# ARC-ONE
 
-> A Next.js template with an AI-powered development workflow using specialized skills for Requirements, Architecture, Frontend, Backend, QA, and Deployment.
+> High-End-Manufaktur-Website für handgefertigte Eukalyptus-Leuchten (Unikate). Jeder Arc ist ein physisches Unikat aus dem Eukalyptusforst bei Monchique, Portugal.
 
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router), TypeScript
 - **Styling:** Tailwind CSS + shadcn/ui (copy-paste components)
-- **Backend:** Supabase (PostgreSQL + Auth + Storage) - optional
+- **Datenbank:** Supabase (PostgreSQL) mit Row Level Security
+- **Auth:** Supabase Auth — Email+Password für Admin und B2B (kein NextAuth.js)
+- **Storage:** Supabase Storage — Fotos, 3D-Scans, CAD-Dateien (kein Cloudflare R2)
+- **Email:** Resend + React Email
+- **Payments:** Stripe (30 % Deposit + 70 % Restbetrag)
+- **3D-Viewer:** model-viewer Web Component
 - **Deployment:** Vercel
 - **Validation:** Zod + react-hook-form
 - **State:** React useState / Context API
+
+> **Hinweis:** Die TechSpec (`features/ARC-ONE_TechSpec_ClaudeCode.md`) beschreibt Prisma ORM, NextAuth.js und Cloudflare R2 — das Projekt verwendet stattdessen Supabase-first (DB + Auth + Storage in einem Stack).
 
 ## Project Structure
 

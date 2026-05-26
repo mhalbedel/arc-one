@@ -1,0 +1,14 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - banner [ref=e11]:
+    - generic [ref=e12]:
+      - link "ARC-ONE" [ref=e13] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e14]:
+        - link "Arcs" [ref=e15] [cursor=pointer]:
+          - /url: /arcs
+  - generic [ref=e17]:
+    - heading "404" [level=1] [ref=e18]
+    - heading "This page could not be found." [level=2] [ref=e20]
+  - alert [ref=e21]

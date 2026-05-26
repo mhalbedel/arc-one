@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "ARC-ONE" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e5]:
+        - link "Arcs" [ref=e6] [cursor=pointer]:
+          - /url: /arcs
+  - main [ref=e7]:
+    - generic [ref=e8]:
+      - paragraph [ref=e9]: Monchique · Algarve · Portugal
+      - heading "Jeder Arc ist ein Unikat." [level=1] [ref=e10]
+      - paragraph [ref=e11]: Handgefertigte Eukalyptus-Leuchten aus dem Forst bei Monchique — entstanden durch das Zusammenspiel von Natur, Zeit und Handwerk.
+      - link "Alle Arcs entdecken" [ref=e12] [cursor=pointer]:
+        - /url: /arcs
+  - alert [ref=e13]

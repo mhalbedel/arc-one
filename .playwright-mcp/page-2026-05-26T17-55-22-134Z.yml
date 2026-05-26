@@ -1,0 +1,48 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "ARC-ONE" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e5]:
+        - link "Arcs" [ref=e6] [cursor=pointer]:
+          - /url: /arcs
+  - button "Open Next.js Dev Tools" [ref=e18] [cursor=pointer]:
+    - img [ref=e19]
+  - alert [ref=e22]
+  - main [ref=e146]:
+    - generic [ref=e147]:
+      - generic [ref=e150]: Kein Foto verfügbar
+      - generic [ref=e151]:
+        - generic [ref=e152]:
+          - paragraph [ref=e154]: ARV-0006
+          - paragraph [ref=e155]: 320 €
+        - paragraph [ref=e157]: Kleines, kompaktes Exemplar mit ungewöhnlich heller Rinde. Eignet sich besonders für niedrige Decken.
+        - generic [ref=e158]:
+          - heading "Abmessungen" [level=2] [ref=e159]
+          - generic [ref=e160]:
+            - term [ref=e161]: Breite
+            - definition [ref=e162]: 57 cm
+            - term [ref=e163]: Höhe
+            - definition [ref=e164]: 39 cm
+            - term [ref=e165]: Tiefe
+            - definition [ref=e166]: 19 cm
+            - term [ref=e167]: Gewicht
+            - definition [ref=e168]: 1.3 kg
+        - generic [ref=e169]:
+          - heading "Herkunft" [level=2] [ref=e170]
+          - generic [ref=e171]:
+            - term [ref=e172]: Erntedatum
+            - definition [ref=e173]: 20. Februar 2026
+            - term [ref=e174]: Waldsektor
+            - definition [ref=e175]: Monchique Sektor 4
+            - term [ref=e176]: Schnittnummer
+            - definition [ref=e177]: "#1"
+        - generic [ref=e178]:
+          - heading "Kompatibilität" [level=2] [ref=e179]
+          - generic [ref=e180]:
+            - generic [ref=e181]: BefestigungOhne Befestigung, Wandmontage
+            - generic [ref=e182]: FinishÖl, Lack
+        - generic [ref=e183]:
+          - link "Arc konfigurieren" [ref=e184] [cursor=pointer]:
+            - /url: /konfigurator/3cce2182-be87-4ecd-a60c-cf1451e21d8c
+          - paragraph [ref=e185]: 30 % Deposit · 70 % vor Versand · nur DE/AT/CH
