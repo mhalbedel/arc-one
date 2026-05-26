@@ -1,6 +1,6 @@
 # PROJ-3: Konfigurator
 
-## Status: In Progress
+## Status: Deployed
 **Created:** 2026-05-26
 **Last Updated:** 2026-05-26
 
@@ -328,9 +328,14 @@ Playwright: 36/36 ✅ (Chromium + Mobile Safari)
 
 ### Produktionsreife-Entscheidung
 
-**❌ NOT READY — 1 High Bug (B-1)**
+**✅ READY — Alle Bugs behoben, deployed am 2026-05-26**
 
-B-1 muss behoben werden: BlockedPage ist vollständig unerreichbar. Fix: Konfigurator-Page nutzt Admin-Client für den initialen Arc-Fetch statt anon-Client.
+## Deployment
+
+- **Deployed:** 2026-05-26
+- **Production URL:** https://arc-one.vercel.app
+- **DB-Migration:** `db/migrations/003_konfigurator_price_columns.sql` — 9 Aufpreis-Spalten auf `arcs`-Tabelle
+- **Neue Env Var:** `SUPABASE_SERVICE_ROLE_KEY` in Vercel gesetzt (Admin-Client für Konfigurator-Page + Reserve-API)
 
 ## Deployment
 _To be added by /deploy_
