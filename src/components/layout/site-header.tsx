@@ -5,11 +5,13 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-16">
-        <Link
-          href="/"
-          className="font-serif text-lg tracking-[0.18em] font-medium uppercase"
-        >
-          ARC-ONE
+        <Link href="/" className="flex items-baseline gap-4">
+          <span className="font-serif text-lg tracking-[0.18em] font-medium uppercase">
+            ARC-ONE
+          </span>
+          <span className="hidden sm:block text-[10px] tracking-[0.12em] uppercase text-muted-foreground">
+            Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur
+          </span>
         </Link>
         <nav>
           <Link
