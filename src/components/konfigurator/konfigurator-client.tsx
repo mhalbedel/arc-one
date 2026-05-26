@@ -299,7 +299,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
-                  Reservieren
+                  Weiter
                 </Button>
               </div>
             </div>

@@ -321,7 +321,7 @@ Playwright: 36/36 ✅ (Chromium + Mobile Safari)
 | # | Schwere | Beschreibung | Reproduktion |
 |---|---------|--------------|--------------|
 | B-1 | **High** | ~~BlockedPage unerreichbar~~ | **BEHOBEN** — Page nutzt jetzt `createAdminClient()` statt `createClient()` |
-| B-2 | **Medium** | Button-Label auf Step 4 zeigt "Reservieren" statt "Weiter". Nutzer denkt er reserviert in Schritt 4, obwohl Schritt 5 noch folgt. | Step 4 Zusammenfassung aufrufen → Button rechts lesen |
+| B-2 | **Medium** | ~~Button-Label auf Step 4 zeigt "Reservieren" statt "Weiter"~~ | **BEHOBEN** — Label in `konfigurator-client.tsx` auf "Weiter" geändert |
 | B-3 | **Medium** | Tablet 768px: Arc-Preview füllt gesamten Viewport (aspect-ratio 3:4 × 768px = 1024px Höhe). Konfigurations-Schritte erst nach Scrollen sichtbar. | Viewport auf 768px setzen, Konfigurator öffnen |
 | B-4 | **Medium** | sessionId-Input nicht auf UUID-Format validiert. Beliebige Strings werden als `reserved_by` gespeichert. | POST /api/konfigurator/reserve mit `sessionId: "irgendwas"` |
 | B-5 | **Low** | `/konfigurator` ohne arc_id → 404 statt Redirect zu `/arcs`. Spec: „Direktzugriff → Redirect zu /arcs". | GET /konfigurator aufrufen |
