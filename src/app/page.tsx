@@ -19,12 +19,14 @@ export default async function HomePage() {
   return (
     <main>
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 py-28 md:py-40">
-        <p className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-10">
+      <section className="mx-auto max-w-6xl px-6 pt-14 pb-28 md:pt-20 md:pb-40">
+        <p className="text-xs tracking-[0.25em] uppercase text-muted-foreground mb-4">
           Monchique · Algarve · Portugal
         </p>
-        <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-normal leading-[1.05] mb-10 max-w-3xl">
-          Every Arc - One of a kind.
+        <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-normal leading-[1.05] mb-10">
+          <span className="block">Every</span>
+          <span className="block pl-16 md:pl-24 lg:pl-32">Arc - One</span>
+          <span className="block pl-[14rem] md:pl-[21rem] lg:pl-[28rem]">of a kind.</span>
         </h1>
         <p className="text-muted-foreground text-base md:text-lg max-w-lg mb-14 leading-relaxed">
           Handgefertigte Eukalyptus-Leuchten aus den Wäldern bei Monchique —

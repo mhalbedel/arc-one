@@ -9,7 +9,7 @@ export function SiteHeader() {
           <span className="font-serif text-lg tracking-[0.18em] font-medium uppercase">
             ARC-ONE
           </span>
-          <span className="hidden sm:block text-[10px] tracking-[0.12em] uppercase text-muted-foreground">
+          <span className="hidden sm:block text-[12px] tracking-[0.12em] uppercase text-muted-foreground">
             Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur
           </span>
         </Link>
