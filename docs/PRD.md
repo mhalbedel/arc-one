@@ -21,7 +21,7 @@ Kleines Team (1-3 Personen), das Arcs erfasst, Bestellungen verwaltet, Drops pla
 |----------|---------|--------|
 | P0 (MVP) | Datenbank-Schema & Supabase-Setup | Planned |
 | P0 (MVP) | Arc-Katalog (Homepage + Browse + Detail) | Planned |
-| P0 (MVP) | Konfigurator (5 Schritte + Reservierung) | Roadmap |
+| P0 (MVP) | Konfigurator (5 Schritte + Reservierung) | Planned |
 | P0 (MVP) | Pre-Order & Stripe (30%/70%-Split) | Roadmap |
 | P0 (MVP) | Admin-Backend (verstecktes CMS) | Roadmap |
 | P1 | Drop & Warteliste | Roadmap |

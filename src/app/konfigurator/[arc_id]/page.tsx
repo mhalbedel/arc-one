@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { KonfiguratorClient } from '@/components/konfigurator/konfigurator-client'
 import { BlockedPage } from '@/components/konfigurator/blocked-page'
 import type { Arc } from '@/types'
@@ -10,7 +10,7 @@ type KonfiguratorPageProps = {
 
 export default async function KonfiguratorPage({ params }: KonfiguratorPageProps) {
   const { arc_id } = await params
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const { data } = await supabase
     .from('arcs')
