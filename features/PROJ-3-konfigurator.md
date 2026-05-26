@@ -324,7 +324,7 @@ Playwright: 36/36 ✅ (Chromium + Mobile Safari)
 | B-2 | **Medium** | ~~Button-Label auf Step 4 zeigt "Reservieren" statt "Weiter"~~ | **BEHOBEN** — Label in `konfigurator-client.tsx` auf "Weiter" geändert |
 | B-3 | **Medium** | ~~Tablet 768px: Arc-Preview füllt gesamten Viewport~~ | **BEHOBEN** — 2-Spalten-Layout startet jetzt bei `md:` (768px) statt `lg:` (1024px) |
 | B-4 | **Medium** | ~~sessionId-Input nicht auf UUID-Format validiert~~ | **BEHOBEN** — UUID-Regex validiert beide Felder (`arcId` + `sessionId`) vor DB-Zugriff |
-| B-5 | **Low** | `/konfigurator` ohne arc_id → 404 statt Redirect zu `/arcs`. Spec: „Direktzugriff → Redirect zu /arcs". | GET /konfigurator aufrufen |
+| B-5 | **Low** | ~~`/konfigurator` ohne arc_id → 404~~ | **BEHOBEN** — `src/app/konfigurator/page.tsx` leitet zu `/arcs` weiter |
 
 ### Produktionsreife-Entscheidung
 
