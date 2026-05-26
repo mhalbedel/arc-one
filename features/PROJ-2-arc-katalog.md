@@ -277,4 +277,11 @@ Die 3 offenen ACs (H-3, H-5, D-2) sind **Testdaten-Limitierungen**, keine Code-F
 **✅ APPROVED — keine Critical oder High Bugs**
 
 ## Deployment
-_To be added by /deploy_
+
+**Datum:** 2026-05-26
+**Production URL:** https://arc-one-seven.vercel.app
+**Vercel Projekt:** markus-7177s-projects/arc-one
+
+- Security Headers aktiv (X-Frame-Options, HSTS, nosniff, Referrer-Policy)
+- Supabase Env-Vars in Vercel hinterlegt (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+- Alle 10 Arcs laden live aus Supabase ✅
