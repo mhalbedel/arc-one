@@ -64,6 +64,15 @@ export interface ArcRow {
   is_featured: boolean
   status: ArcStatus
   base_price: number
+  price_mounting_wall: number | null
+  price_mounting_ceiling: number | null
+  price_mounting_spinne_per: number | null
+  price_finish_oil: number | null
+  price_finish_lacquer: number | null
+  price_finish_shellac: number | null
+  price_light_porcelain: number | null
+  price_light_bg_led: number | null
+  price_light_true_led: number | null
   drop_id: string | null
   reserved_until: string | null
   reserved_by: string | null
@@ -188,6 +197,15 @@ export interface Database {
           status?: ArcStatus
           created_at?: string
           updated_at?: string
+          price_mounting_wall?: number | null
+          price_mounting_ceiling?: number | null
+          price_mounting_spinne_per?: number | null
+          price_finish_oil?: number | null
+          price_finish_lacquer?: number | null
+          price_finish_shellac?: number | null
+          price_light_porcelain?: number | null
+          price_light_bg_led?: number | null
+          price_light_true_led?: number | null
         }
         Update: Partial<ArcRow>
       }

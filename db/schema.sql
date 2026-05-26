@@ -273,13 +273,24 @@ CREATE TABLE arcs (
   status              arc_status DEFAULT 'RAW',
   base_price          INTEGER NOT NULL,
 
+  -- Konfigurator Aufpreise in Cent (NULL = Option nicht verfügbar/nicht kalkuliert)
+  price_mounting_wall         INTEGER,
+  price_mounting_ceiling      INTEGER,
+  price_mounting_spinne_per   INTEGER,
+  price_finish_oil            INTEGER,
+  price_finish_lacquer        INTEGER,
+  price_finish_shellac        INTEGER,
+  price_light_porcelain       INTEGER,
+  price_light_bg_led          INTEGER,
+  price_light_true_led        INTEGER,
+
   -- Featured on homepage (set by admin in PROJ-5)
   is_featured         BOOLEAN DEFAULT FALSE,
 
   -- Drop assignment (optional)
   drop_id             UUID REFERENCES drops(id) ON DELETE SET NULL,
 
-  -- Temporary reservation (30-min window during configurator)
+  -- Temporary reservation (24h window during configurator)
   reserved_until      TIMESTAMPTZ,
   reserved_by         TEXT,
 

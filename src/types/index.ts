@@ -27,7 +27,7 @@ export type ArcWithDrop = ArcRow & {
 
 export type MountingType = 'ohne' | 'wand' | 'decke' | 'spinne'
 export type FinishType = 'oel' | 'lack' | 'schellack'
-export type LightType = 'standard' | 'led' | 'ultra'
+export type LightType = 'porzellan' | 'bg_led' | 'true_led'
 
 export interface ConfiguratorState {
   arcId: string
