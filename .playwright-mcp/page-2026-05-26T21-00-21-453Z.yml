@@ -1,0 +1,47 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "ARC-ONE" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=e5]:
+        - link "Arcs" [ref=e6] [cursor=pointer]:
+          - /url: /arcs
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]:
+        - generic [ref=e13]: Kein Foto
+        - paragraph [ref=e14]: ARV-0002
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]: Ab
+          - generic [ref=e18]: 620 €
+        - paragraph [ref=e19]: 30 % Deposit · 70 % vor Versand
+    - generic [ref=e20]:
+      - generic [ref=e22]:
+        - button "1 Befestigung" [ref=e24] [cursor=pointer]:
+          - generic [ref=e25]: "1"
+          - generic [ref=e26]: Befestigung
+        - button "2 Finish" [disabled] [ref=e29]:
+          - generic [ref=e30]: "2"
+          - generic [ref=e31]: Finish
+        - button "3 Licht" [disabled] [ref=e34]:
+          - generic [ref=e35]: "3"
+          - generic [ref=e36]: Licht
+        - button "4 Zusammenfassung" [disabled] [ref=e39]:
+          - generic [ref=e40]: "4"
+          - generic [ref=e41]: Zusammenfassung
+        - button "5 Reservierung" [disabled] [ref=e44]:
+          - generic [ref=e45]: "5"
+          - generic [ref=e46]: Reservierung
+      - generic [ref=e47]:
+        - heading "Befestigung" [level=2] [ref=e48]
+        - generic [ref=e49]:
+          - button "Ohne Befestigung" [ref=e51] [cursor=pointer]:
+            - generic [ref=e52]: Ohne Befestigung
+          - button "Wandmontage" [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: Wandmontage
+          - button "Deckenmontage" [ref=e57] [cursor=pointer]:
+            - generic [ref=e58]: Deckenmontage
+        - button "Weiter" [disabled]
+  - button "Open Next.js Dev Tools" [ref=e64] [cursor=pointer]:
+    - img [ref=e65]

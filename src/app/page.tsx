@@ -24,10 +24,10 @@ export default async function HomePage() {
           Monchique · Algarve · Portugal
         </p>
         <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl font-normal leading-[1.05] mb-10 max-w-3xl">
-          Jeder Arc ist ein Unikat.
+          Every Arc - One of a kind.
         </h1>
         <p className="text-muted-foreground text-base md:text-lg max-w-lg mb-14 leading-relaxed">
-          Handgefertigte Eukalyptus-Leuchten aus dem Forst bei Monchique —
+          Handgefertigte Eukalyptus-Leuchten aus den Wäldern bei Monchique —
           entstanden durch das Zusammenspiel von Natur, Zeit und Handwerk.
         </p>
         <Button asChild size="lg" className="text-xs tracking-[0.15em] uppercase px-8">
