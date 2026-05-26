@@ -256,7 +256,81 @@ src/
 - Preis-Aufschlüsselung blendet 0-€-Zeilen aus ✅
 
 ## QA Test Results
-_To be added by /qa_
+
+**Datum:** 2026-05-26
+**Tester:** Claude QA Engineer
+**Build:** ✅ Sauber
+
+### Acceptance Criteria
+
+| # | Kriterium | Status | Anmerkung |
+|---|-----------|--------|-----------|
+| E-1 | READY Arc → Konfigurator mit Step 1 + Arc-Info | ✅ | |
+| E-2 | RESERVED Arc → Sperrseite | ❌ | **High Bug** — RLS blockt RESERVED Arcs für anon-Client → 404 statt BlockedPage |
+| E-3 | Nicht-READY/RESERVED Arc → 404 | ✅ | |
+| S1-1 | Nur kompatible Befestigungsoptionen sichtbar | ✅ | |
+| S1-2 | Weiter disabled ohne Auswahl | ✅ | |
+| S1-3 | Spinne-Stepper bei Spinne-Auswahl | ⏳ | Testdaten-Limitierung: alle Spinne-Arcs haben `max_spinne_pendants=null` → Spinne nicht anzeigbar |
+| S1-4 | Weiter → Step 2 | ✅ | |
+| S2-1 | Nur kompatible Finish-Optionen | ✅ | |
+| S2-2 | Zurück → Step 1 mit erhaltener Auswahl | ✅ | |
+| S2-3 | Weiter → Step 3 | ✅ | |
+| S3-1 | Alle 3 Lichtoptionen immer sichtbar | ✅ | |
+| S3-2 | Weiter → Step 4 | ✅ | |
+| S4-1 | Zusammenfassung zeigt alle Auswahlen | ✅ | |
+| S4-2 | Preisaufschlüsselung korrekt | ✅ | |
+| S4-3 | 0€-Zeilen ausgeblendet | ✅ | |
+| S4-4 | Schritt-Indikator-Navigation | ✅ | |
+| S4-5 | Weiter → Step 5 | ❌ | **Medium Bug** — Button-Label heißt "Reservieren" statt "Weiter" → irreführend |
+| S5-1 | Read-only-Zusammenfassung + Gesamtpreis + Button sichtbar | ✅ | |
+| S5-2 | Reservierung erfolgreich → Redirect Checkout | ⏳ | Checkout-URL (/checkout/[id]) noch nicht implementiert (PROJ-4) |
+| S5-3 | Race Condition: Arc vergeben → Fehlermeldung | ✅ | API liefert 409 korrekt |
+| P-1 | Gesamtpreis live aktualisiert | ✅ | |
+| P-2 | Spinne-Stepper aktualisiert Preis sofort | ⏳ | Testdaten-Limitierung |
+
+### Responsive
+
+| Breakpoint | Ergebnis |
+|------------|----------|
+| Mobile 375px | ✅ Single-column, alle Elemente lesbar |
+| Tablet 768px | ⚠️ **Medium Bug** — Arc-Preview (3:4) füllt gesamten Viewport, Steps unsichtbar ohne Scrollen |
+| Desktop 1440px | ✅ Two-column layout, korrekt |
+
+### Security Audit
+
+| Check | Ergebnis |
+|-------|----------|
+| Missing arcId → 400 | ✅ |
+| Missing sessionId → 400 | ✅ |
+| GET auf Reserve-Route → 405 | ✅ |
+| SQL Injection in sessionId | ✅ Kein Risiko (Supabase parametrisiert) |
+| SessionId Input-Validierung | ⚠️ **Medium** — Beliebige Strings als sessionId akzeptiert, UUID-Format nicht geprüft |
+| RLS: READY Arcs öffentlich lesbar | ✅ |
+| RLS: Admin-Zugriff für Reserve-API | ✅ Service Role Key korrekt verwendet |
+
+### Automatisierte Tests
+
+```
+Vitest:    17/17 ✅ (keine Regression)
+Playwright: 36/36 ✅ (Chromium + Mobile Safari)
+  tests/PROJ-3-konfigurator.spec.ts
+```
+
+### Bugs
+
+| # | Schwere | Beschreibung | Reproduktion |
+|---|---------|--------------|--------------|
+| B-1 | **High** | BlockedPage unerreichbar: RLS-Policy erlaubt nur `status=READY` für anon-Client. RESERVED Arcs liefern kein Ergebnis → `notFound()` statt BlockedPage. | Arc manuell auf RESERVED setzen, `/konfigurator/[id]` aufrufen → 404 |
+| B-2 | **Medium** | Button-Label auf Step 4 zeigt "Reservieren" statt "Weiter". Nutzer denkt er reserviert in Schritt 4, obwohl Schritt 5 noch folgt. | Step 4 Zusammenfassung aufrufen → Button rechts lesen |
+| B-3 | **Medium** | Tablet 768px: Arc-Preview füllt gesamten Viewport (aspect-ratio 3:4 × 768px = 1024px Höhe). Konfigurations-Schritte erst nach Scrollen sichtbar. | Viewport auf 768px setzen, Konfigurator öffnen |
+| B-4 | **Medium** | sessionId-Input nicht auf UUID-Format validiert. Beliebige Strings werden als `reserved_by` gespeichert. | POST /api/konfigurator/reserve mit `sessionId: "irgendwas"` |
+| B-5 | **Low** | `/konfigurator` ohne arc_id → 404 statt Redirect zu `/arcs`. Spec: „Direktzugriff → Redirect zu /arcs". | GET /konfigurator aufrufen |
+
+### Produktionsreife-Entscheidung
+
+**❌ NOT READY — 1 High Bug (B-1)**
+
+B-1 muss behoben werden: BlockedPage ist vollständig unerreichbar. Fix: Konfigurator-Page nutzt Admin-Client für den initialen Arc-Fetch statt anon-Client.
 
 ## Deployment
 _To be added by /deploy_
