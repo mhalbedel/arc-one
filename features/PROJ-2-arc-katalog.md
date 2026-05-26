@@ -1,6 +1,6 @@
 # PROJ-2: Arc-Katalog
 
-## Status: Architected
+## Status: In Progress
 **Created:** 2026-05-26
 **Last Updated:** 2026-05-26
 

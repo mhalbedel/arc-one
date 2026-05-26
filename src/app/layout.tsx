@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SiteHeader } from "@/components/layout/site-header";
 
 export const metadata: Metadata = {
-  title: "AI Coding Starter Kit",
-  description: "Built with AI Agent Team System",
+  title: "ARC-ONE — Handgefertigte Eukalyptus-Leuchten",
+  description: "Jeder Arc ist ein physisches Unikat aus dem Eukalyptusforst bei Monchique, Portugal.",
 };
 
 export default function RootLayout({
@@ -12,8 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="de">
+      <body className="antialiased min-h-screen">
+        <SiteHeader />
         {children}
       </body>
     </html>
