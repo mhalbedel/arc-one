@@ -140,10 +140,10 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-14 lg:gap-20">
+      <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-10 md:gap-14 lg:gap-20">
 
         {/* Left: Arc Preview + Price */}
-        <div className="lg:sticky lg:top-24 lg:self-start space-y-0">
+        <div className="md:sticky md:top-24 md:self-start space-y-0">
           <ArcPreview serialNumber={arc.serial_number} photoUrl={arc.photo_front_url} />
           <PriceDisplay total={total} hasFullConfig={hasFullConfig} />
         </div>
