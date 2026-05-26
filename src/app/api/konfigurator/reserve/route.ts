@@ -6,7 +6,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { arcId, sessionId, config } = body
 
-  if (!arcId || !sessionId) {
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!arcId || !sessionId || !uuidRe.test(arcId) || !uuidRe.test(sessionId)) {
     return NextResponse.json({ error: 'Ungültige Anfrage.' }, { status: 400 })
   }
 
