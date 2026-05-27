@@ -62,6 +62,7 @@ export interface ArcRow {
   compat_lack: boolean
   compat_schellack: boolean
   is_featured: boolean
+  is_sanded: boolean
   status: ArcStatus
   base_price: number
   price_mounting_wall: number | null
@@ -187,6 +188,7 @@ export interface Database {
         Insert: Omit<ArcRow, 'id' | 'created_at' | 'updated_at'> & {
           id?: string
           is_featured?: boolean
+          is_sanded?: boolean
           compat_ohne?: boolean
           compat_wand?: boolean
           compat_decke?: boolean

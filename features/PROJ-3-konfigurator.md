@@ -2,7 +2,7 @@
 
 ## Status: Deployed
 **Created:** 2026-05-26
-**Last Updated:** 2026-05-26
+**Last Updated:** 2026-05-27
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — `arcs`-Tabelle, Reservierungsfelder (`reserved_until`, `reserved_by`), neue Aufpreis-Spalten
@@ -11,11 +11,12 @@
 
 ## User Stories
 
-- Als Endkunde möchte ich meinen Arc Schritt für Schritt konfigurieren (Befestigung, Finish, Licht), damit ich ein auf meine Bedürfnisse abgestimmtes Angebot erhalte.
+- Als Endkunde möchte ich meinen Arc Schritt für Schritt konfigurieren (Befestigung, ggf. Finish, Licht), damit ich ein auf meine Bedürfnisse abgestimmtes Angebot erhalte.
 - Als Endkunde möchte ich den Gesamtpreis nach jeder Auswahl live sehen, damit ich die Kosten vor der Reservierung kenne.
 - Als Endkunde möchte ich zwischen den Schritten frei hin- und herwechseln, damit ich meine Konfiguration anpassen kann.
 - Als Endkunde möchte ich den konfigurierten Arc für 24 Stunden reservieren, damit ich Zeit habe den Checkout abzuschließen.
 - Als Endkunde möchte ich sofort sehen, wenn ein Arc bereits reserviert ist, damit ich keine Zeit mit einer unmöglichen Konfiguration verbringe.
+- Als Endkunde möchte ich beim Konfigurieren eines ungeschliffenen Rohlings klar sehen, dass kein Finish wählbar ist, damit ich keine falsche Erwartung habe.
 
 ## Out of Scope
 
@@ -44,42 +45,52 @@
 - [ ] Angenommen "Spinne" ist ausgewählt und der Nutzer ändert die Auswahl auf eine andere Befestigungsart, dann verschwindet der Stepper.
 - [ ] Angenommen der Nutzer hat eine Befestigungsart ausgewählt, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zu Schritt 2 (Finish).
 
-### Schritt 2: Finish
+### Schritt 2: Finish (nur wenn `is_sanded = true`)
 
-- [ ] Angenommen Schritt 2 angezeigt wird, dann sind nur die Finish-Optionen sichtbar, die der Arc unterstützt.
-- [ ] Angenommen der Nutzer wählt ein Finish, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zu Schritt 3 (Licht).
+- [ ] Angenommen der Arc hat `is_sanded = true`, wenn Schritt 2 angezeigt wird, dann sind nur die Finish-Optionen sichtbar, die der Arc unterstützt.
+- [ ] Angenommen der Arc hat `is_sanded = true` und der Nutzer wählt ein Finish, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zu Schritt 3 (Licht).
+- [ ] Angenommen der Arc hat `is_sanded = false`, dann wird Schritt 2 (Finish) vollständig übersprungen — der Schritt erscheint weder im Step-Indikator noch im Flow.
 
-### Schritt 3: Licht
+### Schritt 2 (bei `is_sanded = false`) / Schritt 3 (bei `is_sanded = true`): Licht
 
-- [ ] Angenommen Schritt 3 angezeigt wird, dann werden immer alle drei Lichtoptionen angezeigt: "Porzellan Fassung", "Hintergrund LED", "True Light LED".
-- [ ] Angenommen der Nutzer wählt eine Lichtoption, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zu Schritt 4 (Zusammenfassung).
+- [ ] Angenommen der Licht-Schritt angezeigt wird, dann werden immer alle drei Lichtoptionen angezeigt: "Porzellan Fassung", "Hintergrund LED", "True Light LED".
+- [ ] Angenommen der Nutzer wählt eine Lichtoption, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zur Zusammenfassung.
 
-### Schritt 4: Zusammenfassung
+### Schritt 3 (bei `is_sanded = false`) / Schritt 4 (bei `is_sanded = true`): Zusammenfassung
 
-- [ ] Angenommen Schritt 4 angezeigt wird, dann werden die gewählte Befestigung (inkl. Pendelanzahl bei Spinne), das gewählte Finish, die gewählte Lichtoption sowie eine Preisaufschlüsselung (Grundpreis + alle Aufpreise + Gesamtpreis) angezeigt.
+- [ ] Angenommen `is_sanded = true` und Schritt 4 angezeigt wird, dann werden angezeigt: gewählte Befestigung (inkl. Pendelanzahl bei Spinne), gewähltes Finish, gewählte Lichtoption, Oberflächenzustand "Geschliffen" (fest, nicht änderbar), Preisaufschlüsselung (Grundpreis + alle Aufpreise + Gesamtpreis).
+- [ ] Angenommen `is_sanded = false` und die Zusammenfassung angezeigt wird, dann werden angezeigt: gewählte Befestigung, gewählte Lichtoption, Oberflächenzustand "Ungeschliffen – Rohling" (fest), kein Finish-Eintrag in der Zusammenfassung, Preisaufschlüsselung ohne Finish-Zeile.
 - [ ] Angenommen der Nutzer klickt auf "Zurück zu Schritt X" (oder einen Schritt-Indikator), dann kehrt er zu diesem Schritt zurück und seine bisherigen Auswahlen bleiben erhalten.
-- [ ] Angenommen der Nutzer klickt auf "Weiter", dann wechselt die Ansicht zu Schritt 5 (Reservierung).
+- [ ] Angenommen der Nutzer klickt auf "Weiter", dann wechselt die Ansicht zur Reservierung.
 
-### Schritt 5: Reservierung
+### Schritt 4 (bei `is_sanded = false`) / Schritt 5 (bei `is_sanded = true`): Reservierung
 
-- [ ] Angenommen Schritt 5 angezeigt wird, dann wird die vollständige Konfiguration als Read-only-Zusammenfassung sowie der Gesamtpreis und ein Button "Jetzt reservieren (24 Stunden)" angezeigt.
+- [ ] Angenommen der Reservierungs-Schritt angezeigt wird, dann wird die vollständige Konfiguration als Read-only-Zusammenfassung sowie der Gesamtpreis und ein Button "Jetzt reservieren (24 Stunden)" angezeigt.
 - [ ] Angenommen der Nutzer klickt auf "Jetzt reservieren" und der Arc ist noch frei, dann wird `reserved_until` auf jetzt + 24 Stunden gesetzt, `reserved_by` auf eine Client-Session-ID, und der Nutzer wird zum Checkout (PROJ-4) weitergeleitet.
 - [ ] Angenommen der Nutzer klickt auf "Jetzt reservieren" und der Arc wurde inzwischen von jemand anderem reserviert, dann wird eine Fehlermeldung "Dieser Arc wurde gerade von jemand anderem reserviert" mit einem Link zurück zum Katalog angezeigt — keine Weiterleitung zum Checkout.
+
+### Step-Indikator (übergreifend)
+
+- [ ] Angenommen der Arc hat `is_sanded = false`, wenn der Konfigurator geladen wird, dann zeigt der Step-Indikator 4 Schritte (ohne Finish-Schritt).
+- [ ] Angenommen der Arc hat `is_sanded = true`, wenn der Konfigurator geladen wird, dann zeigt der Step-Indikator 5 Schritte (mit Finish-Schritt).
 
 ### Preisanzeige (übergreifend)
 
 - [ ] Angenommen der Nutzer wechselt zu einem anderen Schritt, wenn eine gültige Auswahl vorliegt, dann wird der aktuelle Gesamtpreis (Grundpreis + alle bisher gewählten Aufpreise) im Konfigurator dauerhaft sichtbar aktualisiert.
 - [ ] Angenommen die Befestigung "Spinne" gewählt ist und der Nutzer die Pendelanzahl ändert, dann aktualisiert sich der Gesamtpreis sofort.
+- [ ] Angenommen der Arc hat `is_sanded = false`, dann enthält der Gesamtpreis keinen Finish-Aufpreis.
 
 ## Edge Cases
 
-- **Arc wird während der Konfiguration reserviert:** Kein Echtzeit-Check — erst beim Klick auf "Jetzt reservieren" (Schritt 5) wird geprüft. Wenn der Arc dann weg ist, erscheint eine Fehlermeldung.
+- **Arc wird während der Konfiguration reserviert:** Kein Echtzeit-Check — erst beim Klick auf "Jetzt reservieren" wird geprüft. Wenn der Arc dann weg ist, erscheint eine Fehlermeldung.
 - **Nur eine kompatible Befestigungsoption:** Schritt wird trotzdem vollständig angezeigt — kein automatisches Überspringen.
 - **Spinne-Stepper Grenzwerte:** Nutzer kann nicht unter 1 oder über `max_spinne_pendel` navigieren; Buttons werden an den Grenzen deaktiviert.
-- **Arc ohne `max_spinne_pendel`:** Falls `max_spinne_pendel` null ist und "Spinne" trotzdem als kompatibel markiert wurde, wird Spinne nicht als Option angezeigt (defensives Fallback — verhindert undefinierten Stepper).
-- **Aufpreis = 0:** Wenn der Admin einen Aufpreis auf 0 setzt, wird die Option trotzdem angezeigt; in der Preisaufschlüsselung erscheint "+0 €" oder die Zeile wird weggelassen (Architektur-Entscheidung).
+- **Arc ohne `max_spinne_pendel`:** Falls `max_spinne_pendel` null ist und "Spinne" trotzdem als kompatibel markiert wurde, wird Spinne nicht als Option angezeigt.
+- **Aufpreis = 0:** Zeile in der Preisaufschlüsselung wird ausgeblendet (bereits implementiert).
 - **Browser-Zurück-Button:** Verlässt der Nutzer den Konfigurator über den Browser-Zurück-Button, geht die Konfiguration verloren — kein Persist außerhalb der Page.
 - **Direktzugriff auf `/konfigurator` ohne Arc-ID:** Redirect zur Browse-Ansicht (`/arcs`).
+- **Arc mit `is_sanded = false` und gesetzten `price_finish_*` Spalten:** Die Finish-Aufpreise werden ignoriert — Finish-Schritt ist ausgeblendet, Preisberechnung schließt Finish-Aufpreise aus.
+- **Arc wechselt `is_sanded` während aktiver Session:** Der Konfigurator lädt `is_sanded` einmalig beim Seitenaufruf (Server Component). Ändert ein Admin den Wert während der Session, hat das keine Auswirkung bis zum nächsten Reload.
 
 ## Technical Requirements
 
@@ -106,6 +117,9 @@
 | Kein Echtzeit-Check während Konfiguration | Keine WebSocket-Komplexität nötig; Race Condition ist selten und wird beim Reservieren-Klick abgefangen | 2026-05-26 |
 | Keine Kontaktdaten im Konfigurator | Trennung von Concerns: Konfigurator = Konfiguration + Reservierung, PROJ-4 = Zahlung + Kundendaten | 2026-05-26 |
 | Lichtoptionen immer alle 3 sichtbar | Keine Arc-spezifischen Licht-Kompatibilitätsdaten im Schema — alle Lichtoptionen sind für alle Arcs verfügbar | 2026-05-26 |
+| Finish-Schritt bei `is_sanded = false` vollständig ausblenden | Finish (Öl/Lack/Schellack) setzt einen geschliffenen Untergrund voraus — ein Rohling kann keinen Oberflächenfinish erhalten | 2026-05-27 |
+| Schliff nicht als buchbare Option im Konfigurator | Schliff ist ein handwerklicher Schritt, der nicht über den Konfigurator bestellt werden kann; ein Arc kommt entweder schon geschliffen oder als Rohling | 2026-05-27 |
+| Schrittanzahl dynamisch (4 oder 5) je nach `is_sanded` | Step-Indikator spiegelt den tatsächlichen Flow — kein "leerer" Schritt, keine Verwirrung | 2026-05-27 |
 
 ### Technical Decisions
 <!-- Added by /architecture -->
@@ -118,6 +132,8 @@
 | Reservierung via API Route (POST) mit atomischem DB-UPDATE | Verhindert Doppelreservierungen durch DB-Bedingung (WHERE reserved_until IS NULL OR < now()); Server Action wäre ebenfalls möglich, aber API Route ist expliziter für externe Nachvollziehbarkeit | 2026-05-26 |
 | Preisaufschlüsselung: Zeilen mit Aufpreis 0 ausblenden | Cleaner UX — "+0 €" ist irreführend und wirkt unfertig; ausgeblendete Zeile vermeidet Verwirrung | 2026-05-26 |
 | Keine neuen Pakete | Alle benötigten shadcn/ui Komponenten (Button, Card, Separator, Badge) bereits installiert | 2026-05-26 |
+| Steps-Array aus `is_sanded` zur Laufzeit berechnet | `KonfiguratorClient` erhält `is_sanded` als Prop und baut das Steps-Array einmalig beim Mount — kein Feature-Flag, kein Conditional im JSX auf Step-Ebene | 2026-05-27 |
+| Finish-Aufpreise bei `is_sanded=false` aus Preisberechnung ausschließen | Auch wenn `price_finish_*` in der DB gesetzt sind, werden sie ignoriert — Quelle der Wahrheit ist `is_sanded`, nicht das Vorhandensein eines Aufpreises | 2026-05-27 |
 
 ---
 
@@ -127,36 +143,38 @@
 
 ```
 /konfigurator/[arc_id]/page.tsx  (Server Component)
-│  → Lädt Arc-Daten inkl. Aufpreise aus Supabase
+│  → Lädt Arc-Daten inkl. Aufpreise + is_sanded aus Supabase
 │  → Prüft Reservierungsstatus
 │
-├── BlockedPage  [NEU]  (wenn Arc reserviert)
+├── BlockedPage  (wenn Arc reserviert)
 │   └── "Reserviert bis [Zeit]" + Link → /arcs
 │
 ├── 404  (wenn Arc nicht READY/RESERVED)
 │
-└── KonfiguratorClient  [NEU]  (Client Component — verwaltet Step-State)
+└── KonfiguratorClient  (Client Component — verwaltet Step-State)
+    │  → erhält is_sanded als Prop
+    │  → berechnet Steps-Array dynamisch: 4 Schritte (ohne Finish) oder 5 Schritte (mit Finish)
     │
-    ├── ArcPreview  [NEU]  (persistent: Foto + Seriennummer)
-    ├── PriceDisplay  [NEU]  (persistent: Gesamtpreis, live-updated)
-    ├── StepIndicator  [NEU]  (1–5, klickbar für bereits besuchte Schritte)
+    ├── ArcPreview  (persistent: Foto + Seriennummer + Oberflächenzustand-Badge)
+    ├── PriceDisplay  (persistent: Gesamtpreis, live-updated)
+    ├── StepIndicator  (1–4 oder 1–5, klickbar für bereits besuchte Schritte)
     │
-    ├── Step1Befestigung  [NEU]
+    ├── Step: Befestigung  (immer Schritt 1)
     │   ├── OptionCard × n  (nur kompatible Optionen)
-    │   └── SpinneStepper  [NEU]  (bedingt — nur wenn "Spinne" gewählt)
+    │   └── SpinneStepper  (bedingt — nur wenn "Spinne" gewählt)
     │
-    ├── Step2Finish  [NEU]
+    ├── Step: Finish  [NUR wenn is_sanded = true]
     │   └── OptionCard × n  (nur kompatible Optionen)
     │
-    ├── Step3Licht  [NEU]
+    ├── Step: Licht  (Schritt 2 bei is_sanded=false, Schritt 3 bei is_sanded=true)
     │   └── OptionCard × 3  (immer alle 3)
     │
-    ├── Step4Zusammenfassung  [NEU]
-    │   ├── KonfigSummary  (read-only: alle Auswahlen)
-    │   └── PreisAufschlüsselung  (Grundpreis + Aufpreise > 0 + Gesamt)
+    ├── Step: Zusammenfassung  (Schritt 3 oder 4)
+    │   ├── KonfigSummary  (read-only: Befestigung, ggf. Finish, Licht, Oberflächenzustand)
+    │   └── PreisAufschlüsselung  (Grundpreis + Aufpreise > 0 + Gesamt; kein Finish-Aufpreis wenn is_sanded=false)
     │
-    └── Step5Reservierung  [NEU]
-        ├── KonfigSummary  (read-only, identisch Schritt 4)
+    └── Step: Reservierung  (Schritt 4 oder 5)
+        ├── KonfigSummary  (read-only, identisch Zusammenfassung)
         └── ReservierenButton → POST /api/konfigurator/reserve
 ```
 
@@ -242,6 +260,12 @@ src/
 | `Badge` | Aktiver Step im StepIndicator |
 
 ## Implementation Notes
+
+**is_sanded Erweiterung (2026-05-27)**
+- `src/components/konfigurator/step-indicator.tsx` — auf dynamisches `steps: string[]` + `currentIndex`/`furthestIndex` Props umgestellt (nicht mehr hardcoded 5 Schritte)
+- `src/components/konfigurator/arc-preview.tsx` — `isSanded` Prop ergänzt, Badge "Rohling" / "Geschliffen" unter Seriennummer
+- `src/components/konfigurator/konfig-summary.tsx` — `isSanded` Prop, Oberflächen-Zeile ergänzt, Finish-Zeile nur wenn `isSanded = true`
+- `src/components/konfigurator/konfigurator-client.tsx` — auf `StepKey`-basierte Navigation refaktoriert; `steps`-Array wird aus `arc.is_sanded` dynamisch gebaut (4 oder 5 Schritte); `hasFullConfig` berücksichtigt `is_sanded`; Finish-Aufpreis bei `is_sanded=false` immer 0
 
 **Frontend (2026-05-26)**
 - Alle Komponenten unter `src/components/konfigurator/` erstellt

@@ -25,13 +25,19 @@ type KonfigSummaryProps = {
   spinneCount: number
   finish: FinishType | null
   light: LightType | null
+  isSanded: boolean
 }
 
-export function KonfigSummary({ mounting, spinneCount, finish, light }: KonfigSummaryProps) {
+export function KonfigSummary({ mounting, spinneCount, finish, light, isSanded }: KonfigSummaryProps) {
   return (
     <div className="space-y-0">
       <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3">Konfiguration</p>
       <dl className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <dt className="text-muted-foreground">Oberfläche</dt>
+          <dd>{isSanded ? 'Geschliffen' : 'Ungeschliffen – Rohling'}</dd>
+        </div>
+        <Separator />
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Befestigung</dt>
           <dd>
@@ -45,11 +51,15 @@ export function KonfigSummary({ mounting, spinneCount, finish, light }: KonfigSu
             )}
           </dd>
         </div>
-        <Separator />
-        <div className="flex justify-between">
-          <dt className="text-muted-foreground">Finish</dt>
-          <dd>{finish ? FINISH_LABELS[finish] : <span className="text-muted-foreground/50">—</span>}</dd>
-        </div>
+        {isSanded && (
+          <>
+            <Separator />
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Finish</dt>
+              <dd>{finish ? FINISH_LABELS[finish] : <span className="text-muted-foreground/50">—</span>}</dd>
+            </div>
+          </>
+        )}
         <Separator />
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Licht</dt>

@@ -1,11 +1,13 @@
 import Image from 'next/image'
+import { Badge } from '@/components/ui/badge'
 
 type ArcPreviewProps = {
   serialNumber: string
   photoUrl: string | null
+  isSanded: boolean
 }
 
-export function ArcPreview({ serialNumber, photoUrl }: ArcPreviewProps) {
+export function ArcPreview({ serialNumber, photoUrl, isSanded }: ArcPreviewProps) {
   return (
     <div className="space-y-3">
       <div className="relative aspect-[3/4] bg-muted overflow-hidden">
@@ -24,9 +26,14 @@ export function ArcPreview({ serialNumber, photoUrl }: ArcPreviewProps) {
           </div>
         )}
       </div>
-      <p className="font-serif text-xs tracking-[0.2em] uppercase text-muted-foreground text-center">
-        {serialNumber}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="font-serif text-xs tracking-[0.2em] uppercase text-muted-foreground">
+          {serialNumber}
+        </p>
+        <Badge variant={isSanded ? 'secondary' : 'outline'} className="text-[10px]">
+          {isSanded ? 'Geschliffen' : 'Rohling'}
+        </Badge>
+      </div>
     </div>
   )
 }

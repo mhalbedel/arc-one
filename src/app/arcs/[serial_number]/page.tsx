@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { PhotoSection } from '@/components/arcs/photo-section'
 import { DropBadge } from '@/components/arcs/drop-badge'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { formatPrice, formatDate } from '@/lib/utils'
 import Link from 'next/link'
@@ -82,6 +83,16 @@ export default async function ArcDetailPage({ params }: ArcDetailPageProps) {
             <p className="font-medium text-2xl tabular-nums">
               {formatPrice(typedArc.base_price)}
             </p>
+            <div className="flex items-center gap-2">
+              <Badge variant={typedArc.is_sanded ? 'secondary' : 'outline'}>
+                {typedArc.is_sanded ? 'Geschliffen' : 'Ungeschliffen – Rohling'}
+              </Badge>
+            </div>
+            {!typedArc.is_sanded && (
+              <p className="text-xs text-muted-foreground">
+                Der Grundpreis bezieht sich auf den ungeschliffenen Rohling. Schliff und Finish werden im Konfigurator gewählt.
+              </p>
+            )}
           </div>
 
           <Separator />

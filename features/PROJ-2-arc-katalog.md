@@ -2,7 +2,7 @@
 
 ## Status: In Progress
 **Created:** 2026-05-26
-**Last Updated:** 2026-05-26
+**Last Updated:** 2026-05-27
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — Arc-Daten, RLS-Policies
@@ -15,7 +15,8 @@
 - Als Endkunde möchte ich die Homepage besuchen, damit ich einen ersten Eindruck von ARC-ONE bekomme und zum Katalog weiterfinde.
 - Als Endkunde möchte ich alle verfügbaren Arcs in einer Übersicht sehen, damit ich den richtigen Arc für mich finden kann.
 - Als Endkunde möchte ich Arcs nach Preis sortieren, damit ich Arcs in meinem Budget-Rahmen schnell erkenne.
-- Als Endkunde möchte ich die Details eines Arcs sehen (Fotos, Maße, Charakter, Kompatibilität, Preis), damit ich eine fundierte Kaufentscheidung treffen kann.
+- Als Endkunde möchte ich die Details eines Arcs sehen (Fotos, Maße, Charakter, Kompatibilität, Preis, Oberflächenzustand), damit ich eine fundierte Kaufentscheidung treffen kann.
+- Als Endkunde möchte ich sofort sehen, ob ein Arc bereits geschliffen wurde oder noch im Rohzustand (ungeschliffen) vorliegt, damit ich den Arbeitsaufwand und das Preisniveau verstehe.
 - Als Endkunde möchte ich von der Arc-Detailseite direkt zum Konfigurator gelangen, damit ich meinen Arc sofort konfigurieren kann.
 - Als B2B-Nutzer (Architekt/Designer) möchte ich denselben öffentlichen Katalog sehen wie Endkunden, damit ich Arcs für Kundenprojekte evaluieren kann.
 
@@ -52,7 +53,9 @@
 
 ### Detailseite (`/arcs/[serial-number]`)
 
-- [ ] Angenommen ein READY-Arc mit der Seriennummer ARV-0001 existiert, wenn die URL `/arcs/ARV-0001` aufgerufen wird, dann werden angezeigt: Fotos Seite A und Seite B, Seriennummer, Charakter-Text, Abmessungen (Breite/Höhe/Tiefe in cm), Gewicht, Herkunft (Erntedatum, Waldsektor, Schnittnummer), Kompatibilitäts-Flags (Befestigungsarten, Finishes), Grundpreis in Euro.
+- [ ] Angenommen ein READY-Arc mit der Seriennummer ARV-0001 existiert, wenn die URL `/arcs/ARV-0001` aufgerufen wird, dann werden angezeigt: Fotos Seite A und Seite B, Seriennummer, Charakter-Text, Abmessungen (Breite/Höhe/Tiefe in cm), Gewicht, Herkunft (Erntedatum, Waldsektor, Schnittnummer), Kompatibilitäts-Flags (Befestigungsarten, Finishes), Oberflächenzustand (Geschliffen / Ungeschliffen), Grundpreis in Euro.
+- [ ] Angenommen ein Arc hat `is_sanded = false`, wenn die Detailseite angezeigt wird, dann erscheint ein klar sichtbares Label "Ungeschliffen – Rohling" und ein Hinweistext: "Der Grundpreis bezieht sich auf den ungeschliffenen Rohling. Schliff und Finish werden im Konfigurator gewählt."
+- [ ] Angenommen ein Arc hat `is_sanded = true`, wenn die Detailseite angezeigt wird, dann erscheint das Label "Geschliffen".
 - [ ] Angenommen ein Arc hat Fotos für Seite A und Seite B, wenn die Detailseite geladen wird, dann sind beide Fotos sichtbar (nebeneinander oder umschaltbar über Tabs/Thumbnails).
 - [ ] Angenommen die Detailseite angezeigt wird, wenn der Nutzer auf "Arc konfigurieren" klickt, dann wird er zum Konfigurator für diesen Arc weitergeleitet (PROJ-3, URL noch offen).
 - [ ] Angenommen ein Arc existiert nicht oder ist nicht READY, wenn die URL `/arcs/[serial-number]` aufgerufen wird, dann wird eine 404-Seite angezeigt.
@@ -78,6 +81,38 @@
 - RLS auf der `arcs`-Tabelle filtert automatisch nicht-READY-Arcs heraus (kein manueller Status-Check im Code nötig)
 - Seiten sollen als Server Components gerendert werden (SEO-Grundlage für PROJ-10)
 
+### DB-Erweiterung: `is_sanded` Spalte
+
+Die `arcs`-Tabelle benötigt eine neue Spalte:
+
+```sql
+-- Migration: PROJ-2 Erweiterung — geschliffen/ungeschliffen
+ALTER TABLE arcs
+  ADD COLUMN is_sanded BOOLEAN NOT NULL DEFAULT FALSE;
+
+COMMENT ON COLUMN arcs.is_sanded IS
+  'TRUE = Arc wurde bereits geschliffen. FALSE = Rohling (ungeschliffen). Der Grundpreis bezieht sich immer auf den ungeschliffenen Rohling.';
+```
+
+**Default `FALSE`** — alle bestehenden Arcs sind Rohlinge bis der Admin den Wert setzt.
+
+### TypeScript-Typen — Erweiterung
+
+`src/types/database.ts` → `ArcsRow`:
+```ts
+is_sanded: boolean
+```
+
+`src/types/database.ts` → `ArcsInsert` / `ArcsUpdate`:
+```ts
+is_sanded?: boolean
+```
+
+`src/types/index.ts` → `Arc`:
+```ts
+isSanded: boolean
+```
+
 ## Open Questions
 
 - [ ] Welche Ziel-URL hat der Konfigurator? (wird in PROJ-3 definiert — CTA vorerst als Platzhalter `/konfigurator/[arc-id]`)
@@ -89,6 +124,9 @@
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| Grundpreis bezieht sich immer auf den ungeschliffenen Rohling | Rohlinge sind die physische Ausgangsbasis; Schliff/Finish werden im Konfigurator gewählt und separat bepreist | 2026-05-27 |
+| `is_sanded` als Boolean-Spalte in `arcs` | Einfachste Abbildung: jeder Arc ist entweder geschliffen oder nicht — kein Enum nötig | 2026-05-27 |
+| Hinweistext "Grundpreis = Rohling" nur bei `is_sanded=false` | Bei bereits geschliffenen Arcs ist der Hinweis nicht nötig; vermeidet Verwirrung | 2026-05-27 |
 | Homepage als reine Brand-Seite, keine Arc-Listings | Zeitloser erster Eindruck; kein Stale-Content wenn Arcs verkauft werden | 2026-05-26 |
 | Highlight-Arcs manuell durch Admin ausgewählt | Redaktionelle Kontrolle — Admin wählt die charakteristischsten Arcs aus, nicht die neuesten | 2026-05-26 |
 | Highlight-Abschnitt ausblenden wenn keine Auswahl | Seite sieht nicht kaputt aus beim Launch ohne ausgewählte Arcs | 2026-05-26 |
@@ -102,6 +140,7 @@
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| `is_sanded` DEFAULT FALSE (additive Migration) | Bestehende Arcs im Live-System bleiben korrekt — alle sind Rohlinge bis der Admin den Wert explizit setzt | 2026-05-27 |
 | Server Components für alle Katalog-Seiten | SSR als SEO-Grundlage (PROJ-10); RLS greift auf DB-Ebene, kein Client-Exposure | 2026-05-26 |
 | Kein API-Layer für öffentliche Lesezugriffe | Server Components rufen Supabase Server Client direkt auf — weniger Code, gleiche Sicherheit | 2026-05-26 |
 | Sortierung via URL-Searchparams (`?sort=`) | Bookmarkbar, kein Client-State, SSR-kompatibel; SortControl ist einzige Client Component | 2026-05-26 |
@@ -140,6 +179,8 @@ Detail  /arcs/[serial_number]  (Server Component)
 ├── PhotoSection  [NEU — Tabs Seite A / Seite B]
 ├── ArcInfoSection  [NEU]
 │   ├── Seriennummer, Grundpreis
+│   ├── Oberflächenzustand-Badge  [NEU — "Ungeschliffen – Rohling" | "Geschliffen"]
+│   ├── Grundpreis-Hinweistext (nur bei is_sanded=false)  [NEU]
 │   ├── Charakter-Text
 │   ├── Abmessungen (B × H × T in cm) + Gewicht
 │   ├── Herkunft (Erntedatum, Waldsektor, Schnittnummer)
@@ -199,6 +240,11 @@ src/
 | `Separator` | Abschnitte in ArcInfoSection |
 
 ## Implementation Notes
+
+**is_sanded Erweiterung (2026-05-27)**
+- `db/migrations/004_is_sanded.sql` — `ALTER TABLE arcs ADD COLUMN is_sanded BOOLEAN NOT NULL DEFAULT FALSE` mit Kommentar
+- `src/types/database.ts` — `is_sanded: boolean` in `ArcRow` und `is_sanded?: boolean` in Insert ergänzt
+- `src/app/arcs/[serial_number]/page.tsx` — Badge ("Ungeschliffen – Rohling" / "Geschliffen") und bedingter Hinweistext nach dem Preis eingefügt
 
 **Backend-Integration (2026-05-26)**
 - Supabase-Verbindung verifiziert — alle 3 Seiten laden echte Daten

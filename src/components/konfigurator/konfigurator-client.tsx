@@ -13,6 +13,19 @@ import { PreisAufschluesselung } from './preis-aufschluesselung'
 import type { MountingType, FinishType, LightType } from '@/types'
 import type { Arc } from '@/types'
 
+type StepKey = 'befestigung' | 'finish' | 'licht' | 'zusammenfassung' | 'reservierung'
+
+const STEPS_SANDED: StepKey[] = ['befestigung', 'finish', 'licht', 'zusammenfassung', 'reservierung']
+const STEPS_UNSANDED: StepKey[] = ['befestigung', 'licht', 'zusammenfassung', 'reservierung']
+
+const STEP_LABELS: Record<StepKey, string> = {
+  befestigung: 'Befestigung',
+  finish: 'Finish',
+  licht: 'Licht',
+  zusammenfassung: 'Zusammenfassung',
+  reservierung: 'Reservierung',
+}
+
 const MOUNTING_OPTIONS: { value: MountingType; label: string; compatKey: keyof Arc }[] = [
   { value: 'ohne', label: 'Ohne Befestigung', compatKey: 'compat_ohne' },
   { value: 'wand', label: 'Wandmontage', compatKey: 'compat_wand' },
@@ -61,8 +74,11 @@ function getLightPrice(arc: Arc, light: LightType | null): number {
 }
 
 export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
-  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1)
-  const [furthestStep, setFurthestStep] = useState<number>(1)
+  const steps = arc.is_sanded ? STEPS_SANDED : STEPS_UNSANDED
+  const stepLabels = steps.map((k) => STEP_LABELS[k])
+
+  const [stepIndex, setStepIndex] = useState(0)
+  const [furthestIndex, setFurthestIndex] = useState(0)
   const [mounting, setMounting] = useState<MountingType | null>(null)
   const [spinneCount, setSpinneCount] = useState(1)
   const [finish, setFinish] = useState<FinishType | null>(null)
@@ -70,11 +86,15 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
   const [error, setError] = useState<string | null>(null)
   const [reserving, setReserving] = useState(false)
 
+  const currentStep = steps[stepIndex]
+
   const mountingPrice = getMountingPrice(arc, mounting, spinneCount)
-  const finishPrice = getFinishPrice(arc, finish)
+  const finishPrice = arc.is_sanded ? getFinishPrice(arc, finish) : 0
   const lightPrice = getLightPrice(arc, light)
   const total = arc.base_price + mountingPrice + finishPrice + lightPrice
-  const hasFullConfig = mounting !== null && finish !== null && light !== null
+
+  const hasFullConfig =
+    mounting !== null && light !== null && (arc.is_sanded ? finish !== null : true)
 
   const availableMounting = MOUNTING_OPTIONS.filter((o) => {
     if (o.value === 'spinne') return arc.compat_spinne && arc.max_spinne_pendants != null
@@ -83,24 +103,21 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
 
   const availableFinish = FINISH_OPTIONS.filter((o) => arc[o.compatKey] === true)
 
-  const mountingLabel = mounting
-    ? (MOUNTING_OPTIONS.find((o) => o.value === mounting)?.label ?? '')
-    : ''
-  const finishLabel = finish
-    ? (FINISH_OPTIONS.find((o) => o.value === finish)?.label ?? '')
-    : ''
-  const lightLabel = light
-    ? (LIGHT_OPTIONS.find((o) => o.value === light)?.label ?? '')
-    : ''
+  const mountingLabel = mounting ? (MOUNTING_OPTIONS.find((o) => o.value === mounting)?.label ?? '') : ''
+  const finishLabel = finish ? (FINISH_OPTIONS.find((o) => o.value === finish)?.label ?? '') : ''
+  const lightLabel = light ? (LIGHT_OPTIONS.find((o) => o.value === light)?.label ?? '') : ''
 
-  function goTo(s: 1 | 2 | 3 | 4 | 5) {
-    setStep(s)
-    if (s > furthestStep) setFurthestStep(s)
+  function goTo(index: number) {
+    setStepIndex(index)
+    if (index > furthestIndex) setFurthestIndex(index)
   }
 
   function next() {
-    const ns = (step + 1) as 1 | 2 | 3 | 4 | 5
-    goTo(ns)
+    goTo(stepIndex + 1)
+  }
+
+  function back() {
+    setStepIndex(stepIndex - 1)
   }
 
   async function reserve() {
@@ -119,7 +136,12 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
         body: JSON.stringify({
           arcId: arc.id,
           sessionId,
-          config: { mounting, spinneCount: mounting === 'spinne' ? spinneCount : undefined, finish, light },
+          config: {
+            mounting,
+            spinneCount: mounting === 'spinne' ? spinneCount : undefined,
+            finish: arc.is_sanded ? finish : null,
+            light,
+          },
         }),
       })
 
@@ -134,35 +156,35 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
     }
   }
 
-  const canProceedStep1 = mounting !== null
-  const canProceedStep2 = finish !== null
-  const canProceedStep3 = light !== null
-
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
       <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-10 md:gap-14 lg:gap-20">
 
         {/* Left: Arc Preview + Price */}
         <div className="md:sticky md:top-24 md:self-start space-y-0">
-          <ArcPreview serialNumber={arc.serial_number} photoUrl={arc.photo_front_url} />
+          <ArcPreview
+            serialNumber={arc.serial_number}
+            photoUrl={arc.photo_front_url}
+            isSanded={arc.is_sanded}
+          />
           <PriceDisplay total={total} hasFullConfig={hasFullConfig} />
         </div>
 
         {/* Right: Steps */}
         <div className="space-y-10">
-          {/* Step Indicator */}
           <div className="overflow-x-auto -mx-6 px-6">
             <StepIndicator
-              currentStep={step}
-              completedUpTo={furthestStep}
-              onStepClick={(s) => setStep(s as 1 | 2 | 3 | 4 | 5)}
+              steps={stepLabels}
+              currentIndex={stepIndex}
+              furthestIndex={furthestIndex}
+              onStepClick={goTo}
             />
           </div>
 
           <Separator />
 
-          {/* Step 1: Befestigung */}
-          {step === 1 && (
+          {/* Befestigung */}
+          {currentStep === 'befestigung' && (
             <div className="space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Befestigung</h2>
               <div className="space-y-2">
@@ -186,7 +208,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
               </div>
               <Button
                 onClick={next}
-                disabled={!canProceedStep1}
+                disabled={mounting === null}
                 className="w-full text-xs tracking-[0.15em] uppercase"
                 size="lg"
               >
@@ -195,8 +217,8 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
             </div>
           )}
 
-          {/* Step 2: Finish */}
-          {step === 2 && (
+          {/* Finish — only shown when is_sanded = true */}
+          {currentStep === 'finish' && (
             <div className="space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Finish</h2>
               <div className="space-y-2">
@@ -212,7 +234,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setStep(1)}
+                  onClick={back}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
@@ -220,7 +242,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
                 </Button>
                 <Button
                   onClick={next}
-                  disabled={!canProceedStep2}
+                  disabled={finish === null}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
@@ -230,8 +252,8 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
             </div>
           )}
 
-          {/* Step 3: Licht */}
-          {step === 3 && (
+          {/* Licht */}
+          {currentStep === 'licht' && (
             <div className="space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Licht</h2>
               <div className="space-y-2">
@@ -247,7 +269,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setStep(2)}
+                  onClick={back}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
@@ -255,7 +277,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
                 </Button>
                 <Button
                   onClick={next}
-                  disabled={!canProceedStep3}
+                  disabled={light === null}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
@@ -265,14 +287,15 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
             </div>
           )}
 
-          {/* Step 4: Zusammenfassung */}
-          {step === 4 && (
+          {/* Zusammenfassung */}
+          {currentStep === 'zusammenfassung' && (
             <div className="space-y-8">
               <KonfigSummary
                 mounting={mounting}
                 spinneCount={spinneCount}
                 finish={finish}
                 light={light}
+                isSanded={arc.is_sanded}
               />
               <Separator />
               <PreisAufschluesselung
@@ -288,14 +311,14 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setStep(3)}
+                  onClick={back}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
                   Zurück
                 </Button>
                 <Button
-                  onClick={() => goTo(5)}
+                  onClick={next}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
                 >
@@ -305,14 +328,15 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
             </div>
           )}
 
-          {/* Step 5: Reservierung */}
-          {step === 5 && (
+          {/* Reservierung */}
+          {currentStep === 'reservierung' && (
             <div className="space-y-8">
               <KonfigSummary
                 mounting={mounting}
                 spinneCount={spinneCount}
                 finish={finish}
                 light={light}
+                isSanded={arc.is_sanded}
               />
               <Separator />
               <PreisAufschluesselung
@@ -338,7 +362,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setStep(4)}
+                  onClick={back}
                   disabled={reserving}
                   className="flex-1 text-xs tracking-[0.15em] uppercase"
                   size="lg"
