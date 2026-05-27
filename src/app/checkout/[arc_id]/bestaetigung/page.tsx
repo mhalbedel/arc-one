@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getStripe } from '@/lib/stripe-server'
 import { OrderConfirmation } from '@/components/checkout/order-confirmation'
 import type { Arc, Order } from '@/types'
 
@@ -40,6 +41,28 @@ export default async function BestaetigungPage({ params, searchParams }: Bestaet
 
   if (!order || order.stripe_deposit_id !== payment_intent) {
     notFound()
+  }
+
+  // Verify with Stripe and update statuses (idempotent)
+  if (order.status === 'PENDING_CONFIRMATION') {
+    const paymentIntent = await getStripe().paymentIntents.retrieve(payment_intent)
+
+    if (paymentIntent.status === 'succeeded') {
+      await Promise.all([
+        supabase
+          .from('orders')
+          .update({ status: 'CONFIRMED', deposit_paid_at: new Date().toISOString() } as unknown as never)
+          .eq('id', order.id),
+        supabase
+          .from('arcs')
+          .update({ status: 'ORDERED' } as unknown as never)
+          .eq('id', arc_id),
+      ])
+
+      // Reflect updated values in the rendered page
+      order.status = 'CONFIRMED'
+      order.deposit_paid_at = new Date().toISOString()
+    }
   }
 
   return <OrderConfirmation arc={arc} order={order} />

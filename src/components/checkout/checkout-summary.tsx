@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator'
 import { formatPrice } from '@/lib/utils'
 import type { Arc } from '@/types'
 import type { CheckoutConfig, ShippingCountry } from '@/types'
-import { SHIPPING_PRICES } from '@/types'
+import { calcCheckoutPrices } from '@/lib/pricing'
 
 const MOUNTING_LABELS: Record<string, string> = {
   ohne: 'Ohne Befestigung',
@@ -37,50 +37,9 @@ type CheckoutSummaryProps = {
   shippingCountry: ShippingCountry
 }
 
-function getMountingPrice(arc: Arc, mounting: string): number {
-  if (mounting === 'ohne') return 0
-  if (mounting === 'wand') return arc.price_mounting_wall ?? 0
-  if (mounting === 'decke') return arc.price_mounting_ceiling ?? 0
-  return 0
-}
-
-function getSpinnePrice(arc: Arc, count: number): number {
-  return (arc.price_mounting_spinne_per ?? 0) * count
-}
-
-function getFinishPrice(arc: Arc, finish: string | null): number {
-  if (!finish) return 0
-  if (finish === 'oel') return arc.price_finish_oil ?? 0
-  if (finish === 'lack') return arc.price_finish_lacquer ?? 0
-  if (finish === 'schellack') return arc.price_finish_shellac ?? 0
-  return 0
-}
-
-function getLightPrice(arc: Arc, light: string): number {
-  if (light === 'porzellan') return arc.price_light_porcelain ?? 0
-  if (light === 'bg_led') return arc.price_light_bg_led ?? 0
-  if (light === 'true_led') return arc.price_light_true_led ?? 0
-  return 0
-}
-
 export function calcPrices(arc: Arc, config: CheckoutConfig | null, shippingCountry: ShippingCountry) {
   if (!config) return null
-
-  const sandingPrice =
-    config.sandingChoice === 'schleifen' ? (arc.price_sanding ?? 0) : 0
-  const mountingPrice =
-    config.mounting === 'spinne'
-      ? getSpinnePrice(arc, config.spinneCount ?? 1)
-      : getMountingPrice(arc, config.mounting)
-  const finishPrice = getFinishPrice(arc, config.finish)
-  const lightPrice = getLightPrice(arc, config.light)
-  const shippingPrice = SHIPPING_PRICES[shippingCountry]
-  const subtotal = arc.base_price + sandingPrice + mountingPrice + finishPrice + lightPrice
-  const total = subtotal + shippingPrice
-  const deposit = Math.round(total * 0.3)
-  const remaining = total - deposit
-
-  return { sandingPrice, mountingPrice, finishPrice, lightPrice, shippingPrice, subtotal, total, deposit, remaining }
+  return calcCheckoutPrices(arc, config, shippingCountry)
 }
 
 export function CheckoutSummary({ arc, config, shippingCountry }: CheckoutSummaryProps) {

@@ -91,6 +91,7 @@ export interface OrderRow {
   mounting_price: number
   finish_price: number
   light_price: number
+  sanding_price: number
   shipping_price: number
   total_price: number
   estimated_days: number
@@ -220,6 +221,7 @@ export interface Database {
           mounting_price?: number
           finish_price?: number
           light_price?: number
+          sanding_price?: number
           shipping_price?: number
           status?: OrderStatus
           created_at?: string

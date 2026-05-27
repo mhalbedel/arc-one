@@ -1,6 +1,12 @@
 # PROJ-4: Pre-Order & Stripe
 
 ## Status: In Progress
+
+### Backend Implementation Notes
+- API: `POST /api/checkout/create-payment-intent` — validates reservation, calculates prices server-side, creates customer + order records, creates Stripe PaymentIntent, returns `clientSecret`
+- Confirmation page verifies Stripe PaymentIntent on load, updates order → CONFIRMED + arc → ORDERED (idempotent)
+- DB migration 006 required: `sanding_price INTEGER DEFAULT 0` on `orders` table
+- Required env vars: `STRIPE_SECRET_KEY` (server-only), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (client)
 **Created:** 2026-05-27
 **Last Updated:** 2026-05-27
 
