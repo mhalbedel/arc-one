@@ -357,9 +357,10 @@ Playwright: 36/36 ✅ (Chromium + Mobile Safari)
 ## Deployment
 
 - **Deployed:** 2026-05-26
-- **Production URL:** https://arc-one.vercel.app
+- **Production URL:** https://arc-one-seven.vercel.app
 - **DB-Migration:** `db/migrations/003_konfigurator_price_columns.sql` — 9 Aufpreis-Spalten auf `arcs`-Tabelle
 - **Neue Env Var:** `SUPABASE_SERVICE_ROLE_KEY` in Vercel gesetzt (Admin-Client für Konfigurator-Page + Reserve-API)
 
-## Deployment
-_To be added by /deploy_
+**is_sanded Erweiterung — 2026-05-27**
+- 4-Schritt-Flow für Rohlinge live ✅
+- DB Migration `004_is_sanded.sql` muss manuell im Supabase SQL-Editor ausgeführt werden

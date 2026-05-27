@@ -331,3 +331,7 @@ Die 3 offenen ACs (H-3, H-5, D-2) sind **Testdaten-Limitierungen**, keine Code-F
 - Security Headers aktiv (X-Frame-Options, HSTS, nosniff, Referrer-Policy)
 - Supabase Env-Vars in Vercel hinterlegt (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
 - Alle 10 Arcs laden live aus Supabase ✅
+
+**is_sanded Erweiterung — 2026-05-27**
+- Badge + Hinweistext auf Detailseite live ✅
+- DB Migration `004_is_sanded.sql` muss manuell im Supabase SQL-Editor ausgeführt werden
