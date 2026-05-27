@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { OptionCard } from './option-card'
@@ -13,18 +13,22 @@ import { PreisAufschluesselung } from './preis-aufschluesselung'
 import type { MountingType, FinishType, LightType } from '@/types'
 import type { Arc } from '@/types'
 
-type StepKey = 'befestigung' | 'finish' | 'licht' | 'zusammenfassung' | 'reservierung'
-
-const STEPS_SANDED: StepKey[] = ['befestigung', 'finish', 'licht', 'zusammenfassung', 'reservierung']
-const STEPS_UNSANDED: StepKey[] = ['befestigung', 'licht', 'zusammenfassung', 'reservierung']
+type StepKey = 'schliff' | 'befestigung' | 'finish' | 'licht' | 'zusammenfassung' | 'reservierung'
+type SandingChoice = 'schleifen' | 'rohling'
 
 const STEP_LABELS: Record<StepKey, string> = {
+  schliff: 'Schliff',
   befestigung: 'Befestigung',
   finish: 'Finish',
   licht: 'Licht',
   zusammenfassung: 'Zusammenfassung',
   reservierung: 'Reservierung',
 }
+
+const SANDING_OPTIONS: { value: SandingChoice; label: string }[] = [
+  { value: 'schleifen', label: 'Schleifen lassen' },
+  { value: 'rohling', label: 'Ungeschliffen belassen (Rohling)' },
+]
 
 const MOUNTING_OPTIONS: { value: MountingType; label: string; compatKey: keyof Arc }[] = [
   { value: 'ohne', label: 'Ohne Befestigung', compatKey: 'compat_ohne' },
@@ -74,9 +78,7 @@ function getLightPrice(arc: Arc, light: LightType | null): number {
 }
 
 export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
-  const steps = arc.is_sanded ? STEPS_SANDED : STEPS_UNSANDED
-  const stepLabels = steps.map((k) => STEP_LABELS[k])
-
+  const [sandingChoice, setSandingChoice] = useState<SandingChoice | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   const [furthestIndex, setFurthestIndex] = useState(0)
   const [mounting, setMounting] = useState<MountingType | null>(null)
@@ -86,15 +88,33 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
   const [error, setError] = useState<string | null>(null)
   const [reserving, setReserving] = useState(false)
 
+  // Arc is already sanded — no sanding step needed
+  const willBeSanded = arc.is_sanded || sandingChoice === 'schleifen'
+
+  const steps = useMemo((): StepKey[] => {
+    if (arc.is_sanded) {
+      return ['befestigung', 'finish', 'licht', 'zusammenfassung', 'reservierung']
+    }
+    if (sandingChoice === 'schleifen') {
+      return ['schliff', 'befestigung', 'finish', 'licht', 'zusammenfassung', 'reservierung']
+    }
+    // rohling or not yet chosen: show without finish
+    return ['schliff', 'befestigung', 'licht', 'zusammenfassung', 'reservierung']
+  }, [arc.is_sanded, sandingChoice])
+
   const currentStep = steps[stepIndex]
 
+  const sandingPrice = sandingChoice === 'schleifen' ? (arc.price_sanding ?? 0) : 0
   const mountingPrice = getMountingPrice(arc, mounting, spinneCount)
-  const finishPrice = arc.is_sanded ? getFinishPrice(arc, finish) : 0
+  const finishPrice = willBeSanded ? getFinishPrice(arc, finish) : 0
   const lightPrice = getLightPrice(arc, light)
-  const total = arc.base_price + mountingPrice + finishPrice + lightPrice
+  const total = arc.base_price + sandingPrice + mountingPrice + finishPrice + lightPrice
 
   const hasFullConfig =
-    mounting !== null && light !== null && (arc.is_sanded ? finish !== null : true)
+    mounting !== null &&
+    light !== null &&
+    (!arc.is_sanded ? sandingChoice !== null : true) &&
+    (willBeSanded ? finish !== null : true)
 
   const availableMounting = MOUNTING_OPTIONS.filter((o) => {
     if (o.value === 'spinne') return arc.compat_spinne && arc.max_spinne_pendants != null
@@ -120,6 +140,17 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
     setStepIndex(stepIndex - 1)
   }
 
+  function handleSandingChoice(choice: SandingChoice) {
+    if (choice === sandingChoice) return
+    setSandingChoice(choice)
+    // Reset all downstream selections when sanding choice changes
+    setMounting(null)
+    setFinish(null)
+    setLight(null)
+    setSpinneCount(1)
+    setFurthestIndex(0)
+  }
+
   async function reserve() {
     setError(null)
     setReserving(true)
@@ -137,9 +168,10 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
           arcId: arc.id,
           sessionId,
           config: {
+            sandingChoice: arc.is_sanded ? 'geschliffen' : sandingChoice,
             mounting,
             spinneCount: mounting === 'spinne' ? spinneCount : undefined,
-            finish: arc.is_sanded ? finish : null,
+            finish: willBeSanded ? finish : null,
             light,
           },
         }),
@@ -174,7 +206,7 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
         <div className="space-y-10">
           <div className="overflow-x-auto -mx-6 px-6">
             <StepIndicator
-              steps={stepLabels}
+              steps={steps.map((k) => STEP_LABELS[k])}
               currentIndex={stepIndex}
               furthestIndex={furthestIndex}
               onStepClick={goTo}
@@ -182,6 +214,31 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
           </div>
 
           <Separator />
+
+          {/* Schliff — only for is_sanded = false arcs */}
+          {currentStep === 'schliff' && (
+            <div className="space-y-6">
+              <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Schliff</h2>
+              <div className="space-y-2">
+                {SANDING_OPTIONS.map((opt) => (
+                  <OptionCard
+                    key={opt.value}
+                    label={opt.label}
+                    selected={sandingChoice === opt.value}
+                    onSelect={() => handleSandingChoice(opt.value)}
+                  />
+                ))}
+              </div>
+              <Button
+                onClick={next}
+                disabled={sandingChoice === null}
+                className="w-full text-xs tracking-[0.15em] uppercase"
+                size="lg"
+              >
+                Weiter
+              </Button>
+            </div>
+          )}
 
           {/* Befestigung */}
           {currentStep === 'befestigung' && (
@@ -206,18 +263,30 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
                   </div>
                 ))}
               </div>
-              <Button
-                onClick={next}
-                disabled={mounting === null}
-                className="w-full text-xs tracking-[0.15em] uppercase"
-                size="lg"
-              >
-                Weiter
-              </Button>
+              <div className="flex gap-3">
+                {!arc.is_sanded && (
+                  <Button
+                    variant="outline"
+                    onClick={back}
+                    className="flex-1 text-xs tracking-[0.15em] uppercase"
+                    size="lg"
+                  >
+                    Zurück
+                  </Button>
+                )}
+                <Button
+                  onClick={next}
+                  disabled={mounting === null}
+                  className={arc.is_sanded ? 'w-full text-xs tracking-[0.15em] uppercase' : 'flex-1 text-xs tracking-[0.15em] uppercase'}
+                  size="lg"
+                >
+                  Weiter
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* Finish — only shown when is_sanded = true */}
+          {/* Finish — shown when arc is already sanded OR user chose "schleifen" */}
           {currentStep === 'finish' && (
             <div className="space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Finish</h2>
@@ -296,10 +365,12 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
                 finish={finish}
                 light={light}
                 isSanded={arc.is_sanded}
+                sandingChoice={sandingChoice}
               />
               <Separator />
               <PreisAufschluesselung
                 base={arc.base_price}
+                sandingPrice={sandingPrice}
                 mountingLabel={mountingLabel}
                 mountingPrice={mountingPrice}
                 finishLabel={finishLabel}
@@ -337,10 +408,12 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
                 finish={finish}
                 light={light}
                 isSanded={arc.is_sanded}
+                sandingChoice={sandingChoice}
               />
               <Separator />
               <PreisAufschluesselung
                 base={arc.base_price}
+                sandingPrice={sandingPrice}
                 mountingLabel={mountingLabel}
                 mountingPrice={mountingPrice}
                 finishLabel={finishLabel}

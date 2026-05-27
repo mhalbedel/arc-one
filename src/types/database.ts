@@ -71,6 +71,7 @@ export interface ArcRow {
   price_finish_oil: number | null
   price_finish_lacquer: number | null
   price_finish_shellac: number | null
+  price_sanding: number | null
   price_light_porcelain: number | null
   price_light_bg_led: number | null
   price_light_true_led: number | null
@@ -205,6 +206,7 @@ export interface Database {
           price_finish_oil?: number | null
           price_finish_lacquer?: number | null
           price_finish_shellac?: number | null
+          price_sanding?: number | null
           price_light_porcelain?: number | null
           price_light_bg_led?: number | null
           price_light_true_led?: number | null

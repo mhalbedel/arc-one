@@ -3,6 +3,7 @@ import { Separator } from '@/components/ui/separator'
 
 type PreisAufschluessselungProps = {
   base: number
+  sandingPrice: number
   mountingLabel: string
   mountingPrice: number
   finishLabel: string
@@ -14,6 +15,7 @@ type PreisAufschluessselungProps = {
 
 export function PreisAufschluesselung({
   base,
+  sandingPrice,
   mountingLabel,
   mountingPrice,
   finishLabel,
@@ -24,6 +26,7 @@ export function PreisAufschluesselung({
 }: PreisAufschluessselungProps) {
   const rows = [
     { label: 'Rohling (Grundpreis)', price: base, always: true },
+    { label: 'Schliff', price: sandingPrice, always: false },
     { label: `Befestigung: ${mountingLabel}`, price: mountingPrice, always: false },
     { label: `Finish: ${finishLabel}`, price: finishPrice, always: false },
     { label: `Licht: ${lightLabel}`, price: lightPrice, always: false },

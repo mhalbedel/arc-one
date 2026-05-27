@@ -11,12 +11,13 @@
 
 ## User Stories
 
-- Als Endkunde möchte ich meinen Arc Schritt für Schritt konfigurieren (Befestigung, ggf. Finish, Licht), damit ich ein auf meine Bedürfnisse abgestimmtes Angebot erhalte.
+- Als Endkunde möchte ich meinen Arc Schritt für Schritt konfigurieren (ggf. Schliff, Befestigung, ggf. Finish, Licht), damit ich ein auf meine Bedürfnisse abgestimmtes Angebot erhalte.
+- Als Endkunde möchte ich bei einem Rohling wählen können, ob er geschliffen werden soll, damit ich den Oberflächenzustand meines Arcs bestimme.
+- Als Endkunde möchte ich klar sehen, wenn ein Arc bereits geschliffen ist und diese Eigenschaft nicht mehr geändert werden kann.
 - Als Endkunde möchte ich den Gesamtpreis nach jeder Auswahl live sehen, damit ich die Kosten vor der Reservierung kenne.
 - Als Endkunde möchte ich zwischen den Schritten frei hin- und herwechseln, damit ich meine Konfiguration anpassen kann.
 - Als Endkunde möchte ich den konfigurierten Arc für 24 Stunden reservieren, damit ich Zeit habe den Checkout abzuschließen.
 - Als Endkunde möchte ich sofort sehen, wenn ein Arc bereits reserviert ist, damit ich keine Zeit mit einer unmöglichen Konfiguration verbringe.
-- Als Endkunde möchte ich beim Konfigurieren eines ungeschliffenen Rohlings klar sehen, dass kein Finish wählbar ist, damit ich keine falsche Erwartung habe.
 
 ## Out of Scope
 
@@ -34,51 +35,61 @@
 
 ### Einstieg & Sperrseite
 
-- [ ] Angenommen ein Arc mit Status READY existiert, wenn der Nutzer `/konfigurator/[arc-id]` aufruft, dann wird der Konfigurator mit Schritt 1 (Befestigung) angezeigt und der Arc-Name und ein Foto sind sichtbar.
-- [ ] Angenommen ein Arc ist aktuell reserviert (`reserved_until` in der Zukunft), wenn der Nutzer `/konfigurator/[arc-id]` aufruft, dann wird eine Sperrseite mit dem Text "Dieser Arc ist gerade reserviert" und der Uhrzeit bis wann sowie einem Link zurück zum Katalog angezeigt — kein Konfigurator.
-- [ ] Angenommen ein Arc hat einen anderen Status als READY oder RESERVED, wenn der Nutzer `/konfigurator/[arc-id]` aufruft, dann wird eine 404-Seite angezeigt.
+- [ ] Angenommen ein Arc mit `is_sanded = false` und Status READY existiert, wenn der Nutzer `/konfigurator/[arc-id]` aufruft, dann wird der Konfigurator mit Schritt 1 (Schliff) geöffnet.
+- [ ] Angenommen ein Arc mit `is_sanded = true` und Status READY existiert, wenn der Nutzer `/konfigurator/[arc-id]` aufruft, dann wird der Konfigurator direkt mit Schritt 1 (Befestigung) geöffnet — kein Schliff-Schritt.
+- [ ] Angenommen ein Arc ist aktuell reserviert (`reserved_until` in der Zukunft), wenn der Nutzer `/konfigurator/[arc-id]` aufruft, dann wird eine Sperrseite angezeigt — kein Konfigurator.
+- [ ] Angenommen ein Arc hat einen anderen Status als READY oder RESERVED, dann wird eine 404-Seite angezeigt.
 
-### Schritt 1: Befestigung
+### Schritt 1 (nur bei `is_sanded = false`): Schliff
 
-- [ ] Angenommen der Konfigurator wird geöffnet, wenn Schritt 1 angezeigt wird, dann sind nur die Befestigungsoptionen sichtbar, die der Arc laut Kompatibilitäts-Flags unterstützt (nicht unterstützte Optionen werden vollständig ausgeblendet).
-- [ ] Angenommen "Spinne" ist eine kompatible Option und der Nutzer wählt sie aus, dann erscheint direkt darunter ein Stepper für die Pendelanzahl (Minimum: 1, Maximum: `max_spinne_pendel` des Arcs).
-- [ ] Angenommen "Spinne" ist ausgewählt und der Nutzer ändert die Auswahl auf eine andere Befestigungsart, dann verschwindet der Stepper.
-- [ ] Angenommen der Nutzer hat eine Befestigungsart ausgewählt, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zu Schritt 2 (Finish).
+- [ ] Angenommen der Arc hat `is_sanded = false`, wenn Schritt 1 angezeigt wird, dann werden genau zwei Optionen angezeigt: "Schleifen lassen" und "Ungeschliffen belassen (Rohling)".
+- [ ] Angenommen der Nutzer wählt "Schleifen lassen", wenn er auf "Weiter" klickt, dann erscheint in den Folgeschritten auch der Finish-Schritt.
+- [ ] Angenommen der Nutzer wählt "Ungeschliffen belassen", wenn er auf "Weiter" klickt, dann wird der Finish-Schritt übersprungen.
+- [ ] Angenommen der Nutzer kehrt auf Schritt 1 zurück und ändert die Schliff-Auswahl, dann werden alle nachfolgenden Auswahlen (Befestigung, Finish, Licht) zurückgesetzt.
 
-### Schritt 2: Finish (nur wenn `is_sanded = true`)
+### Schritt 1 (bei `is_sanded = true`) / Schritt 2 (bei `is_sanded = false`): Befestigung
 
-- [ ] Angenommen der Arc hat `is_sanded = true`, wenn Schritt 2 angezeigt wird, dann sind nur die Finish-Optionen sichtbar, die der Arc unterstützt.
-- [ ] Angenommen der Arc hat `is_sanded = true` und der Nutzer wählt ein Finish, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zu Schritt 3 (Licht).
-- [ ] Angenommen der Arc hat `is_sanded = false`, dann wird Schritt 2 (Finish) vollständig übersprungen — der Schritt erscheint weder im Step-Indikator noch im Flow.
+- [ ] Angenommen der Befestigungs-Schritt angezeigt wird, dann sind nur die Befestigungsoptionen sichtbar, die der Arc laut Kompatibilitäts-Flags unterstützt.
+- [ ] Angenommen "Spinne" ist eine kompatible Option und der Nutzer wählt sie aus, dann erscheint direkt darunter ein Stepper für die Pendelanzahl (Minimum: 1, Maximum: `max_spinne_pendants`).
+- [ ] Angenommen "Spinne" ist ausgewählt und der Nutzer ändert die Auswahl, dann verschwindet der Stepper.
+- [ ] Angenommen der Nutzer hat eine Befestigungsart ausgewählt, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum nächsten Schritt.
 
-### Schritt 2 (bei `is_sanded = false`) / Schritt 3 (bei `is_sanded = true`): Licht
+### Finish-Schritt (nur wenn `is_sanded = true` ODER Schliff-Wahl = "Schleifen lassen")
+
+- [ ] Angenommen der Finish-Schritt angezeigt wird, dann sind nur die Finish-Optionen sichtbar, die der Arc unterstützt.
+- [ ] Angenommen der Nutzer wählt ein Finish, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum Licht-Schritt.
+
+### Licht-Schritt
 
 - [ ] Angenommen der Licht-Schritt angezeigt wird, dann werden immer alle drei Lichtoptionen angezeigt: "Porzellan Fassung", "Hintergrund LED", "True Light LED".
 - [ ] Angenommen der Nutzer wählt eine Lichtoption, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zur Zusammenfassung.
 
-### Schritt 3 (bei `is_sanded = false`) / Schritt 4 (bei `is_sanded = true`): Zusammenfassung
+### Zusammenfassung
 
-- [ ] Angenommen `is_sanded = true` und Schritt 4 angezeigt wird, dann werden angezeigt: gewählte Befestigung (inkl. Pendelanzahl bei Spinne), gewähltes Finish, gewählte Lichtoption, Oberflächenzustand "Geschliffen" (fest, nicht änderbar), Preisaufschlüsselung (Grundpreis + alle Aufpreise + Gesamtpreis).
-- [ ] Angenommen `is_sanded = false` und die Zusammenfassung angezeigt wird, dann werden angezeigt: gewählte Befestigung, gewählte Lichtoption, Oberflächenzustand "Ungeschliffen – Rohling" (fest), kein Finish-Eintrag in der Zusammenfassung, Preisaufschlüsselung ohne Finish-Zeile.
-- [ ] Angenommen der Nutzer klickt auf "Zurück zu Schritt X" (oder einen Schritt-Indikator), dann kehrt er zu diesem Schritt zurück und seine bisherigen Auswahlen bleiben erhalten.
+- [ ] Angenommen die Zusammenfassung angezeigt wird, dann sind alle gewählten Optionen (Oberfläche, Befestigung, ggf. Finish, Licht) und die Preisaufschlüsselung sichtbar.
+- [ ] Angenommen `is_sanded = true`, dann zeigt die Oberflächen-Zeile "Geschliffen" (fest, nicht klickbar).
+- [ ] Angenommen Schliff-Wahl = "Schleifen lassen", dann zeigt die Oberflächen-Zeile "Wird geschliffen".
+- [ ] Angenommen Schliff-Wahl = "Ungeschliffen belassen", dann zeigt die Oberflächen-Zeile "Ungeschliffen – Rohling" und es gibt keine Finish-Zeile.
 - [ ] Angenommen der Nutzer klickt auf "Weiter", dann wechselt die Ansicht zur Reservierung.
 
-### Schritt 4 (bei `is_sanded = false`) / Schritt 5 (bei `is_sanded = true`): Reservierung
+### Reservierung
 
 - [ ] Angenommen der Reservierungs-Schritt angezeigt wird, dann wird die vollständige Konfiguration als Read-only-Zusammenfassung sowie der Gesamtpreis und ein Button "Jetzt reservieren (24 Stunden)" angezeigt.
-- [ ] Angenommen der Nutzer klickt auf "Jetzt reservieren" und der Arc ist noch frei, dann wird `reserved_until` auf jetzt + 24 Stunden gesetzt, `reserved_by` auf eine Client-Session-ID, und der Nutzer wird zum Checkout (PROJ-4) weitergeleitet.
-- [ ] Angenommen der Nutzer klickt auf "Jetzt reservieren" und der Arc wurde inzwischen von jemand anderem reserviert, dann wird eine Fehlermeldung "Dieser Arc wurde gerade von jemand anderem reserviert" mit einem Link zurück zum Katalog angezeigt — keine Weiterleitung zum Checkout.
+- [ ] Angenommen der Nutzer klickt auf "Jetzt reservieren" und der Arc ist noch frei, dann wird `reserved_until` auf jetzt + 24 Stunden gesetzt und der Nutzer zum Checkout weitergeleitet.
+- [ ] Angenommen der Arc wurde inzwischen von jemand anderem reserviert, dann erscheint eine Fehlermeldung — keine Weiterleitung.
 
 ### Step-Indikator (übergreifend)
 
-- [ ] Angenommen der Arc hat `is_sanded = false`, wenn der Konfigurator geladen wird, dann zeigt der Step-Indikator 4 Schritte (ohne Finish-Schritt).
-- [ ] Angenommen der Arc hat `is_sanded = true`, wenn der Konfigurator geladen wird, dann zeigt der Step-Indikator 5 Schritte (mit Finish-Schritt).
+- [ ] Angenommen der Arc hat `is_sanded = true`, dann zeigt der Step-Indikator 5 Schritte (Befestigung, Finish, Licht, Zusammenfassung, Reservierung).
+- [ ] Angenommen der Arc hat `is_sanded = false` und die Schliff-Wahl ist noch nicht getroffen, dann zeigt der Step-Indikator 5 Schritte (Schliff, Befestigung, Licht, Zusammenfassung, Reservierung).
+- [ ] Angenommen der Nutzer wählt "Schleifen lassen", dann aktualisiert sich der Step-Indikator auf 6 Schritte (Schliff, Befestigung, Finish, Licht, Zusammenfassung, Reservierung).
 
 ### Preisanzeige (übergreifend)
 
 - [ ] Angenommen der Nutzer wechselt zu einem anderen Schritt, wenn eine gültige Auswahl vorliegt, dann wird der aktuelle Gesamtpreis (Grundpreis + alle bisher gewählten Aufpreise) im Konfigurator dauerhaft sichtbar aktualisiert.
 - [ ] Angenommen die Befestigung "Spinne" gewählt ist und der Nutzer die Pendelanzahl ändert, dann aktualisiert sich der Gesamtpreis sofort.
-- [ ] Angenommen der Arc hat `is_sanded = false`, dann enthält der Gesamtpreis keinen Finish-Aufpreis.
+- [ ] Angenommen Schliff-Wahl = "Schleifen lassen" und `price_sanding` ist gesetzt, dann erscheint eine "Schliff"-Zeile in der Preisaufschlüsselung.
+- [ ] Angenommen Schliff-Wahl = "Ungeschliffen belassen", dann enthält der Gesamtpreis weder einen Schliff- noch einen Finish-Aufpreis.
 
 ## Edge Cases
 
@@ -89,8 +100,10 @@
 - **Aufpreis = 0:** Zeile in der Preisaufschlüsselung wird ausgeblendet (bereits implementiert).
 - **Browser-Zurück-Button:** Verlässt der Nutzer den Konfigurator über den Browser-Zurück-Button, geht die Konfiguration verloren — kein Persist außerhalb der Page.
 - **Direktzugriff auf `/konfigurator` ohne Arc-ID:** Redirect zur Browse-Ansicht (`/arcs`).
-- **Arc mit `is_sanded = false` und gesetzten `price_finish_*` Spalten:** Die Finish-Aufpreise werden ignoriert — Finish-Schritt ist ausgeblendet, Preisberechnung schließt Finish-Aufpreise aus.
-- **Arc wechselt `is_sanded` während aktiver Session:** Der Konfigurator lädt `is_sanded` einmalig beim Seitenaufruf (Server Component). Ändert ein Admin den Wert während der Session, hat das keine Auswirkung bis zum nächsten Reload.
+- **Schliff-Wahl ändern nach Vorscrollen:** Geht der Nutzer via Step-Indikator zurück auf Schritt 1 (Schliff) und ändert die Wahl, werden Befestigung, Finish und Licht zurückgesetzt. Nur die neue Schliff-Wahl bleibt erhalten.
+- **Arc mit `is_sanded = false` und gesetzten `price_finish_*` Spalten:** Finish-Aufpreise werden nur berücksichtigt, wenn Schliff-Wahl = "Schleifen lassen".
+- **Arc wechselt `is_sanded` während aktiver Session:** Der Konfigurator lädt `is_sanded` einmalig beim Seitenaufruf. Ändert ein Admin den Wert während der Session, hat das keine Auswirkung bis zum Reload.
+- **`price_sanding = null`:** Der Schliff-Schritt wird trotzdem angeboten; in der Preisaufschlüsselung erscheint keine Schliff-Zeile (Preis = 0, wie andere Aufpreise ohne Wert).
 
 ## Technical Requirements
 
@@ -117,9 +130,11 @@
 | Kein Echtzeit-Check während Konfiguration | Keine WebSocket-Komplexität nötig; Race Condition ist selten und wird beim Reservieren-Klick abgefangen | 2026-05-26 |
 | Keine Kontaktdaten im Konfigurator | Trennung von Concerns: Konfigurator = Konfiguration + Reservierung, PROJ-4 = Zahlung + Kundendaten | 2026-05-26 |
 | Lichtoptionen immer alle 3 sichtbar | Keine Arc-spezifischen Licht-Kompatibilitätsdaten im Schema — alle Lichtoptionen sind für alle Arcs verfügbar | 2026-05-26 |
-| Finish-Schritt bei `is_sanded = false` vollständig ausblenden | Finish (Öl/Lack/Schellack) setzt einen geschliffenen Untergrund voraus — ein Rohling kann keinen Oberflächenfinish erhalten | 2026-05-27 |
-| Schliff nicht als buchbare Option im Konfigurator | Schliff ist ein handwerklicher Schritt, der nicht über den Konfigurator bestellt werden kann; ein Arc kommt entweder schon geschliffen oder als Rohling | 2026-05-27 |
-| Schrittanzahl dynamisch (4 oder 5) je nach `is_sanded` | Step-Indikator spiegelt den tatsächlichen Flow — kein "leerer" Schritt, keine Verwirrung | 2026-05-27 |
+| Schliff als erster konfigurierbarer Schritt (für Rohlinge) | Kunden können entscheiden, ob sie ihren Rohling schleifen lassen wollen; das bestimmt ob Finish verfügbar ist | 2026-05-27 |
+| `is_sanded = true` → kein Schliff-Schritt, direkt Befestigung | Geschliffene Arcs können nicht "ungeschliffen" werden — irreversibel; kein sinnloser Schritt | 2026-05-27 |
+| Schliff-Wahl ändert → alle nachfolgenden Selections zurücksetzen | Schliff-Entscheid ist fundamental (bestimmt ob Finish verfügbar ist); inkonsistente Downstream-Auswahlen wären schlimmer als ein Reset | 2026-05-27 |
+| Schrittanzahl dynamisch (5 oder 6) je nach Schliff-Wahl | Step-Indikator spiegelt den tatsächlichen Flow — erst nach der Schliff-Wahl wird klar ob Finish erscheint | 2026-05-27 |
+| `price_sanding` als nullable Spalte in `arcs` | Konsistentes Muster mit anderen Aufpreisen; Admin füllt den Preis aus wenn er ihn kalkuliert hat | 2026-05-27 |
 
 ### Technical Decisions
 <!-- Added by /architecture -->

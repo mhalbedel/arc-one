@@ -20,22 +20,35 @@ const LIGHT_LABELS: Record<LightType, string> = {
   true_led: 'True Light LED',
 }
 
+type SandingChoice = 'schleifen' | 'rohling'
+
 type KonfigSummaryProps = {
   mounting: MountingType | null
   spinneCount: number
   finish: FinishType | null
   light: LightType | null
   isSanded: boolean
+  sandingChoice: SandingChoice | null
 }
 
-export function KonfigSummary({ mounting, spinneCount, finish, light, isSanded }: KonfigSummaryProps) {
+export function KonfigSummary({ mounting, spinneCount, finish, light, isSanded, sandingChoice }: KonfigSummaryProps) {
+  const willBeSanded = isSanded || sandingChoice === 'schleifen'
+
+  const surfaceLabel = isSanded
+    ? 'Geschliffen'
+    : sandingChoice === 'schleifen'
+      ? 'Wird geschliffen'
+      : sandingChoice === 'rohling'
+        ? 'Ungeschliffen – Rohling'
+        : '—'
+
   return (
     <div className="space-y-0">
       <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-3">Konfiguration</p>
       <dl className="space-y-2 text-sm">
         <div className="flex justify-between">
           <dt className="text-muted-foreground">Oberfläche</dt>
-          <dd>{isSanded ? 'Geschliffen' : 'Ungeschliffen – Rohling'}</dd>
+          <dd>{surfaceLabel}</dd>
         </div>
         <Separator />
         <div className="flex justify-between">
@@ -51,7 +64,7 @@ export function KonfigSummary({ mounting, spinneCount, finish, light, isSanded }
             )}
           </dd>
         </div>
-        {isSanded && (
+        {willBeSanded && (
           <>
             <Separator />
             <div className="flex justify-between">
