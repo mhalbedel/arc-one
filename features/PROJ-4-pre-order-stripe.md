@@ -1,6 +1,6 @@
 # PROJ-4: Pre-Order & Stripe
 
-## Status: Planned
+## Status: Architected
 **Created:** 2026-05-27
 **Last Updated:** 2026-05-27
 
@@ -87,8 +87,8 @@
 
 ## Open Questions
 
-- [ ] Welche Stripe-Account-Währung? Vermutlich EUR — bestätigen bevor /architecture.
-- [ ] Soll der Deposit exakt 30,00% sein oder auf den nächsten Cent gerundet werden?
+- [x] Welche Stripe-Account-Währung? → EUR (2026-05-27)
+- [x] Soll der Deposit exakt 30,00% sein oder auf den nächsten Cent gerundet werden? → Auf den nächsten Cent (2026-05-27)
 
 ## Decision Log
 
@@ -103,12 +103,104 @@
 | Abgelaufene Reservierung → zurück zum Konfigurator | Klarer Weg für Nutzer; Konfigurator erlaubt neue Reservierung | 2026-05-27 |
 
 ### Technical Decisions
-<!-- Added by /architecture -->
+| Decision | Rationale | Date |
+|----------|-----------|------|
+| Stripe Payment Element statt Custom Card Form | Offiziell von Stripe empfohlen; PCI-konform out-of-the-box; unterstützt Karte + SEPA + weitere Methoden | 2026-05-27 |
+| PaymentIntent-Erstellung + DB-Einträge in einem API-Call | Atomare Verknüpfung: stripe_deposit_id wird sofort in der Order gespeichert; kein Daten-Verlust bei Redirect | 2026-05-27 |
+| Bestätigungsseite als Server Component mit Stripe-Verifikation | Einfach für MVP; Stripe-Zahlung wird server-seitig verifiziert bevor Arc auf ORDERED gesetzt wird | 2026-05-27 |
+| Stripe Webhook → PROJ-5 | Robustere Verarbeitung für Edge Cases (Netzwerkfehler nach Redirect); nicht kritisch für MVP | 2026-05-27 |
+| Kein neues DB-Schema außer sanding_price in orders | Alle anderen Felder bereits in orders/customers vorhanden; minimale Migration | 2026-05-27 |
+| Versandpreis als Konstante im Code (DE: 29€, AT/CH: 49€) | Einfachste Lösung für Prototyp; konfigurierbar über Admin-Backend in PROJ-5 | 2026-05-27 |
+| Deposit = Math.round(total_cents × 0.30) | Auf den nächsten Cent gerundet; Währung EUR; Stripe erwartet Betrag in Cent | 2026-05-27 |
 
 ---
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Seitenstruktur
+
+```
+/checkout/[arc_id]/                     (Server Component)
+  — lädt Arc aus DB, prüft Reservierung
+  — abgelaufen? → redirect /konfigurator/[arc_id]
+  +-- CheckoutClient                    (Client Component)
+      +-- CheckoutSummary
+      |   +-- KonfigSummaryReadonly     (Wiederverwendung aus Konfigurator)
+      |   +-- PreisAufschluesselung     (+ Versand + Deposit-Zeile)
+      +-- ContactForm
+      |   +-- Persönliche Daten         (Vorname, Nachname, E-Mail, Telefon)
+      |   +-- Lieferadresse             (Straße, PLZ, Stadt, Land)
+      |   +-- "Rechnungsadr. = Lieferadr." Checkbox
+      |   +-- Rechnungsadresse          (optional, eingeblendet bei Checkbox off)
+      +-- StripePaymentForm             (eingeblendet nach Formular-Submit)
+          +-- Stripe Payment Element
+          +-- "Jetzt zahlen (30% Deposit)" Button
+
+/checkout/[arc_id]/bestaetigung/        (Server Component)
+  — lädt Arc + Bestellung, verifiziert Stripe-Zahlung
+  — ungültig/nicht gefunden? → 404
+  — Zahlungsbestätigung anzeigen
+```
+
+### Datenfluss
+
+```
+[Nutzer füllt Formular aus]
+        ↓
+POST /api/checkout/create-payment-intent
+  • Reservierung prüfen (server-seitig)
+  • Gesamtpreis berechnen (Konfig + Versand)
+  • Deposit = Math.round(Gesamt_in_Cent × 0,30)
+  • Customer-Datensatz anlegen
+  • Order-Datensatz anlegen (Status: PENDING_CONFIRMATION)
+  • Arc.order_id setzen
+  • Stripe PaymentIntent erstellen (Betrag in Cent, EUR)
+  • Order.stripe_deposit_id = paymentIntent.id
+  → gibt client_secret zurück
+
+[Stripe Payment Element zeigt sich]
+        ↓
+[Nutzer zahlt → Stripe leitet weiter]
+        ↓
+/checkout/[arc_id]/bestaetigung?payment_intent=pi_xxx
+  • Server verifiziert bei Stripe: payment_intent.status === "succeeded"
+  • Order-Status → CONFIRMED, deposit_paid_at setzen
+  • Arc-Status → ORDERED
+  • Bestätigungsseite rendern
+```
+
+### Datenbank
+
+Kein neues Schema nötig außer einer Erweiterung:
+
+| Tabelle | Neue/genutzte Felder |
+|---------|----------------------|
+| `customers` | name, email, phone, address (JSON: Liefer- + ggf. Rechnungsadresse) |
+| `orders` | config, base_price, mounting_price, finish_price, light_price, **sanding_price** (neu), shipping_price, total_price, deposit_amount, remaining_amount, stripe_deposit_id, customer_id, status |
+| `arcs` | order_id (Verweis auf neue Bestellung), status → ORDERED |
+
+**Migration 006:** `sanding_price INTEGER` zu `orders` hinzufügen.
+
+### API-Route
+
+| Route | Methode | Zweck |
+|-------|---------|-------|
+| `/api/checkout/create-payment-intent` | POST | Preisberechnung, DB-Einträge, Stripe PaymentIntent erstellen |
+
+### Neue Pakete
+
+| Paket | Zweck |
+|-------|-------|
+| `stripe` | Stripe Node.js SDK (server-seitig) |
+| `@stripe/stripe-js` | Stripe.js (browser) |
+| `@stripe/react-stripe-js` | React-Hooks für Stripe Elements |
+
+### Umgebungsvariablen
+
+| Variable | Scope | Zweck |
+|----------|-------|-------|
+| `STRIPE_SECRET_KEY` | Server only | PaymentIntent erstellen, Zahlung verifizieren |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client | Stripe.js initialisieren |
 
 ## QA Test Results
 _To be added by /qa_
