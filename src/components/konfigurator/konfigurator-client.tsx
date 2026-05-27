@@ -51,6 +51,7 @@ const LIGHT_OPTIONS: { value: LightType; label: string }[] = [
 
 type KonfiguratorClientProps = {
   arc: Arc
+  expiredReservation?: boolean
 }
 
 function getMountingPrice(arc: Arc, mounting: MountingType | null, spinneCount: number): number {
@@ -77,7 +78,7 @@ function getLightPrice(arc: Arc, light: LightType | null): number {
   return 0
 }
 
-export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
+export function KonfiguratorClient({ arc, expiredReservation }: KonfiguratorClientProps) {
   const [sandingChoice, setSandingChoice] = useState<SandingChoice | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   const [furthestIndex, setFurthestIndex] = useState(0)
@@ -178,6 +179,13 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
       })
 
       if (res.ok) {
+        localStorage.setItem(`arc_config_${arc.id}`, JSON.stringify({
+          sandingChoice: arc.is_sanded ? 'geschliffen' : sandingChoice,
+          mounting,
+          spinneCount: mounting === 'spinne' ? spinneCount : undefined,
+          finish: willBeSanded ? finish : null,
+          light,
+        }))
         window.location.href = `/checkout/${arc.id}`
       } else {
         const data = await res.json()
@@ -190,6 +198,11 @@ export function KonfiguratorClient({ arc }: KonfiguratorClientProps) {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
+      {expiredReservation && (
+        <div className="mb-8 bg-destructive/10 border border-destructive/20 px-5 py-4 text-sm text-destructive">
+          Deine Reservierung ist abgelaufen. Bitte konfiguriere den Arc erneut und reserviere ihn.
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-10 md:gap-14 lg:gap-20">
 
         {/* Left: Arc Preview + Price */}

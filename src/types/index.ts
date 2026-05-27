@@ -61,3 +61,23 @@ export interface Address {
   zip: string
   country: string
 }
+
+// ── Checkout Config (persisted to localStorage) ────────────
+
+export type SandingChoice = 'schleifen' | 'rohling' | 'geschliffen'
+
+export interface CheckoutConfig {
+  sandingChoice: SandingChoice
+  mounting: MountingType
+  spinneCount?: number
+  finish: FinishType | null
+  light: LightType
+}
+
+export type ShippingCountry = 'DE' | 'AT' | 'CH'
+
+export const SHIPPING_PRICES: Record<ShippingCountry, number> = {
+  DE: 2900,
+  AT: 4900,
+  CH: 4900,
+}

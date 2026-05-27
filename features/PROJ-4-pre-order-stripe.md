@@ -1,6 +1,6 @@
 # PROJ-4: Pre-Order & Stripe
 
-## Status: Architected
+## Status: In Progress
 **Created:** 2026-05-27
 **Last Updated:** 2026-05-27
 
