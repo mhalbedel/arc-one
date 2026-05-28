@@ -1,6 +1,6 @@
 # PROJ-4: Pre-Order & Stripe
 
-## Status: In Review
+## Status: Approved
 
 ### Backend Implementation Notes
 - API: `POST /api/checkout/create-payment-intent` — validates reservation, calculates prices server-side, creates customer + order records, creates Stripe PaymentIntent, returns `clientSecret`
@@ -219,9 +219,9 @@ Kein neues Schema nötig außer einer Erweiterung:
 
 ## QA Test Results
 
-**QA Date:** 2026-05-28  
+**QA Date:** 2026-05-28 (re-QA after bug fixes)  
 **Tester:** /qa skill  
-**Status: NOT READY FOR PRODUCTION — 2 High bugs must be fixed first**
+**Status: ✅ APPROVED — No High or Critical bugs remaining**
 
 ### Acceptance Criteria Results
 
@@ -316,6 +316,26 @@ Kein neues Schema nötig außer einer Erweiterung:
 - Unit tests: `src/lib/pricing.test.ts` (6 tests — all pass)
 - E2E tests: `tests/PROJ-4-pre-order-stripe.spec.ts` (13 tests — all pass)
 - Fixed regression: `vitest.config.ts` now has `include` pattern to exclude Playwright tests
+
+### Re-QA Verification (2026-05-28, after bug fixes)
+
+**All previously failing ACs now pass:**
+
+| Bug | Verified | Method |
+|-----|----------|--------|
+| #1 Repeat email → 500 | ✅ Fixed | Browser: `re-qa-test@example.com` submitted twice → both show payment form. API: both calls return `clientSecret`. |
+| #2 Billing country not initialized | ✅ Fixed | Browser: unchecked billing checkbox, left "Deutschland" default, submitted → advanced to payment, no "Bitte wählen" error |
+| #3 Customer email in confirmation | ✅ Fixed (code verified) | `bestaetigung/page.tsx` now fetches customer by `order.customer_id` |
+| #4 API ZIP validation | ✅ Fixed | API: `curl` with AT country + 5-digit DE ZIP → 400 "Ungültige Anfrage." |
+| #5 Rate limiting | ⚠️ Still open | No IP-based rate limiting — acceptable for MVP, address in PROJ-5 infra |
+| #7 Sanding in confirmation | ✅ Fixed (code verified) | `order-confirmation.tsx` now shows Oberfläche row |
+| #8 noValidate | ✅ Fixed | Browser: `not-an-email` in email field → inline "Ungültige E-Mail-Adresse" error shown |
+| #9 Safe JSON parsing | ✅ Fixed (code verified) | `res.ok` checked before `res.json().catch(()=>({}))` |
+
+**Remaining open (Low):**
+- Frontend ZIP schema not updated with per-country rules (only API has it) — server rejects invalid ZIPs with generic 400; UX could show per-field error instead
+
+**Final test counts:** 23 unit tests + 25 E2E tests — all pass, no regressions
 
 ## Deployment
 _To be added by /deploy_
