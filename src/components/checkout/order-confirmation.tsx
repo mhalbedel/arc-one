@@ -5,9 +5,10 @@ import type { Arc, Order } from '@/types'
 type OrderConfirmationProps = {
   arc: Arc
   order: Order
+  customerEmail: string | null
 }
 
-export function OrderConfirmation({ arc, order }: OrderConfirmationProps) {
+export function OrderConfirmation({ arc, order, customerEmail }: OrderConfirmationProps) {
   const config = order.config as Record<string, string | null> | null
 
   return (
@@ -16,7 +17,7 @@ export function OrderConfirmation({ arc, order }: OrderConfirmationProps) {
         <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Bestellung bestätigt</p>
         <h1 className="text-2xl font-medium">Bestellnummer {order.order_number}</h1>
         <p className="text-sm text-muted-foreground">
-          Eine Bestätigungsmail wurde an deine E-Mail-Adresse gesendet.
+          Eine Bestätigungsmail wurde an {customerEmail ?? 'deine E-Mail-Adresse'} gesendet.
         </p>
       </div>
 
@@ -34,6 +35,12 @@ export function OrderConfirmation({ arc, order }: OrderConfirmationProps) {
           <div className="space-y-3">
             <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Konfiguration</p>
             <dl className="space-y-2 text-sm">
+              {config.sandingChoice && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Oberfläche</dt>
+                  <dd>{String(config.sandingChoice)}</dd>
+                </div>
+              )}
               {config.mounting && (
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Befestigung</dt>

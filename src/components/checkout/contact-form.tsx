@@ -58,14 +58,15 @@ function FieldError({ message }: { message?: string }) {
 export function ContactForm({ onSubmit, onCountryChange, submitting }: ContactFormProps) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { sameAsBilling: true, country: 'DE' },
+    defaultValues: { sameAsBilling: true, country: 'DE', billingCountry: 'DE' },
   })
 
   const sameAsBilling = watch('sameAsBilling')
   const country = watch('country')
+  const billingCountry = watch('billingCountry')
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
       {/* Persönliche Daten */}
       <div className="space-y-4">
         <h3 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Persönliche Daten</h3>
@@ -170,7 +171,7 @@ export function ContactForm({ onSubmit, onCountryChange, submitting }: ContactFo
             <div>
               <Label className="text-xs text-muted-foreground">Land *</Label>
               <Select
-                defaultValue="DE"
+                value={billingCountry ?? 'DE'}
                 onValueChange={(val) => setValue('billingCountry', val as ShippingCountry)}
               >
                 <SelectTrigger className="mt-1">

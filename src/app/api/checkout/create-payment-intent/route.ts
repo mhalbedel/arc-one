@@ -28,6 +28,20 @@ const bodySchema = z.object({
     billingZip: z.string().optional(),
     billingCity: z.string().optional(),
     billingCountry: z.enum(['DE', 'AT', 'CH']).optional(),
+  }).superRefine((data, ctx) => {
+    const zipForCountry = (zip: string, country: 'DE' | 'AT' | 'CH') => {
+      if (country === 'DE' && !/^\d{5}$/.test(zip)) return false
+      if ((country === 'AT' || country === 'CH') && !/^\d{4}$/.test(zip)) return false
+      return true
+    }
+    if (!zipForCountry(data.zip, data.country)) {
+      ctx.addIssue({ code: 'custom', path: ['zip'], message: `Ungültige PLZ für ${data.country === 'DE' ? 'Deutschland (5 Ziffern)' : 'Österreich/Schweiz (4 Ziffern)'}` })
+    }
+    if (!data.sameAsBilling && data.billingZip && data.billingCountry) {
+      if (!zipForCountry(data.billingZip, data.billingCountry)) {
+        ctx.addIssue({ code: 'custom', path: ['billingZip'], message: `Ungültige PLZ für ${data.billingCountry === 'DE' ? 'Deutschland (5 Ziffern)' : 'Österreich/Schweiz (4 Ziffern)'}` })
+      }
+    }
   }),
 })
 
@@ -77,15 +91,18 @@ export async function POST(req: NextRequest) {
         country: contactData.billingCountry!,
       }
 
-  // Create customer record
+  // Upsert customer — reuse existing record if email already exists
   const customerInsert = await supabase
     .from('customers')
-    .insert({
-      email: contactData.email,
-      name: `${contactData.firstName} ${contactData.lastName}`,
-      phone: contactData.phone || null,
-      address: { delivery: deliveryAddress, billing: billingAddress },
-    } as unknown as never)
+    .upsert(
+      {
+        email: contactData.email,
+        name: `${contactData.firstName} ${contactData.lastName}`,
+        phone: contactData.phone || null,
+        address: { delivery: deliveryAddress, billing: billingAddress },
+      } as unknown as never,
+      { onConflict: 'email' },
+    )
     .select('id')
     .single()
   const customer = customerInsert.data as { id: string } | null

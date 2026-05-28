@@ -8,7 +8,16 @@
 - DB migration 006 required: `sanding_price INTEGER DEFAULT 0` on `orders` table
 - Required env vars: `STRIPE_SECRET_KEY` (server-only), `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (client)
 **Created:** 2026-05-27
-**Last Updated:** 2026-05-27
+**Last Updated:** 2026-05-28
+
+### Bug Fixes (2026-05-28)
+- Bug #1: Customer upsert on email conflict — `route.ts` now uses `.upsert()` with `onConflict: 'email'`
+- Bug #2: Billing country RHF state — added `billingCountry: 'DE'` to `defaultValues`, made Select controlled
+- Bug #3: Customer email on confirmation — `bestaetigung/page.tsx` fetches customer by `order.customer_id`
+- Bug #4: Per-country ZIP validation — `superRefine` added to API Zod schema
+- Bug #7: Sanding choice in order confirmation — `order-confirmation.tsx` now shows Oberfläche
+- Bug #8: `noValidate` on form — prevents browser native email validation from blocking RHF
+- Bug #9: Safe `res.json()` — checks `res.ok` first, `.catch(() => ({}))` prevents silent failure
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — `orders`- und `customers`-Tabelle

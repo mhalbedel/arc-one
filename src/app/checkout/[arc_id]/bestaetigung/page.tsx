@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe-server'
 import { OrderConfirmation } from '@/components/checkout/order-confirmation'
-import type { Arc, Order } from '@/types'
+import type { Arc, Order, Customer } from '@/types'
 
 type BestaetigungPageProps = {
   params: Promise<{ arc_id: string }>
@@ -43,6 +43,17 @@ export default async function BestaetigungPage({ params, searchParams }: Bestaet
     notFound()
   }
 
+  // Fetch customer email for confirmation display
+  let customerEmail: string | null = null
+  if (order.customer_id) {
+    const { data: customerData } = await supabase
+      .from('customers')
+      .select('email')
+      .eq('id', order.customer_id)
+      .single()
+    customerEmail = (customerData as Pick<Customer, 'email'> | null)?.email ?? null
+  }
+
   // Verify with Stripe and update statuses (idempotent)
   if (order.status === 'PENDING_CONFIRMATION') {
     const paymentIntent = await getStripe().paymentIntents.retrieve(payment_intent)
@@ -65,5 +76,5 @@ export default async function BestaetigungPage({ params, searchParams }: Bestaet
     }
   }
 
-  return <OrderConfirmation arc={arc} order={order} />
+  return <OrderConfirmation arc={arc} order={order} customerEmail={customerEmail} />
 }

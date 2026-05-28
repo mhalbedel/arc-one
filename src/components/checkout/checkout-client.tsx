@@ -43,12 +43,13 @@ export function CheckoutClient({ arc }: CheckoutClientProps) {
         body: JSON.stringify({ arcId: arc.id, contactData, config }),
       })
 
-      const data = await res.json()
-
       if (!res.ok) {
-        setError(data.error ?? 'Ein Fehler ist aufgetreten.')
+        const data = await res.json().catch(() => ({}))
+        setError((data as { error?: string }).error ?? 'Ein Fehler ist aufgetreten.')
         return
       }
+
+      const data = await res.json()
 
       setClientSecret(data.clientSecret)
       setShippingCountry(contactData.country as ShippingCountry)
