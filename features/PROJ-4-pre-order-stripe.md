@@ -1,6 +1,6 @@
 # PROJ-4: Pre-Order & Stripe
 
-## Status: Approved
+## Status: Deployed
 
 ### Backend Implementation Notes
 - API: `POST /api/checkout/create-payment-intent` — validates reservation, calculates prices server-side, creates customer + order records, creates Stripe PaymentIntent, returns `clientSecret`
@@ -338,4 +338,16 @@ Kein neues Schema nötig außer einer Erweiterung:
 **Final test counts:** 23 unit tests + 25 E2E tests — all pass, no regressions
 
 ## Deployment
-_To be added by /deploy_
+
+**Deployed:** 2026-05-28  
+**Production URL:** https://arc-one-seven.vercel.app  
+**Vercel Deployment:** https://arc-4u0j0oknx-markus-7177s-projects.vercel.app  
+**Build time:** 38s  
+
+**Post-deploy checks:**
+- ✅ Homepage 200, Arc catalog 200, invalid checkout → 404
+- ✅ Security headers verified (X-Frame-Options, HSTS, nosniff, Referrer-Policy)
+- ✅ API route live and validating input correctly
+- ✅ DB migration 006 applied before deploy
+
+**DB migration applied:** `006_orders_sanding_price.sql` — adds `sanding_price INTEGER NOT NULL DEFAULT 0` to `orders` table
