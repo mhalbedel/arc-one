@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "ARC-ONE Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: ARC-ONE
+        - generic [ref=e6]: Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur
+      - navigation [ref=e7]:
+        - link "Arcs" [ref=e8] [cursor=pointer]:
+          - /url: /arcs
+  - main [ref=e9]:
+    - generic [ref=e10]:
+      - heading "Alle Arcs" [level=1] [ref=e11]
+      - combobox [ref=e12] [cursor=pointer]:
+        - generic: Preis aufsteigend
+        - img [ref=e13]
+    - generic [ref=e15]:
+      - link [ref=e16] [cursor=pointer]:
+        - /url: /arcs/ARV-0010
+        - article [ref=e17]:
+          - generic [ref=e20]: Kein Foto
+          - generic [ref=e21]:
+            - generic [ref=e22]:
+              - generic [ref=e23]: ARV-0010
+              - generic [ref=e24]: 610 €
+            - paragraph [ref=e25]: 96 × 48 cm
+            - paragraph [ref=e26]: Arc entdecken →
+      - link [ref=e27] [cursor=pointer]:
+        - /url: /arcs/ARV-0002
+        - article [ref=e28]:
+          - generic [ref=e29]:
+            - generic [ref=e31]: Kein Foto
+            - generic [ref=e33]: "Drop #01 — Die ersten Bögen"
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e36]: ARV-0002
+              - generic [ref=e37]: 620 €
+            - paragraph [ref=e38]: 112 × 38 cm
+            - paragraph [ref=e39]: Arc entdecken →
+      - link [ref=e40] [cursor=pointer]:
+        - /url: /arcs/ARV-0007
+        - article [ref=e41]:
+          - generic [ref=e44]: Kein Foto
+          - generic [ref=e45]:
+            - generic [ref=e46]:
+              - generic [ref=e47]: ARV-0007
+              - generic [ref=e48]: 660 €
+            - paragraph [ref=e49]: 104 × 44 cm
+            - paragraph [ref=e50]: Arc entdecken →
+      - link [ref=e51] [cursor=pointer]:
+        - /url: /arcs/ARV-0003
+        - article [ref=e52]:
+          - generic [ref=e53]:
+            - generic [ref=e55]: Kein Foto
+            - generic [ref=e57]: "Drop #01 — Die ersten Bögen"
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - generic [ref=e60]: ARV-0003
+              - generic [ref=e61]: 710 €
+            - paragraph [ref=e62]: 65 × 55 cm
+            - paragraph [ref=e63]: Arc entdecken →
+  - button "Open Next.js Dev Tools" [ref=e69] [cursor=pointer]:
+    - img [ref=e70]
+  - alert [ref=e73]
+```

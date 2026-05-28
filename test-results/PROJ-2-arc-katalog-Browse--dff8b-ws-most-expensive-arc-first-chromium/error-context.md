@@ -1,0 +1,67 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "ARC-ONE Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: ARC-ONE
+        - generic [ref=e6]: Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur
+      - navigation [ref=e7]:
+        - link "Arcs" [ref=e8] [cursor=pointer]:
+          - /url: /arcs
+  - main [ref=e9]:
+    - generic [ref=e10]:
+      - heading "Alle Arcs" [level=1] [ref=e11]
+      - combobox [ref=e12] [cursor=pointer]:
+        - img [ref=e13]
+      - combobox [ref=e15]
+    - generic [ref=e16]:
+      - link [ref=e17] [cursor=pointer]:
+        - /url: /arcs/ARV-0003
+        - article [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e21]: Kein Foto
+            - generic [ref=e23]: "Drop #01 — Die ersten Bögen"
+          - generic [ref=e24]:
+            - generic [ref=e25]:
+              - generic [ref=e26]: ARV-0003
+              - generic [ref=e27]: 710 €
+            - paragraph [ref=e28]: 65 × 55 cm
+            - paragraph [ref=e29]: Arc entdecken →
+      - link [ref=e30] [cursor=pointer]:
+        - /url: /arcs/ARV-0007
+        - article [ref=e31]:
+          - generic [ref=e34]: Kein Foto
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: ARV-0007
+              - generic [ref=e38]: 660 €
+            - paragraph [ref=e39]: 104 × 44 cm
+            - paragraph [ref=e40]: Arc entdecken →
+      - link [ref=e41] [cursor=pointer]:
+        - /url: /arcs/ARV-0002
+        - article [ref=e42]:
+          - generic [ref=e43]:
+            - generic [ref=e45]: Kein Foto
+            - generic [ref=e47]: "Drop #01 — Die ersten Bögen"
+          - generic [ref=e48]:
+            - generic [ref=e49]:
+              - generic [ref=e50]: ARV-0002
+              - generic [ref=e51]: 620 €
+            - paragraph [ref=e52]: 112 × 38 cm
+            - paragraph [ref=e53]: Arc entdecken →
+      - link [ref=e54] [cursor=pointer]:
+        - /url: /arcs/ARV-0010
+        - article [ref=e55]:
+          - generic [ref=e58]: Kein Foto
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]: ARV-0010
+              - generic [ref=e62]: 610 €
+            - paragraph [ref=e63]: 96 × 48 cm
+            - paragraph [ref=e64]: Arc entdecken →
+  - button "Open Next.js Dev Tools" [ref=e70] [cursor=pointer]:
+    - img [ref=e71]
+```
