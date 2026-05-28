@@ -1,6 +1,6 @@
 # PROJ-4: Pre-Order & Stripe
 
-## Status: In Progress
+## Status: In Review
 
 ### Backend Implementation Notes
 - API: `POST /api/checkout/create-payment-intent` — validates reservation, calculates prices server-side, creates customer + order records, creates Stripe PaymentIntent, returns `clientSecret`
@@ -209,7 +209,104 @@ Kein neues Schema nötig außer einer Erweiterung:
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client | Stripe.js initialisieren |
 
 ## QA Test Results
-_To be added by /qa_
+
+**QA Date:** 2026-05-28  
+**Tester:** /qa skill  
+**Status: NOT READY FOR PRODUCTION — 2 High bugs must be fixed first**
+
+### Acceptance Criteria Results
+
+| # | Criterion | Result |
+|---|-----------|--------|
+| 1 | Valid reservation → Checkout page shown | ✅ PASS |
+| 2 | Expired/no reservation → redirect to Konfigurator with message | ✅ PASS (code verified, not E2E testable without DB manipulation) |
+| 3 | Arc not RESERVED → 404 | ✅ PASS |
+| 4 | Config shown (Schliff, Befestigung, Finish, Licht) | ✅ PASS |
+| 5 | Price breakdown shown (Grundpreis, Versand, Gesamt) | ✅ PASS |
+| 6 | Deposit (30%) clearly shown | ✅ PASS |
+| 7 | Required fields validated (Vorname, Nachname, E-Mail, Adresse) | ✅ PASS |
+| 8 | Telefon is optional | ✅ PASS |
+| 9 | Empty required field → error per field | ✅ PASS |
+| 10 | Invalid E-Mail → error shown | ⚠️ PARTIAL — Zod schema correct, but `<form>` lacks `noValidate` so browser native validation blocks RHF for empty-form submit (Bug #6) |
+| 11 | Only DE/AT/CH in Land select | ✅ PASS |
+| 12 | Country change updates shipping price (DE: 29€, AT/CH: 49€) | ✅ PASS |
+| 13 | sameAsBilling checkbox default checked, billing form hidden | ✅ PASS |
+| 14 | Unchecking sameAsBilling shows billing form | ✅ PASS |
+| 15 | Stripe Payment Element shown after valid form submit | ❌ FAIL — Bug #1 (customer upsert) blocks payment in retry scenarios |
+| 16 | Successful payment → arc ORDERED + order CONFIRMED | ⚠️ NOT TESTED — Stripe test payment not verified end-to-end |
+| 17 | Failed payment → error shown, reservation stays active | ⚠️ NOT TESTED |
+| 18 | Success → redirect to /bestaetigung | ⚠️ NOT TESTED |
+| 19 | Confirmation: order number shown | ⚠️ NOT TESTED |
+| 20 | Confirmation: order summary shown | ⚠️ NOT TESTED |
+| 21 | Confirmation: "Bestätigungsmail an [E-Mail] gesendet" | ❌ FAIL — Bug #3: shows generic text, not actual customer email |
+| 22 | Confirmation page without valid order → 404 | ✅ PASS |
+
+### Bugs Found
+
+#### High
+
+**Bug #1: Customer INSERT fails for repeat email — checkout broken on retry**
+- **Steps:** Submit checkout form with any previously used email address
+- **Expected:** New customer created or existing customer reused
+- **Actual:** 500 error "Kundendaten konnten nicht gespeichert werden" because `customers.email` is `UNIQUE NOT NULL`
+- **Root cause:** `route.ts:81` uses `.insert()` — duplicate email causes a unique constraint violation
+- **Fix:** Replace `.insert()` with Supabase upsert on conflict: `email`, then retrieve the customer ID; or `SELECT id FROM customers WHERE email = $1` first
+- **File:** `src/app/api/checkout/create-payment-intent/route.ts:81`
+
+**Bug #2: Billing country RHF state not initialized — billing form blocks submit**
+- **Steps:** Uncheck "Rechnungsadresse entspricht Lieferadresse" → billing form appears with "Deutschland" pre-selected → submit without touching country dropdown
+- **Expected:** Germany accepted as billing country
+- **Actual:** Validation shows "Bitte wählen" because `billingCountry` is `undefined` in RHF state (shadcn Select uses `defaultValue` but doesn't call `setValue` on mount)
+- **Fix:** Add `setValue('billingCountry', 'DE')` when the billing section mounts, or use `value={watch('billingCountry') ?? 'DE'}` and initialize with `defaultValues`
+- **File:** `src/components/checkout/contact-form.tsx:172`
+
+#### Medium
+
+**Bug #3: Customer email not shown on confirmation page**
+- **Steps:** Complete a checkout → view confirmation page
+- **Expected:** "Eine Bestätigungsmail wurde an max@example.com gesendet."
+- **Actual:** "Eine Bestätigungsmail wurde an deine E-Mail-Adresse gesendet." (no actual email)
+- **Fix:** In `bestaetigung/page.tsx`, join `customers` by `order.customer_id` and pass email to `OrderConfirmation`
+- **File:** `src/app/checkout/[arc_id]/bestaetigung/page.tsx` + `src/components/checkout/order-confirmation.tsx`
+
+**Bug #4: Per-country ZIP validation not implemented**
+- **Steps:** Select Austria as country, enter a 5-digit German ZIP (e.g. 10115) → form accepts it
+- **Expected:** Error "Ungültige PLZ für Österreich (4 Ziffern)"
+- **Actual:** Passes validation (regex `/^\d{4,5}$/` accepts both)
+- **Spec edge case:** "DE: 5 Ziffern, AT: 4 Ziffern, CH: 4 Ziffern"
+- **Fix:** Add per-country zip validation in `contactSchema` superRefine, and in API Zod schema
+- **Files:** `src/components/checkout/contact-form.tsx:16`, `src/app/api/checkout/create-payment-intent/route.ts:22`
+
+**Bug #5: No rate limiting on create-payment-intent API**
+- **Steps:** Send rapid repeated POST requests to `/api/checkout/create-payment-intent`
+- **Expected:** Rate limiting after N requests
+- **Actual:** Each request creates a new customer + order + Stripe PaymentIntent (orphan records)
+- **Fix:** Add IP-based rate limiting (e.g. via Next.js middleware or Vercel rate limiting)
+
+**Bug #6 (was "Medium via vitest config"): vitest config picks up Playwright tests — `npm test` showed PROJ-2/PROJ-3 spec failures**  
+- **Status:** ✅ FIXED — Added `include: ['src/**/*.{test,spec}.{ts,tsx}']` to `vitest.config.ts`
+
+#### Low
+
+**Bug #7: Sanding choice missing from order confirmation summary**
+- The `OrderConfirmation` component shows Befestigung, Finish, Licht but not Schliff/Oberfläche
+- **File:** `src/components/checkout/order-confirmation.tsx:37`
+
+**Bug #8: `<form>` lacks `noValidate` — browser native email validation conflicts with RHF**
+- Native HTML5 email validation on `type="email"` blocks form submit before RHF fires
+- Causes inconsistent UX: empty email shows "Ungültige E-Mail-Adresse" (browser tooltip), not a React inline error
+- **Fix:** Add `noValidate` to the `<form>` element
+- **File:** `src/components/checkout/contact-form.tsx:68`
+
+**Bug #9: `res.json()` called before `res.ok` check in checkout-client — silent failure on non-JSON 500 errors**
+- If the API returns a 500 with a non-JSON body (e.g. unhandled Stripe error), `res.json()` throws and there is no catch block, so the user sees no error message
+- **Fix:** Wrap `res.json()` in try/catch or check `res.ok` first before parsing JSON
+- **File:** `src/components/checkout/checkout-client.tsx:46`
+
+### Test Artifacts
+- Unit tests: `src/lib/pricing.test.ts` (6 tests — all pass)
+- E2E tests: `tests/PROJ-4-pre-order-stripe.spec.ts` (13 tests — all pass)
+- Fixed regression: `vitest.config.ts` now has `include` pattern to exclude Playwright tests
 
 ## Deployment
 _To be added by /deploy_
