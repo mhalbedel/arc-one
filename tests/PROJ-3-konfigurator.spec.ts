@@ -205,13 +205,18 @@ test('Step-Indikator: Klick auf abgeschlossenen Schritt wechselt zurück', async
 
 // ── Edge Cases ────────────────────────────────────────────────
 
-test('Edge Case: Spinne ausgeblendet wenn max_spinne_pendants null', async ({ page }) => {
-  // ARV-0002 hat max_spinne_pendants=null → Spinne im Befestigungs-Schritt nicht darstellbar
+test('Befestigung: Spinne wählbar bei gesetztem max_spinne_pendants (ARV-0002, max=5)', async ({ page }) => {
+  // ARV-0002 hat max_spinne_pendants=5 → Spinne ist verfügbar inkl. Pendel-Stepper
   await page.goto(`/konfigurator/${ARC_ID_ARV_0002}`)
   await page.getByRole('button', { name: 'Schleifen lassen', exact: true }).click()
   await page.getByRole('button', { name: 'Weiter' }).click()
   await expect(page.getByRole('heading', { name: 'BEFESTIGUNG' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Spinne' })).not.toBeVisible()
+  await expect(page.getByRole('button', { name: 'Spinne' })).toBeVisible()
+  await page.getByRole('button', { name: 'Spinne' }).click()
+  // Pendel-Stepper erscheint nach Auswahl
+  await expect(page.getByText('Pendel')).toBeVisible()
+  await expect(page.getByText('max. 5')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Weiter' })).toBeEnabled()
 })
 
 test('Edge Case: Reserve API lehnt fehlende arcId ab (400)', async ({ request }) => {

@@ -66,18 +66,19 @@ export const ARCS: ArcSeed[] = [
     width_cm: 78.5, height_cm: 42.0, depth_cm: 22.0, weight_grams: 1840,
     harvest_date: '2026-02-12 00:00:00+00', forest_section: 'Monchique Sektor 3', cut_number: 1,
     character: 'Weit geschwungener Bogen mit tiefer Maserung entlang der Wölbung.',
-    max_spinne_pendants: null, drop_id: DROP.id,
+    max_spinne_pendants: null, drop_id: DROP.id, // bewusst null → Spinne ausgeblendet (negativer Test)
   }),
   arc({
     id: uuid(2), serial_number: 'ARV-0002', base_price: 62000,
     character: 'Langer flacher Bogen, fast symmetrisch.',
-    max_spinne_pendants: null, drop_id: DROP.id, // max null → Spinne ausgeblendet (PROJ-3 Edge Case)
+    max_spinne_pendants: 5, drop_id: DROP.id, // Spinne aktiviert (konsistent mit Prod)
   }),
   arc({ id: uuid(3), serial_number: 'ARV-0003', base_price: 71000, drop_id: DROP.id,
     character: 'Tiefer, fast schalenförmiger Arc mit starker Wölbung.' }),
   arc({ id: uuid(4), serial_number: 'ARV-0004', base_price: 53000,
     character: 'Klassischer Halbmond mit lebendiger Riffelung.' }), // drop_id null → kein Badge
   arc({ id: uuid(5), serial_number: 'ARV-0005', base_price: 58000,
+    max_spinne_pendants: 5, // Spinne aktiviert (konsistent mit Prod)
     character: 'Breiter Bogen mit auffälliger Astnarbe in der Mitte.' }),
   arc({ id: uuid(6), serial_number: 'ARV-0006', base_price: 32000, // günstigster (320 €)
     character: 'Kleines, kompaktes Exemplar mit heller Rinde.' }),
