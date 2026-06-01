@@ -437,6 +437,66 @@ CREATE INDEX idx_admin_profiles_auth_user_id ON admin_profiles(auth_user_id);
 
 
 -- ============================================================
+-- PRICING (PROJ-3a) — zentrale Preismatrix + Klassen-Grenzwerte
+-- Aufpreise werden global gepflegt und aus Groessen-/Gewichtsklasse
+-- des Arcs abgeleitet. Loest die per-Arc price_*-Spalten ab
+-- (die vorerst deprecated im arcs-Schema bestehen bleiben).
+-- ============================================================
+
+CREATE TABLE pricing_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  component TEXT NOT NULL CHECK (component IN ('schliff', 'finish', 'mounting', 'light')),
+  variant TEXT,
+  tier TEXT NOT NULL CHECK (tier IN ('klein', 'mittel', 'gross', 'leicht', 'schwer')),
+  price_cents INTEGER NOT NULL DEFAULT 0 CHECK (price_cents >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_pricing_rules_unique
+  ON pricing_rules (component, COALESCE(variant, ''), tier);
+
+CREATE TRIGGER trg_pricing_rules_updated_at
+  BEFORE UPDATE ON pricing_rules
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE pricing_rules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can read pricing_rules"
+  ON pricing_rules FOR SELECT
+  USING (true);
+
+CREATE POLICY "Admins have full access to pricing_rules"
+  ON pricing_rules FOR ALL
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+CREATE TABLE pricing_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  size_klein_max_cm2 INTEGER NOT NULL DEFAULT 3000 CHECK (size_klein_max_cm2 > 0),
+  size_mittel_max_cm2 INTEGER NOT NULL DEFAULT 6000 CHECK (size_mittel_max_cm2 > 0),
+  weight_leicht_max_g INTEGER NOT NULL DEFAULT 2000 CHECK (weight_leicht_max_g > 0),
+  weight_mittel_max_g INTEGER NOT NULL DEFAULT 5000 CHECK (weight_mittel_max_g > 0),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TRIGGER trg_pricing_settings_updated_at
+  BEFORE UPDATE ON pricing_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE pricing_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public can read pricing_settings"
+  ON pricing_settings FOR SELECT
+  USING (true);
+
+CREATE POLICY "Admins have full access to pricing_settings"
+  ON pricing_settings FOR ALL
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+
+-- ============================================================
 -- STORAGE BUCKETS
 -- Run these separately in Supabase Dashboard → Storage → New bucket
 -- Or uncomment and run via SQL if storage extension is enabled:

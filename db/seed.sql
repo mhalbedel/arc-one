@@ -162,3 +162,44 @@ INSERT INTO waitlist_entries (email, confirmed_at, token) VALUES
 --   TRUE,
 --   TRUE
 -- );
+
+
+-- ============================================================
+-- PART 6: Pricing (PROJ-3a) — zentrale Preismatrix + Grenzwerte
+-- Platzhalterpreise, vom Manufaktur-Team zu kalibrieren.
+-- (Bestehende DBs erhalten dieselben Werte ueber Migration 008.)
+-- ============================================================
+
+INSERT INTO pricing_settings DEFAULT VALUES;
+
+INSERT INTO pricing_rules (component, variant, tier, price_cents) VALUES
+  ('schliff', NULL, 'klein',  8000),
+  ('schliff', NULL, 'mittel', 12000),
+  ('schliff', NULL, 'gross',  18000),
+  ('finish', 'oel',       'klein',  4000),
+  ('finish', 'oel',       'mittel', 6000),
+  ('finish', 'oel',       'gross',  8000),
+  ('finish', 'lack',      'klein',  5000),
+  ('finish', 'lack',      'mittel', 7500),
+  ('finish', 'lack',      'gross',  10000),
+  ('finish', 'schellack', 'klein',  6000),
+  ('finish', 'schellack', 'mittel', 9000),
+  ('finish', 'schellack', 'gross',  12000),
+  ('mounting', 'wand',   'leicht', 4000),
+  ('mounting', 'wand',   'mittel', 6000),
+  ('mounting', 'wand',   'schwer', 9000),
+  ('mounting', 'decke',  'leicht', 6000),
+  ('mounting', 'decke',  'mittel', 9000),
+  ('mounting', 'decke',  'schwer', 13000),
+  ('mounting', 'spinne', 'leicht', 2500),
+  ('mounting', 'spinne', 'mittel', 3500),
+  ('mounting', 'spinne', 'schwer', 5000),
+  ('light', 'porzellan', 'klein',  1000),
+  ('light', 'porzellan', 'mittel', 1500),
+  ('light', 'porzellan', 'gross',  2000),
+  ('light', 'bg_led',    'klein',  3000),
+  ('light', 'bg_led',    'mittel', 4500),
+  ('light', 'bg_led',    'gross',  6000),
+  ('light', 'true_led',  'klein',  5000),
+  ('light', 'true_led',  'mittel', 7500),
+  ('light', 'true_led',  'gross',  10000);

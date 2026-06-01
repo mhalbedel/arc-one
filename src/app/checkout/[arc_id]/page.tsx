@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getPricingData } from '@/lib/pricing-data'
 import { CheckoutClient } from '@/components/checkout/checkout-client'
 import type { Arc } from '@/types'
 
@@ -27,5 +28,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     redirect(`/konfigurator/${arc_id}?expired=1`)
   }
 
-  return <CheckoutClient arc={arc} />
+  const pricing = await getPricingData(supabase)
+
+  return <CheckoutClient arc={arc} pricing={pricing} />
 }

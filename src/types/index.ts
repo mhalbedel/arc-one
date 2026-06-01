@@ -40,6 +40,28 @@ export interface ConfiguratorState {
 
 // ── Pricing Types ──────────────────────────────────────────
 
+export type { PricingRuleRow, PricingSettingsRow } from './database'
+
+export type SizeClass = 'klein' | 'mittel' | 'gross'
+export type WeightClass = 'leicht' | 'mittel' | 'schwer'
+
+/** Klassen-Grenzwerte; vom Admin pflegbar (PROJ-5). */
+export interface PricingSettings {
+  size_klein_max_cm2: number
+  size_mittel_max_cm2: number
+  weight_leicht_max_g: number
+  weight_mittel_max_g: number
+}
+
+/** Preisliste als Lookup. Key: `${component}:${variant}:${tier}` bzw. `${component}:${tier}` (schliff). Wert in Cent. */
+export type PricingRules = Record<string, number>
+
+/** Gebuendelte Preisdaten, einmal serverseitig geladen und an den Client durchgereicht. */
+export interface PricingData {
+  rules: PricingRules
+  settings: PricingSettings
+}
+
 export interface PriceBreakdown {
   base: number
   mounting: number

@@ -10,8 +10,14 @@ import { ArcPreview } from './arc-preview'
 import { PriceDisplay } from './price-display'
 import { KonfigSummary } from './konfig-summary'
 import { PreisAufschluesselung } from './preis-aufschluesselung'
-import type { MountingType, FinishType, LightType } from '@/types'
+import type { MountingType, FinishType, LightType, PricingData } from '@/types'
 import type { Arc } from '@/types'
+import {
+  sandingPriceFor,
+  mountingPriceFor,
+  finishPriceFor,
+  lightPriceFor,
+} from '@/lib/pricing'
 
 type StepKey = 'schliff' | 'befestigung' | 'finish' | 'licht' | 'zusammenfassung' | 'reservierung'
 type SandingChoice = 'schleifen' | 'rohling'
@@ -58,34 +64,11 @@ function isBlocked(arc: Arc, key: string): boolean {
 
 type KonfiguratorClientProps = {
   arc: Arc
+  pricing: PricingData
   expiredReservation?: boolean
 }
 
-function getMountingPrice(arc: Arc, mounting: MountingType | null, spinneCount: number): number {
-  if (!mounting || mounting === 'ohne') return 0
-  if (mounting === 'wand') return arc.price_mounting_wall ?? 0
-  if (mounting === 'decke') return arc.price_mounting_ceiling ?? 0
-  if (mounting === 'spinne') return (arc.price_mounting_spinne_per ?? 0) * spinneCount
-  return 0
-}
-
-function getFinishPrice(arc: Arc, finish: FinishType | null): number {
-  if (!finish) return 0
-  if (finish === 'oel') return arc.price_finish_oil ?? 0
-  if (finish === 'lack') return arc.price_finish_lacquer ?? 0
-  if (finish === 'schellack') return arc.price_finish_shellac ?? 0
-  return 0
-}
-
-function getLightPrice(arc: Arc, light: LightType | null): number {
-  if (!light) return 0
-  if (light === 'porzellan') return arc.price_light_porcelain ?? 0
-  if (light === 'bg_led') return arc.price_light_bg_led ?? 0
-  if (light === 'true_led') return arc.price_light_true_led ?? 0
-  return 0
-}
-
-export function KonfiguratorClient({ arc, expiredReservation }: KonfiguratorClientProps) {
+export function KonfiguratorClient({ arc, pricing, expiredReservation }: KonfiguratorClientProps) {
   const [sandingChoice, setSandingChoice] = useState<SandingChoice | null>(null)
   const [stepIndex, setStepIndex] = useState(0)
   const [furthestIndex, setFurthestIndex] = useState(0)
@@ -112,10 +95,10 @@ export function KonfiguratorClient({ arc, expiredReservation }: KonfiguratorClie
 
   const currentStep = steps[stepIndex]
 
-  const sandingPrice = sandingChoice === 'schleifen' ? (arc.price_sanding ?? 0) : 0
-  const mountingPrice = getMountingPrice(arc, mounting, spinneCount)
-  const finishPrice = willBeSanded ? getFinishPrice(arc, finish) : 0
-  const lightPrice = getLightPrice(arc, light)
+  const sandingPrice = sandingChoice === 'schleifen' ? sandingPriceFor(arc, pricing) : 0
+  const mountingPrice = mountingPriceFor(arc, mounting, spinneCount, pricing)
+  const finishPrice = willBeSanded ? finishPriceFor(arc, finish, pricing) : 0
+  const lightPrice = lightPriceFor(arc, light, pricing)
   const total = arc.base_price + sandingPrice + mountingPrice + finishPrice + lightPrice
 
   const hasFullConfig =

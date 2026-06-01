@@ -186,6 +186,29 @@ export interface AdminProfileRow {
   created_at: string
 }
 
+export interface PricingRuleRow {
+  id: string
+  /** schliff | finish | mounting | light */
+  component: string
+  /** finish: oel/lack/schellack · mounting: wand/decke/spinne · light: porzellan/bg_led/true_led · schliff: null */
+  variant: string | null
+  /** Groessenklasse (klein/mittel/gross) ODER Gewichtsklasse (leicht/mittel/schwer) */
+  tier: string
+  /** Aufpreis in Cent; bei mounting:spinne = Preis pro Pendel */
+  price_cents: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PricingSettingsRow {
+  id: string
+  size_klein_max_cm2: number
+  size_mittel_max_cm2: number
+  weight_leicht_max_g: number
+  weight_mittel_max_g: number
+  updated_at: string
+}
+
 // ── Database Type (for Supabase client) ───────────────────
 
 export interface Database {
@@ -294,6 +317,29 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<AdminProfileRow>
+      }
+      pricing_rules: {
+        Row: PricingRuleRow
+        Insert: Omit<PricingRuleRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          variant?: string | null
+          price_cents?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<PricingRuleRow>
+      }
+      pricing_settings: {
+        Row: PricingSettingsRow
+        Insert: Omit<PricingSettingsRow, 'id' | 'updated_at'> & {
+          id?: string
+          size_klein_max_cm2?: number
+          size_mittel_max_cm2?: number
+          weight_leicht_max_g?: number
+          weight_mittel_max_g?: number
+          updated_at?: string
+        }
+        Update: Partial<PricingSettingsRow>
       }
     }
     Views: Record<string, never>

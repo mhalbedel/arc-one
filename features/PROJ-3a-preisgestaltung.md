@@ -308,6 +308,20 @@ Die **Admin-Pflege-Oberfläche** (Liste bearbeiten, Grenzwerte setzen) ist **nic
 
 Keine. Alle benötigten Bausteine (Supabase-Client, Typen, bestehende Konfigurator-/Checkout-Komponenten) sind vorhanden.
 
+## Implementation Notes
+
+**Backend / Berechnungslogik (2026-06-01)**
+
+- **DB:** `db/migrations/008_pricing_matrix.sql` — neue Tabellen `pricing_rules` (Zeilen: component/variant/tier/price_cents, Unique-Index über `(component, COALESCE(variant,''), tier)`) und `pricing_settings` (vier Grenzwerte, Defaults 3000/6000 cm², 2000/5000 g). RLS: public read + admin write (`is_admin()`), `update_updated_at`-Trigger. Inklusive Seed mit Platzhalterpreisen. **Muss im Ziel-Supabase ausgeführt werden (wie zuvor 004/007).**
+- `db/schema.sql` + `db/seed.sql` analog ergänzt (Fresh-Setup-Pfad).
+- **Typen:** `src/types/database.ts` — `PricingRuleRow`, `PricingSettingsRow` + Einträge in `Database.public.Tables`. `src/types/index.ts` — Domain-Typen `SizeClass`, `WeightClass`, `PricingSettings`, `PricingRules`, `PricingData` + Re-Export der Row-Typen.
+- **`src/lib/pricing.ts`** komplett auf die Matrix umgestellt (reine Funktion): `sizeClass`/`weightClass`-Klassifizierung, `ruleKey`-Lookup, Per-Komponente-Helfer (`sandingPriceFor`, `finishPriceFor`, `lightPriceFor`, `mountingPriceFor`, `spinnePerPendantFor`), `DEFAULT_PRICING_SETTINGS`. `calcCheckoutPrices` erhält jetzt `PricingData` als 4. Argument. Fallback: fehlende Regel → 0; fehlende Maße/Gewicht → kleinste Klasse.
+- **`src/lib/pricing-data.ts`** (neu, `server-only`): `getPricingData(supabase)` lädt beide Tabellen und baut `PricingData` (mit Settings-Fallback).
+- **Verdrahtung:** Konfigurator-Page + Checkout-Page laden `getPricingData` (Admin-Client) und reichen `pricing` durch; `KonfiguratorClient` nutzt jetzt die `pricing.ts`-Helfer (lokale per-Arc-Helfer entfernt); `CheckoutClient`/`CheckoutSummary`/`calcPrices` + Checkout-Route auf neue Signatur umgestellt (verbindliche Server-Berechnung aus der Matrix).
+- **Deprecated:** die per-Arc `price_*`-Spalten werden nirgends mehr gelesen (bleiben im Schema, kein Drop).
+- **Tests:** `src/lib/pricing.test.ts` neu (Klassifizierung inkl. Grenzwerte, Matrix-Berechnung, Spinne×Anzahl, Opt-out=0, fehlende Regel=0). Verifiziert: Vitest 28/28 grün, `npm run build` (inkl. TS-Check) sauber.
+- **Offen für `/frontend`:** sichtbarer Aufpreis je Optionskarte + durchgehende Aufschlüsselung in jedem Schritt (Datengrundlage steht; `spinnePerPendantFor` für die Spinne-Karte ist vorbereitet). Acceptance-Block „Preisanzeige im Konfigurator".
+
 ## QA Test Results
 _To be added by /qa_
 

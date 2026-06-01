@@ -3,7 +3,7 @@
 import { Separator } from '@/components/ui/separator'
 import { formatPrice } from '@/lib/utils'
 import type { Arc } from '@/types'
-import type { CheckoutConfig, ShippingCountry } from '@/types'
+import type { CheckoutConfig, PricingData, ShippingCountry } from '@/types'
 import { calcCheckoutPrices } from '@/lib/pricing'
 
 const MOUNTING_LABELS: Record<string, string> = {
@@ -37,15 +37,21 @@ type CheckoutSummaryProps = {
   arc: Arc
   config: CheckoutConfig | null
   shippingCountry: ShippingCountry
+  pricing: PricingData
 }
 
-export function calcPrices(arc: Arc, config: CheckoutConfig | null, shippingCountry: ShippingCountry) {
+export function calcPrices(
+  arc: Arc,
+  config: CheckoutConfig | null,
+  shippingCountry: ShippingCountry,
+  pricing: PricingData,
+) {
   if (!config) return null
-  return calcCheckoutPrices(arc, config, shippingCountry)
+  return calcCheckoutPrices(arc, config, shippingCountry, pricing)
 }
 
-export function CheckoutSummary({ arc, config, shippingCountry }: CheckoutSummaryProps) {
-  const prices = calcPrices(arc, config, shippingCountry)
+export function CheckoutSummary({ arc, config, shippingCountry, pricing }: CheckoutSummaryProps) {
+  const prices = calcPrices(arc, config, shippingCountry, pricing)
 
   return (
     <div className="space-y-8">

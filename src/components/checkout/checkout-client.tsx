@@ -5,16 +5,17 @@ import { Separator } from '@/components/ui/separator'
 import { CheckoutSummary, calcPrices } from './checkout-summary'
 import { ContactForm } from './contact-form'
 import { StripePaymentForm } from './stripe-payment-form'
-import type { Arc, CheckoutConfig, ShippingCountry } from '@/types'
+import type { Arc, CheckoutConfig, PricingData, ShippingCountry } from '@/types'
 import type { ContactFormValues } from './contact-form'
 
 type Phase = 'form' | 'payment'
 
 type CheckoutClientProps = {
   arc: Arc
+  pricing: PricingData
 }
 
-export function CheckoutClient({ arc }: CheckoutClientProps) {
+export function CheckoutClient({ arc, pricing }: CheckoutClientProps) {
   const [config, setConfig] = useState<CheckoutConfig | null>(null)
   const [shippingCountry, setShippingCountry] = useState<ShippingCountry>('DE')
   const [phase, setPhase] = useState<Phase>('form')
@@ -59,7 +60,7 @@ export function CheckoutClient({ arc }: CheckoutClientProps) {
     }
   }
 
-  const prices = calcPrices(arc, config, shippingCountry)
+  const prices = calcPrices(arc, config, shippingCountry, pricing)
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
@@ -67,7 +68,7 @@ export function CheckoutClient({ arc }: CheckoutClientProps) {
 
         {/* Left: Summary */}
         <div className="md:sticky md:top-24 md:self-start">
-          <CheckoutSummary arc={arc} config={config} shippingCountry={shippingCountry} />
+          <CheckoutSummary arc={arc} config={config} shippingCountry={shippingCountry} pricing={pricing} />
         </div>
 
         {/* Right: Form / Payment */}

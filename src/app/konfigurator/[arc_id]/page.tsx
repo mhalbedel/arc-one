@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getPricingData } from '@/lib/pricing-data'
 import { KonfiguratorClient } from '@/components/konfigurator/konfigurator-client'
 import { BlockedPage } from '@/components/konfigurator/blocked-page'
 import type { Arc } from '@/types'
@@ -30,5 +31,7 @@ export default async function KonfiguratorPage({ params, searchParams }: Konfigu
     return <BlockedPage reservedUntil={arc.reserved_until} />
   }
 
-  return <KonfiguratorClient arc={arc} expiredReservation={expired === '1'} />
+  const pricing = await getPricingData(supabase)
+
+  return <KonfiguratorClient arc={arc} pricing={pricing} expiredReservation={expired === '1'} />
 }

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe-server'
 import { calcCheckoutPrices } from '@/lib/pricing'
+import { getPricingData } from '@/lib/pricing-data'
 import type { Arc } from '@/types'
 
 const bodySchema = z.object({
@@ -72,8 +73,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Reservierung ist abgelaufen.' }, { status: 409 })
   }
 
-  // Calculate prices server-side
-  const prices = calcCheckoutPrices(arc, config, contactData.country)
+  // Calculate prices server-side (verbindlich) aus der zentralen Preismatrix
+  const pricing = await getPricingData(supabase)
+  const prices = calcCheckoutPrices(arc, config, contactData.country, pricing)
 
   // Build customer address
   const deliveryAddress = {
