@@ -41,3 +41,7 @@ next-env.d.ts
 # MCP Servers
 .mcp.json
 .playwright-mcp
+
+# Test Results
+playwright-report
+test-results
