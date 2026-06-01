@@ -402,7 +402,7 @@ Playwright: tests/PROJ-3-konfigurator.spec.ts 22/22 ✅ (Suite an aktuelles Mode
 ### Regression — vorbestehende Failures (NICHT durch dieses Feature)
 
 Die E2E-Suiten **PROJ-2** und **PROJ-4** sind unabhängig von diesem Increment rot. Bewiesene Ursachen:
-- **Homepage-Copy auf Englisch umgestellt** ("EveryArc - One of a kind." statt "Unikat") — bricht PROJ-2-Homepage/Browse-Tests. **Achtung:** widerspricht PRD ("Nur Deutsch in v1") — potenzieller eigener Bug, gehört zu PROJ-2.
+- **Homepage-Hero-Headline ist bewusst englisch** ("EveryArc - One of a kind.") — gewollte Design-Entscheidung (nur dieser eine Satz, Rest der Seite bleibt deutsch). Der PROJ-2-Homepage-Test erwartet noch "Unikat" und ist dadurch veraltet → reine Test-Wartung in PROJ-2, **kein Bug**.
 - **Test-Daten-Drift:** ARV-0001 ist seit Migration 004 `is_sanded = false` (öffnet auf Schliff, nicht Befestigung); reservierte Arcs/fehlende localStorage-Config brechen PROJ-4-Checkout-Tests.
 - Verifiziert, dass die in diesem Increment berührten Flächen fehlerfrei rendern (Katalog-Detailseite 200, Checkout-Labels rein additiv).
 
