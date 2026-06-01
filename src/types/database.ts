@@ -61,6 +61,12 @@ export interface ArcRow {
   compat_oel: boolean
   compat_lack: boolean
   compat_schellack: boolean
+  /**
+   * Gesperrte Konfigurations-Optionen (Opt-out). Leeres Array = alles verfügbar.
+   * Namespaced Keys: `schliff:<v>` | `mounting:<v>` | `finish:<v>` | `light:<v>`.
+   * Löst die `compat_*`-Whitelist ab (compat_* bleibt vorerst als deprecated bestehen).
+   */
+  blocked_options: string[]
   is_featured: boolean
   is_sanded: boolean
   status: ArcStatus
@@ -198,6 +204,7 @@ export interface Database {
           compat_oel?: boolean
           compat_lack?: boolean
           compat_schellack?: boolean
+          blocked_options?: string[]
           status?: ArcStatus
           created_at?: string
           updated_at?: string

@@ -30,24 +30,31 @@ const SANDING_OPTIONS: { value: SandingChoice; label: string }[] = [
   { value: 'rohling', label: 'Ungeschliffen belassen (Rohling)' },
 ]
 
-const MOUNTING_OPTIONS: { value: MountingType; label: string; compatKey: keyof Arc }[] = [
-  { value: 'ohne', label: 'Ohne Befestigung', compatKey: 'compat_ohne' },
-  { value: 'wand', label: 'Wandmontage', compatKey: 'compat_wand' },
-  { value: 'decke', label: 'Deckenmontage', compatKey: 'compat_decke' },
-  { value: 'spinne', label: 'Spinne', compatKey: 'compat_spinne' },
+const MOUNTING_OPTIONS: { value: MountingType; label: string }[] = [
+  { value: 'wand', label: 'Wandmontage' },
+  { value: 'decke', label: 'Deckenmontage' },
+  { value: 'spinne', label: 'Spinne' },
+  { value: 'ohne', label: 'Ohne Befestigung' },
 ]
 
-const FINISH_OPTIONS: { value: FinishType; label: string; compatKey: keyof Arc }[] = [
-  { value: 'oel', label: 'Öl', compatKey: 'compat_oel' },
-  { value: 'lack', label: 'Lack', compatKey: 'compat_lack' },
-  { value: 'schellack', label: 'Schellack', compatKey: 'compat_schellack' },
+const FINISH_OPTIONS: { value: FinishType; label: string }[] = [
+  { value: 'unbehandelt', label: 'Unbehandelt' },
+  { value: 'oel', label: 'Öl' },
+  { value: 'lack', label: 'Lack' },
+  { value: 'schellack', label: 'Schellack' },
 ]
 
 const LIGHT_OPTIONS: { value: LightType; label: string }[] = [
   { value: 'porzellan', label: 'Porzellan Fassung' },
   { value: 'bg_led', label: 'Hintergrund LED' },
   { value: 'true_led', label: 'True Light LED' },
+  { value: 'ohne', label: 'Ohne Licht' },
 ]
+
+/** Eine Option ist verfügbar, solange ihr namespaced Key nicht in arc.blocked_options steht. */
+function isBlocked(arc: Arc, key: string): boolean {
+  return arc.blocked_options?.includes(key) ?? false
+}
 
 type KonfiguratorClientProps = {
   arc: Arc
@@ -117,12 +124,19 @@ export function KonfiguratorClient({ arc, expiredReservation }: KonfiguratorClie
     (!arc.is_sanded ? sandingChoice !== null : true) &&
     (willBeSanded ? finish !== null : true)
 
+  // Opt-out-Modell: Standardmäßig alle Optionen verfügbar, Admin sperrt einzelne via blocked_options
+  const availableSanding = SANDING_OPTIONS.filter((o) => !isBlocked(arc, `schliff:${o.value}`))
+
   const availableMounting = MOUNTING_OPTIONS.filter((o) => {
-    if (o.value === 'spinne') return arc.compat_spinne && arc.max_spinne_pendants != null
-    return arc[o.compatKey] === true
+    if (isBlocked(arc, `mounting:${o.value}`)) return false
+    // Spinne braucht eine gesetzte Pendelanzahl, sonst ist der Stepper nicht darstellbar
+    if (o.value === 'spinne') return arc.max_spinne_pendants != null
+    return true
   })
 
-  const availableFinish = FINISH_OPTIONS.filter((o) => arc[o.compatKey] === true)
+  const availableFinish = FINISH_OPTIONS.filter((o) => !isBlocked(arc, `finish:${o.value}`))
+
+  const availableLight = LIGHT_OPTIONS.filter((o) => !isBlocked(arc, `light:${o.value}`))
 
   const mountingLabel = mounting ? (MOUNTING_OPTIONS.find((o) => o.value === mounting)?.label ?? '') : ''
   const finishLabel = finish ? (FINISH_OPTIONS.find((o) => o.value === finish)?.label ?? '') : ''
@@ -233,7 +247,7 @@ export function KonfiguratorClient({ arc, expiredReservation }: KonfiguratorClie
             <div className="space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Schliff</h2>
               <div className="space-y-2">
-                {SANDING_OPTIONS.map((opt) => (
+                {availableSanding.map((opt) => (
                   <OptionCard
                     key={opt.value}
                     label={opt.label}
@@ -339,7 +353,7 @@ export function KonfiguratorClient({ arc, expiredReservation }: KonfiguratorClie
             <div className="space-y-6">
               <h2 className="text-xs tracking-[0.15em] uppercase text-muted-foreground">Licht</h2>
               <div className="space-y-2">
-                {LIGHT_OPTIONS.map((opt) => (
+                {availableLight.map((opt) => (
                   <OptionCard
                     key={opt.value}
                     label={opt.label}

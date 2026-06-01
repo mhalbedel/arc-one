@@ -21,10 +21,14 @@ const MOUNTING_LABELS: Record<string, string> = {
 }
 
 const FINISH_LABELS: Record<string, string> = {
+  unbehandelt: 'Unbehandelt',
   oel: 'Öl',
   lack: 'Lack',
   schellack: 'Schellack',
 }
+
+const ALL_MOUNTING = ['wand', 'decke', 'spinne', 'ohne'] as const
+const ALL_FINISH = ['unbehandelt', 'oel', 'lack', 'schellack'] as const
 
 export default async function ArcDetailPage({ params }: ArcDetailPageProps) {
   const { serial_number } = await params
@@ -40,18 +44,14 @@ export default async function ArcDetailPage({ params }: ArcDetailPageProps) {
 
   const typedArc = arc as ArcWithDrop
 
-  const mountingOptions = [
-    typedArc.compat_ohne && 'ohne',
-    typedArc.compat_wand && 'wand',
-    typedArc.compat_decke && 'decke',
-    typedArc.compat_spinne && 'spinne',
-  ].filter(Boolean) as string[]
-
-  const finishOptions = [
-    typedArc.compat_oel && 'oel',
-    typedArc.compat_lack && 'lack',
-    typedArc.compat_schellack && 'schellack',
-  ].filter(Boolean) as string[]
+  // Opt-out-Modell: alle Optionen verfügbar, außer in blocked_options gesperrt
+  const blocked = typedArc.blocked_options ?? []
+  const mountingOptions = ALL_MOUNTING.filter((m) => {
+    if (blocked.includes(`mounting:${m}`)) return false
+    if (m === 'spinne') return typedArc.max_spinne_pendants != null
+    return true
+  })
+  const finishOptions = ALL_FINISH.filter((f) => !blocked.includes(`finish:${f}`))
 
   const showDropBadge =
     typedArc.drops?.status === 'SCHEDULED' || typedArc.drops?.status === 'LIVE'
@@ -166,7 +166,7 @@ export default async function ArcDetailPage({ params }: ArcDetailPageProps) {
               <div>
                 <span className="text-muted-foreground mr-2">Befestigung</span>
                 {mountingOptions.map((m) => MOUNTING_LABELS[m]).join(', ')}
-                {typedArc.compat_spinne && typedArc.max_spinne_pendants != null && (
+                {mountingOptions.includes('spinne') && typedArc.max_spinne_pendants != null && (
                   <span className="text-muted-foreground ml-1">
                     (max. {typedArc.max_spinne_pendants} Pendel)
                   </span>

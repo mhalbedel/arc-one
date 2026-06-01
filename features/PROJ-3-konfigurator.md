@@ -1,15 +1,16 @@
 # PROJ-3: Konfigurator
 
-## Status: Deployed
+## Status: In Progress
 **Created:** 2026-05-26
 **Last Updated:** 2026-06-01
 
-> **Refinement (2026-06-01) — Planned, noch nicht implementiert:** Neue Optionen "Ohne Befestigung" und "Ohne Licht". Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Nächster Schritt: `/frontend`.
+> **Refinement (2026-06-01) — Frontend implementiert, QA ausstehend:** Zwei Änderungen in diesem Increment. (1) Neue "Ohne"-Optionen: "Ohne Befestigung", "Ohne Licht" und Finish "Unbehandelt". (2) **Verfügbarkeitsmodell umgestellt von Whitelist (`compat_*`) auf Opt-out (`blocked_options`):** per Default sind ALLE Optionen verfügbar; der Admin sperrt unmögliche Optionen pro Arc. Die Admin-Sperr-UI gehört zu PROJ-5; bis dahin werden Sperren per SQL gesetzt. Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Die deployte v1 bleibt live; dies ist ein Increment darauf. Nächster Schritt: `/qa`.
 
 ## Dependencies
-- PROJ-1 (Datenbank-Schema & Supabase-Setup) — `arcs`-Tabelle, Reservierungsfelder (`reserved_until`, `reserved_by`), neue Aufpreis-Spalten
-- PROJ-2 (Arc-Katalog) — CTA "Arc konfigurieren" auf der Detailseite verlinkt hierher
+- PROJ-1 (Datenbank-Schema & Supabase-Setup) — `arcs`-Tabelle, Reservierungsfelder (`reserved_until`, `reserved_by`), Aufpreis-Spalten, `blocked_options`-Spalte
+- PROJ-2 (Arc-Katalog) — CTA "Arc konfigurieren" auf der Detailseite verlinkt hierher; Katalog-Detailseite zeigt verfügbare Optionen aus `blocked_options`
 - PROJ-4 (Pre-Order & Stripe) — Konfigurator leitet nach erfolgreicher Reservierung zum Checkout weiter
+- PROJ-5 (Admin-Backend) — Admin-Oberfläche zum Pflegen von `blocked_options` (Sperren von Optionen); bis dahin nur per SQL setzbar
 
 ## User Stories
 
@@ -17,6 +18,9 @@
 - Als Endkunde möchte ich bei einem Rohling wählen können, ob er geschliffen werden soll, damit ich den Oberflächenzustand meines Arcs bestimme.
 - Als Endkunde möchte ich meinen Arc auch **ohne Befestigung** konfigurieren können, damit ich den Arc selbst montiere oder anderweitig verwende. **(NEU 2026-06-01)**
 - Als Endkunde möchte ich meinen Arc auch **ohne Licht** konfigurieren können, damit ich ihn als reines Objekt ohne Leuchtmittel erhalte. **(NEU 2026-06-01)**
+- Als Endkunde möchte ich beim Finish auch **"Unbehandelt"** wählen können, damit ich die geschliffene Oberfläche ohne Behandlung erhalte. **(NEU 2026-06-01)**
+- Als Endkunde möchte ich grundsätzlich **alle Optionen** angeboten bekommen, sofern der Hersteller sie für diesen Arc nicht ausdrücklich gesperrt hat. **(NEU 2026-06-01)**
+- Als Admin möchte ich pro Arc einzelne Optionen **sperren** können, die für dieses Unikat nicht möglich sind, damit Kunden keine unmögliche Konfiguration wählen. **(NEU 2026-06-01, UI in PROJ-5)**
 - Als Endkunde möchte ich klar sehen, wenn ein Arc bereits geschliffen ist und diese Eigenschaft nicht mehr geändert werden kann.
 - Als Endkunde möchte ich den Gesamtpreis nach jeder Auswahl live sehen, damit ich die Kosten vor der Reservierung kenne.
 - Als Endkunde möchte ich zwischen den Schritten frei hin- und herwechseln, damit ich meine Konfiguration anpassen kann.
@@ -51,24 +55,30 @@
 - [ ] Angenommen der Nutzer wählt "Ungeschliffen belassen", wenn er auf "Weiter" klickt, dann wird der Finish-Schritt übersprungen.
 - [ ] Angenommen der Nutzer kehrt auf Schritt 1 zurück und ändert die Schliff-Auswahl, dann werden alle nachfolgenden Auswahlen (Befestigung, Finish, Licht) zurückgesetzt.
 
+### Verfügbarkeitsmodell (übergreifend) **(NEU 2026-06-01)**
+
+- [ ] Angenommen ein Arc hat `blocked_options = {}` (leer), wenn ein Optionsschritt angezeigt wird, dann sind alle Optionen dieses Schritts wählbar (Default = alles verfügbar).
+- [ ] Angenommen `blocked_options` enthält einen namespaced Key (z.B. `mounting:decke`), wenn der zugehörige Schritt angezeigt wird, dann wird genau diese Option nicht angezeigt.
+- [ ] Angenommen alle Optionen eines Schritts sind gesperrt (Admin-Fehlkonfiguration), dann ist der Schritt leer — dies gilt als ungültige Admin-Eingabe und ist nicht durch die UI abzufangen (siehe Edge Cases).
+
 ### Schritt 1 (bei `is_sanded = true`) / Schritt 2 (bei `is_sanded = false`): Befestigung
 
-- [ ] Angenommen der Befestigungs-Schritt angezeigt wird, dann sind nur die Befestigungsoptionen sichtbar, die der Arc laut Kompatibilitäts-Flags unterstützt.
-- [ ] **(NEU 2026-06-01)** Angenommen der Befestigungs-Schritt angezeigt wird, dann erscheint zusätzlich zu den kompatiblen Optionen immer eine Karte "Ohne Befestigung" — unabhängig von den Kompatibilitäts-Flags des Arcs.
+- [ ] **(NEU 2026-06-01)** Angenommen der Befestigungs-Schritt angezeigt wird, dann sind alle nicht gesperrten Befestigungsoptionen sichtbar: "Wandmontage", "Deckenmontage", "Spinne", "Ohne Befestigung".
+- [ ] **(NEU 2026-06-01)** Angenommen "Spinne" ist nicht gesperrt, aber `max_spinne_pendants` ist null, dann wird "Spinne" nicht angezeigt (Stepper nicht darstellbar — Datenvollständigkeit, kein Sperr-Eintrag nötig).
 - [ ] **(NEU 2026-06-01)** Angenommen der Nutzer wählt "Ohne Befestigung", wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum nächsten Schritt; es wird kein Befestigungs-Aufpreis berechnet (0 €) und kein Spinne-Stepper angezeigt.
-- [ ] Angenommen "Spinne" ist eine kompatible Option und der Nutzer wählt sie aus, dann erscheint direkt darunter ein Stepper für die Pendelanzahl (Minimum: 1, Maximum: `max_spinne_pendants`).
+- [ ] Angenommen "Spinne" ist verfügbar und der Nutzer wählt sie aus, dann erscheint direkt darunter ein Stepper für die Pendelanzahl (Minimum: 1, Maximum: `max_spinne_pendants`).
 - [ ] Angenommen "Spinne" ist ausgewählt und der Nutzer ändert die Auswahl, dann verschwindet der Stepper.
 - [ ] Angenommen der Nutzer hat eine Befestigungsart ausgewählt, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum nächsten Schritt.
 
 ### Finish-Schritt (nur wenn `is_sanded = true` ODER Schliff-Wahl = "Schleifen lassen")
 
-- [ ] Angenommen der Finish-Schritt angezeigt wird, dann sind nur die Finish-Optionen sichtbar, die der Arc unterstützt.
+- [ ] **(NEU 2026-06-01)** Angenommen der Finish-Schritt angezeigt wird, dann sind alle nicht gesperrten Finish-Optionen sichtbar: "Unbehandelt", "Öl", "Lack", "Schellack".
+- [ ] **(NEU 2026-06-01)** Angenommen der Nutzer wählt "Unbehandelt", wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum Licht-Schritt; es wird kein Finish-Aufpreis berechnet (0 €).
 - [ ] Angenommen der Nutzer wählt ein Finish, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum Licht-Schritt.
 
 ### Licht-Schritt
 
-- [ ] Angenommen der Licht-Schritt angezeigt wird, dann werden immer alle drei Lichtoptionen angezeigt: "Porzellan Fassung", "Hintergrund LED", "True Light LED".
-- [ ] **(NEU 2026-06-01)** Angenommen der Licht-Schritt angezeigt wird, dann erscheint zusätzlich immer eine vierte Karte "Ohne Licht".
+- [ ] **(NEU 2026-06-01)** Angenommen der Licht-Schritt angezeigt wird, dann sind alle nicht gesperrten Lichtoptionen sichtbar: "Porzellan Fassung", "Hintergrund LED", "True Light LED", "Ohne Licht".
 - [ ] **(NEU 2026-06-01)** Angenommen der Nutzer wählt "Ohne Licht", wenn er auf "Weiter" klickt, dann wechselt die Ansicht zur Zusammenfassung; es wird kein Licht-Aufpreis berechnet (0 €).
 - [ ] Angenommen der Nutzer wählt eine Lichtoption, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zur Zusammenfassung.
 
@@ -77,6 +87,7 @@
 - [ ] Angenommen die Zusammenfassung angezeigt wird, dann sind alle gewählten Optionen (Oberfläche, Befestigung, ggf. Finish, Licht) und die Preisaufschlüsselung sichtbar.
 - [ ] **(NEU 2026-06-01)** Angenommen "Ohne Befestigung" gewählt wurde, dann zeigt die Befestigungs-Zeile "Ohne Befestigung" und es gibt keine Befestigungs-Aufpreiszeile.
 - [ ] **(NEU 2026-06-01)** Angenommen "Ohne Licht" gewählt wurde, dann zeigt die Licht-Zeile "Ohne Licht" und es gibt keine Licht-Aufpreiszeile.
+- [ ] **(NEU 2026-06-01)** Angenommen Finish "Unbehandelt" gewählt wurde, dann zeigt die Finish-Zeile "Unbehandelt" und es gibt keine Finish-Aufpreiszeile.
 - [ ] Angenommen `is_sanded = true`, dann zeigt die Oberflächen-Zeile "Geschliffen" (fest, nicht klickbar).
 - [ ] Angenommen Schliff-Wahl = "Schleifen lassen", dann zeigt die Oberflächen-Zeile "Wird geschliffen".
 - [ ] Angenommen Schliff-Wahl = "Ungeschliffen belassen", dann zeigt die Oberflächen-Zeile "Ungeschliffen – Rohling" und es gibt keine Finish-Zeile.
@@ -104,9 +115,9 @@
 ## Edge Cases
 
 - **Arc wird während der Konfiguration reserviert:** Kein Echtzeit-Check — erst beim Klick auf "Jetzt reservieren" wird geprüft. Wenn der Arc dann weg ist, erscheint eine Fehlermeldung.
-- **Nur eine kompatible Befestigungsoption:** Schritt wird trotzdem vollständig angezeigt — kein automatisches Überspringen.
+- **Nur eine nicht gesperrte Befestigungsoption:** Schritt wird trotzdem vollständig angezeigt — kein automatisches Überspringen.
 - **Spinne-Stepper Grenzwerte:** Nutzer kann nicht unter 1 oder über `max_spinne_pendel` navigieren; Buttons werden an den Grenzen deaktiviert.
-- **Arc ohne `max_spinne_pendel`:** Falls `max_spinne_pendel` null ist und "Spinne" trotzdem als kompatibel markiert wurde, wird Spinne nicht als Option angezeigt.
+- **Arc ohne `max_spinne_pendel`:** Falls `max_spinne_pendel` null ist, wird "Spinne" nicht angezeigt — auch wenn nicht gesperrt (Stepper nicht darstellbar).
 - **Aufpreis = 0:** Zeile in der Preisaufschlüsselung wird ausgeblendet (bereits implementiert).
 - **Browser-Zurück-Button:** Verlässt der Nutzer den Konfigurator über den Browser-Zurück-Button, geht die Konfiguration verloren — kein Persist außerhalb der Page.
 - **Direktzugriff auf `/konfigurator` ohne Arc-ID:** Redirect zur Browse-Ansicht (`/arcs`).
@@ -115,8 +126,10 @@
 - **Arc wechselt `is_sanded` während aktiver Session:** Der Konfigurator lädt `is_sanded` einmalig beim Seitenaufruf. Ändert ein Admin den Wert während der Session, hat das keine Auswirkung bis zum Reload.
 - **`price_sanding = null`:** Der Schliff-Schritt wird trotzdem angeboten; in der Preisaufschlüsselung erscheint keine Schliff-Zeile (Preis = 0, wie andere Aufpreise ohne Wert).
 - **"Ohne Befestigung" + "Ohne Licht" zusammen (NEU 2026-06-01):** Gültige Konfiguration — ein Arc kann sowohl ohne Befestigung als auch ohne Licht reserviert werden (Arc als reines Objekt). Beide Schritte bleiben im Flow, nur die jeweilige "Ohne ..."-Karte ist gewählt.
-- **Arc ohne kompatible Befestigungsoption (NEU 2026-06-01):** Der Befestigungs-Schritt zeigt mindestens die Karte "Ohne Befestigung" — der Schritt ist nie leer.
 - **"Ohne Befestigung" gewählt, danach zu Spinne gewechselt (NEU 2026-06-01):** Wechselt der Nutzer von "Ohne Befestigung" zu "Spinne", erscheint der Spinne-Stepper wie gewohnt; wechselt er zurück zu "Ohne Befestigung", verschwindet der Stepper.
+- **Alle Optionen eines Schritts gesperrt (NEU 2026-06-01):** Sperrt der Admin alle Optionen eines Schritts in `blocked_options`, ist der Schritt leer und "Weiter" bleibt deaktiviert (keine Auswahl möglich). Das gilt als ungültige Admin-Eingabe; die UI fängt es nicht ab. Validierung gehört in die Admin-Sperr-UI (PROJ-5).
+- **Gesperrte Option war bereits gewählt, dann Sperre gesetzt (NEU 2026-06-01):** Da `blocked_options` einmalig beim Seitenaufruf geladen wird (wie `is_sanded`), wirkt eine während der Session gesetzte Sperre erst nach Reload.
+- **`compat_*`-Flags deprecated (NEU 2026-06-01):** Der Konfigurator ignoriert die alten `compat_*`-Spalten vollständig; Verfügbarkeit kommt ausschließlich aus `blocked_options`. Die Spalten bleiben vorerst im Schema (kein destruktiver Drop), werden aber nicht mehr gelesen.
 
 ## Technical Requirements
 
@@ -148,9 +161,11 @@
 | Schliff-Wahl ändert → alle nachfolgenden Selections zurücksetzen | Schliff-Entscheid ist fundamental (bestimmt ob Finish verfügbar ist); inkonsistente Downstream-Auswahlen wären schlimmer als ein Reset | 2026-05-27 |
 | Schrittanzahl dynamisch (5 oder 6) je nach Schliff-Wahl | Step-Indikator spiegelt den tatsächlichen Flow — erst nach der Schliff-Wahl wird klar ob Finish erscheint | 2026-05-27 |
 | `price_sanding` als nullable Spalte in `arcs` | Konsistentes Muster mit anderen Aufpreisen; Admin füllt den Preis aus wenn er ihn kalkuliert hat | 2026-05-27 |
-| "Ohne Befestigung" & "Ohne Licht" immer für jeden Arc wählbar (kein Admin-Flag) | Einfachste Umsetzung, konsistent mit "Lichtoptionen immer alle sichtbar"; kein neues Schema, keine Admin-Pflege (PROJ-5) nötig | 2026-06-01 |
 | "Ohne ..."-Optionen als zusätzliche Auswahl-Karte (kein Schritt-Skip) | Konsistent mit dem bestehenden Card-Pattern; Schritt-Indikator bleibt stabil; bewusste, explizite Nutzerwahl statt impliziter Skip | 2026-06-01 |
-| Aufpreis für "Ohne Befestigung"/"Ohne Licht" = 0 € (keine neue Preis-Spalte) | Wegfall einer Komponente kostet nichts; 0-€-Zeilen werden ohnehin in der Preisaufschlüsselung ausgeblendet | 2026-06-01 |
+| Aufpreis für "Ohne ..."/"Unbehandelt" = 0 € (keine neue Preis-Spalte) | Wegfall einer Komponente kostet nichts; 0-€-Zeilen werden ohnehin in der Preisaufschlüsselung ausgeblendet | 2026-06-01 |
+| **Opt-out statt Whitelist:** per Default ALLE Optionen verfügbar, Admin sperrt via `blocked_options` | Überholt frühere Entscheidungen "nicht-kompatible ausblenden" / "Ohne immer wählbar (kein Flag)". Hersteller-Sicht: jedes Unikat kann grundsätzlich alles, Ausnahmen sind selten und werden explizit gesperrt | 2026-06-01 |
+| Finish "Unbehandelt" als Default-Finish-Option | Geschliffener Arc ohne Behandlung ist ein valides Ergebnis; analog zu "Ohne Befestigung"/"Ohne Licht" | 2026-06-01 |
+| Admin-Sperr-UI in PROJ-5, nicht in PROJ-3 | Konfigurator braucht nur das Datenfeld + Default-Verhalten; die Pflege-Oberfläche gehört ins Admin-Backend. Bis dahin Sperren per SQL | 2026-06-01 |
 
 ### Technical Decisions
 <!-- Added by /architecture -->
@@ -165,8 +180,10 @@
 | Keine neuen Pakete | Alle benötigten shadcn/ui Komponenten (Button, Card, Separator, Badge) bereits installiert | 2026-05-26 |
 | Steps-Array aus `is_sanded` zur Laufzeit berechnet | `KonfiguratorClient` erhält `is_sanded` als Prop und baut das Steps-Array einmalig beim Mount — kein Feature-Flag, kein Conditional im JSX auf Step-Ebene | 2026-05-27 |
 | Finish-Aufpreise bei `is_sanded=false` aus Preisberechnung ausschließen | Auch wenn `price_finish_*` in der DB gesetzt sind, werden sie ignoriert — Quelle der Wahrheit ist `is_sanded`, nicht das Vorhandensein eines Aufpreises | 2026-05-27 |
-| "Ohne Befestigung"/"Ohne Licht" als Client-State-Wert `'none'`, kein neues DB-Schema | `MountingType` und `LightType` erhalten jeweils den Wert `'none'`; Preisbeitrag fix 0 — keine Migration, keine neuen Spalten | 2026-06-01 |
-| "Ohne Befestigung"-Karte unabhängig von Kompatibilitäts-Flags rendern | Die Option ist nie inkompatibel (Weglassen ist immer möglich) — sie wird im Befestigungs-Schritt fest angehängt, nicht aus den Flags abgeleitet | 2026-06-01 |
+| "Ohne ..."/"Unbehandelt" als Enum-Wert (`mounting:'ohne'`, `light:'ohne'`, `finish:'unbehandelt'`) | `MountingType`/`LightType` hatten/erhielten `'ohne'`, `FinishType` bekommt `'unbehandelt'`; Preisbeitrag fix 0 (pricing.ts defaultet auf 0) | 2026-06-01 |
+| Verfügbarkeit via `blocked_options TEXT[]` auf `arcs` (Opt-out) | Eine Spalte statt ~12 Booleans; Default `'{}'` = alles verfügbar; namespaced Keys (`mounting:`, `finish:`, `light:`, `schliff:`) erlauben gleiche Werte über Schritte hinweg | 2026-06-01 |
+| `compat_*`-Spalten deprecated, nicht gedroppt | Kein destruktiver Migrationsschritt; Konfigurator + Katalog lesen nur noch `blocked_options`. Cleanup (Drop) als spätere separate Migration | 2026-06-01 |
+| Gemeinsame Filterlogik `isBlocked(arc, key)` im Client + `blocked.includes(...)` im Katalog | Kleine, klare Helper statt zentralem Modul — Duplizierung ist minimal, kein Over-Engineering | 2026-06-01 |
 
 ---
 
@@ -193,15 +210,14 @@
     ├── StepIndicator  (1–4 oder 1–5, klickbar für bereits besuchte Schritte)
     │
     ├── Step: Befestigung  (immer Schritt 1)
-    │   ├── OptionCard × n  (nur kompatible Optionen)
-    │   ├── OptionCard "Ohne Befestigung"  (immer angehängt, mountingType='none')
+    │   ├── OptionCard × 4  (Wand/Decke/Spinne/Ohne — minus blocked_options; Spinne nur bei max_spinne_pendants)
     │   └── SpinneStepper  (bedingt — nur wenn "Spinne" gewählt)
     │
-    ├── Step: Finish  [NUR wenn is_sanded = true]
-    │   └── OptionCard × n  (nur kompatible Optionen)
+    ├── Step: Finish  [NUR wenn is_sanded = true ODER Schliff = schleifen]
+    │   └── OptionCard × 4  (Unbehandelt/Öl/Lack/Schellack — minus blocked_options)
     │
     ├── Step: Licht  (Schritt 2 bei is_sanded=false, Schritt 3 bei is_sanded=true)
-    │   └── OptionCard × 4  (3 Lichtoptionen + "Ohne Licht", lightType='none')
+    │   └── OptionCard × 4  (Porzellan/BG-LED/True-LED/Ohne — minus blocked_options)
     │
     ├── Step: Zusammenfassung  (Schritt 3 oder 4)
     │   ├── KonfigSummary  (read-only: Befestigung, ggf. Finish, Licht, Oberflächenzustand)
@@ -227,6 +243,19 @@ Aufpreise direkt als neue Spalten in der bestehenden `arcs`-Tabelle (kein separa
 | `price_light_porcelain` | Aufpreis Porzellan Fassung |
 | `price_light_bg_led` | Aufpreis Hintergrund LED |
 | `price_light_true_led` | Aufpreis True Light LED |
+
+### Datenmodell: `blocked_options` (Opt-out-Verfügbarkeit, 2026-06-01)
+
+`blocked_options TEXT[] NOT NULL DEFAULT '{}'` auf `arcs`. Leeres Array = alle Optionen verfügbar. Der Admin trägt namespaced Keys ein, um einzelne Optionen pro Arc zu sperren:
+
+| Schritt | Mögliche Keys |
+|---------|---------------|
+| Schliff | `schliff:schleifen`, `schliff:rohling` |
+| Befestigung | `mounting:wand`, `mounting:decke`, `mounting:spinne`, `mounting:ohne` |
+| Finish | `finish:unbehandelt`, `finish:oel`, `finish:lack`, `finish:schellack` |
+| Licht | `light:porzellan`, `light:bg_led`, `light:true_led`, `light:ohne` |
+
+Migration: `db/migrations/007_blocked_options.sql`. Löst die `compat_*`-Whitelist ab (compat_* bleibt vorerst deprecated im Schema, wird nicht mehr gelesen).
 
 ### Datenfluss
 
@@ -294,6 +323,20 @@ src/
 | `Badge` | Aktiver Step im StepIndicator |
 
 ## Implementation Notes
+
+**Opt-out-Verfügbarkeit + Ohne/Unbehandelt-Optionen (2026-06-01)**
+- `src/types/index.ts` — `LightType` um `'ohne'`, `FinishType` um `'unbehandelt'` erweitert (`MountingType` hatte `'ohne'` bereits)
+- `src/types/database.ts` — `ArcRow.blocked_options: string[]` (Pflichtfeld) + Insert-Variante ergänzt
+- `src/components/konfigurator/konfigurator-client.tsx` — Verfügbarkeit komplett auf `blocked_options` umgestellt (Helper `isBlocked(arc, key)` mit namespaced Keys); `compat_*`-Filterung entfernt; alle vier Listen (Schliff/Befestigung/Finish/Licht) zeigen per Default alles, minus gesperrter Keys; Spinne weiterhin nur bei `max_spinne_pendants != null`; `compatKey`-Felder aus den Options-Arrays entfernt; "Unbehandelt" als erste Finish-Option
+- `src/components/konfigurator/konfig-summary.tsx` — `LIGHT_LABELS += ohne`, `FINISH_LABELS += unbehandelt` (Pflicht für `Record<…Type>`)
+- `src/components/checkout/checkout-summary.tsx` — `LIGHT_LABELS += ohne`, `FINISH_LABELS += unbehandelt`
+- `src/app/arcs/[serial_number]/page.tsx` — "Kompatibilität"-Sektion von `compat_*` auf `blocked_options` umgestellt (`ALL_MOUNTING`/`ALL_FINISH` minus blocked); `FINISH_LABELS += unbehandelt`
+- `src/lib/pricing.test.ts` — Mock-Arc um `blocked_options: []` ergänzt (Pflichtfeld)
+- DB: `db/schema.sql` + `db/migrations/007_blocked_options.sql` — `blocked_options TEXT[] NOT NULL DEFAULT '{}'`. **Migration muss im Supabase SQL-Editor ausgeführt werden** (wie zuvor 004)
+- Kein Reserve-API-/Pricing-Change nötig: Reserve validiert Config-Enums nicht; `pricing.ts` defaultet auf 0 für `'ohne'`/`'unbehandelt'`; 0-€-Zeilen werden in der Preisaufschlüsselung ausgeblendet
+- `compat_*`-Spalten bleiben deprecated im Schema (kein Drop), werden aber nirgends mehr gelesen
+- Verifiziert: `tsc` typrein für alle geänderten Dateien; `npm run build` erfolgreich (inkl. TS-Check); Vitest 23/23 grün
+- Vorbestehend (nicht in diesem Increment): `src/types/index.test.ts` enthält veraltete Licht-Werte (`'standard'/'led'/'ultra'`) und einen ArcStatus-Assert, die im reinen `tsc` Fehler werfen — unabhängig von dieser Änderung; vom `next build` ausgeschlossen
 
 **is_sanded Erweiterung (2026-05-27)**
 - `src/components/konfigurator/step-indicator.tsx` — auf dynamisches `steps: string[]` + `currentIndex`/`furthestIndex` Props umgestellt (nicht mehr hardcoded 5 Schritte)

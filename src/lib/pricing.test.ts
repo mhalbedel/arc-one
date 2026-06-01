@@ -24,6 +24,7 @@ const baseArc: Arc = {
   compat_oel: true,
   compat_lack: true,
   compat_schellack: true,
+  blocked_options: [],
   is_featured: false,
   is_sanded: false,
   status: 'READY',

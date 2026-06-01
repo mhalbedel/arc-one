@@ -14,6 +14,7 @@ const MOUNTING_LABELS: Record<string, string> = {
 }
 
 const FINISH_LABELS: Record<string, string> = {
+  unbehandelt: 'Unbehandelt',
   oel: 'Öl',
   lack: 'Lack',
   schellack: 'Schellack',
@@ -23,6 +24,7 @@ const LIGHT_LABELS: Record<string, string> = {
   porzellan: 'Porzellan Fassung',
   bg_led: 'Hintergrund LED',
   true_led: 'True Light LED',
+  ohne: 'Ohne Licht',
 }
 
 const SANDING_LABELS: Record<string, string> = {

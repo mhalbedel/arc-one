@@ -265,10 +265,14 @@ CREATE TABLE arcs (
   compat_spinne       BOOLEAN DEFAULT FALSE,
   max_spinne_pendants INTEGER,
 
-  -- Finish compatibility flags
+  -- Finish compatibility flags (DEPRECATED — ersetzt durch blocked_options, siehe unten)
   compat_oel          BOOLEAN DEFAULT TRUE,
   compat_lack         BOOLEAN DEFAULT TRUE,
   compat_schellack    BOOLEAN DEFAULT TRUE,
+
+  -- Gesperrte Konfigurations-Optionen (Opt-out). Leeres Array = alles verfügbar.
+  -- Namespaced Keys: 'schliff:<v>' | 'mounting:<v>' | 'finish:<v>' | 'light:<v>'
+  blocked_options     TEXT[] NOT NULL DEFAULT '{}',
 
   status              arc_status DEFAULT 'RAW',
   base_price          INTEGER NOT NULL,
