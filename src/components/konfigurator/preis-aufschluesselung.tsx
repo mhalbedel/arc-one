@@ -11,6 +11,7 @@ type PreisAufschluessselungProps = {
   lightLabel: string
   lightPrice: number
   total: number
+  totalLabel?: string
 }
 
 export function PreisAufschluesselung({
@@ -23,6 +24,7 @@ export function PreisAufschluesselung({
   lightLabel,
   lightPrice,
   total,
+  totalLabel = 'Gesamt',
 }: PreisAufschluessselungProps) {
   const rows = [
     { label: 'Rohling (Grundpreis)', price: base, always: true },
@@ -46,7 +48,7 @@ export function PreisAufschluesselung({
       })}
       <Separator />
       <div className="flex justify-between text-sm font-medium">
-        <span>Gesamt</span>
+        <span>{totalLabel}</span>
         <span className="tabular-nums">{formatPrice(total)}</span>
       </div>
     </div>

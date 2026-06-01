@@ -322,6 +322,19 @@ Keine. Alle benötigten Bausteine (Supabase-Client, Typen, bestehende Konfigurat
 - **Tests:** `src/lib/pricing.test.ts` neu (Klassifizierung inkl. Grenzwerte, Matrix-Berechnung, Spinne×Anzahl, Opt-out=0, fehlende Regel=0). Verifiziert: Vitest 28/28 grün, `npm run build` (inkl. TS-Check) sauber.
 - **Offen für `/frontend`:** sichtbarer Aufpreis je Optionskarte + durchgehende Aufschlüsselung in jedem Schritt (Datengrundlage steht; `spinnePerPendantFor` für die Spinne-Karte ist vorbereitet). Acceptance-Block „Preisanzeige im Konfigurator".
 
+**Frontend / Preisanzeige (2026-06-01)**
+
+- **`option-card.tsx`** um `price?`/`priceSuffix?` erweitert: zeigt rechts den Aufpreis (`+ X €`) bzw. „inklusive" bei 0.
+- **`konfigurator-client.tsx`:** jede Optionskarte (Schliff/Befestigung/Finish/Licht) bekommt ihren klassenabhängigen Aufpreis. Spinne-Karte zeigt Preis „/ Pendel"; unter dem Stepper eine Live-Zeile „Spinne gesamt + (Pro-Pendel × Anzahl)".
+- **Durchgehende Aufschlüsselung:** `PreisAufschluesselung` jetzt im linken Sticky-Panel (in JEDEM Schritt sichtbar) statt nur in Zusammenfassung/Reservierung; `totalLabel` schaltet zwischen „Zwischensumme" (unvollständig) und „Gesamt" (vollständig). Die alte `PriceDisplay`-Komponente entfernt (`price-display.tsx` gelöscht), die doppelten Aufschlüsselungen in Zusammenfassung/Reservierung entfernt.
+- Verifiziert: Vitest 28/28 grün, `npm run build` (inkl. TS-Check) sauber.
+
+**Hinweise für `/qa` (E2E `tests/PROJ-3-konfigurator.spec.ts`):** Durch das neue Modell brechen erwartbar einige Assertions und müssen am Test-Supabase (mit Migration 008 + Seed) neu verifiziert werden:
+- „Ab X€"-Test (ehem. Label `AB`) entfällt → neu: „Zwischensumme" + „Rohling (Grundpreis)".
+- Befestigungspreise sind durch die Matrix nicht mehr 0 → „blendet 0€-Zeilen aus" mit Wandmontage gilt nicht mehr (0€-Ausblendung weiter über „Ohne …"/„Unbehandelt" gedeckt).
+- Substring-Assertions (`Wandmontage`, `Öl`, `True Light LED`, `Pendel`) kollidieren jetzt mit den neuen Aufschlüsselungs-/Karten-Texten → `{ exact: true }` nötig.
+- Neue Coverage empfohlen: Aufpreis je Karte sichtbar, „inklusive" bei 0, Spinne-Gesamt aktualisiert sich mit Pendelanzahl.
+
 ## QA Test Results
 _To be added by /qa_
 

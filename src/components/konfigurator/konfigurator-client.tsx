@@ -3,11 +3,11 @@
 import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { formatPrice } from '@/lib/utils'
 import { OptionCard } from './option-card'
 import { SpinneStepper } from './spinne-stepper'
 import { StepIndicator } from './step-indicator'
 import { ArcPreview } from './arc-preview'
-import { PriceDisplay } from './price-display'
 import { KonfigSummary } from './konfig-summary'
 import { PreisAufschluesselung } from './preis-aufschluesselung'
 import type { MountingType, FinishType, LightType, PricingData } from '@/types'
@@ -17,6 +17,7 @@ import {
   mountingPriceFor,
   finishPriceFor,
   lightPriceFor,
+  spinnePerPendantFor,
 } from '@/lib/pricing'
 
 type StepKey = 'schliff' | 'befestigung' | 'finish' | 'licht' | 'zusammenfassung' | 'reservierung'
@@ -100,6 +101,12 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
   const finishPrice = willBeSanded ? finishPriceFor(arc, finish, pricing) : 0
   const lightPrice = lightPriceFor(arc, light, pricing)
   const total = arc.base_price + sandingPrice + mountingPrice + finishPrice + lightPrice
+
+  // Aufpreis je Option (klassenabhaengig) fuer die Karten-Anzeige
+  const sandingOptionPrice = sandingPriceFor(arc, pricing)
+  const spinnePerPendant = spinnePerPendantFor(arc, pricing)
+  const mountingOptionPrice = (m: MountingType): number =>
+    m === 'spinne' ? spinnePerPendant : mountingPriceFor(arc, m, 1, pricing)
 
   const hasFullConfig =
     mounting !== null &&
@@ -202,14 +209,28 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
       )}
       <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr] gap-10 md:gap-14 lg:gap-20">
 
-        {/* Left: Arc Preview + Price */}
+        {/* Left: Arc Preview + durchgehende Preisaufschlüsselung */}
         <div className="md:sticky md:top-24 md:self-start space-y-0">
           <ArcPreview
             serialNumber={arc.serial_number}
             photoUrl={arc.photo_front_url}
             isSanded={arc.is_sanded}
           />
-          <PriceDisplay total={total} hasFullConfig={hasFullConfig} />
+          <div className="border-t border-border pt-4 mt-4 space-y-3">
+            <PreisAufschluesselung
+              base={arc.base_price}
+              sandingPrice={sandingPrice}
+              mountingLabel={mountingLabel}
+              mountingPrice={mountingPrice}
+              finishLabel={finishLabel}
+              finishPrice={finishPrice}
+              lightLabel={lightLabel}
+              lightPrice={lightPrice}
+              total={total}
+              totalLabel={hasFullConfig ? 'Gesamt' : 'Zwischensumme'}
+            />
+            <p className="text-xs text-muted-foreground">30 % Deposit · 70 % vor Versand</p>
+          </div>
         </div>
 
         {/* Right: Steps */}
@@ -236,6 +257,7 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
                     label={opt.label}
                     selected={sandingChoice === opt.value}
                     onSelect={() => handleSandingChoice(opt.value)}
+                    price={opt.value === 'schleifen' ? sandingOptionPrice : 0}
                   />
                 ))}
               </div>
@@ -261,14 +283,24 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
                       label={opt.label}
                       selected={mounting === opt.value}
                       onSelect={() => setMounting(opt.value)}
+                      price={mountingOptionPrice(opt.value)}
+                      priceSuffix={opt.value === 'spinne' ? '/ Pendel' : undefined}
                     />
                     {opt.value === 'spinne' && mounting === 'spinne' && (
-                      <SpinneStepper
-                        value={spinneCount}
-                        min={1}
-                        max={arc.max_spinne_pendants ?? 1}
-                        onChange={setSpinneCount}
-                      />
+                      <div className="space-y-2">
+                        <SpinneStepper
+                          value={spinneCount}
+                          min={1}
+                          max={arc.max_spinne_pendants ?? 1}
+                          onChange={setSpinneCount}
+                        />
+                        {spinnePerPendant > 0 && (
+                          <div className="ml-5 flex justify-between text-sm">
+                            <span className="text-muted-foreground">Spinne gesamt</span>
+                            <span className="tabular-nums">+ {formatPrice(spinnePerPendant * spinneCount)}</span>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 ))}
@@ -307,6 +339,7 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
                     label={opt.label}
                     selected={finish === opt.value}
                     onSelect={() => setFinish(opt.value)}
+                    price={finishPriceFor(arc, opt.value, pricing)}
                   />
                 ))}
               </div>
@@ -342,6 +375,7 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
                     label={opt.label}
                     selected={light === opt.value}
                     onSelect={() => setLight(opt.value)}
+                    price={lightPriceFor(arc, opt.value, pricing)}
                   />
                 ))}
               </div>
@@ -377,18 +411,6 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
                 isSanded={arc.is_sanded}
                 sandingChoice={sandingChoice}
               />
-              <Separator />
-              <PreisAufschluesselung
-                base={arc.base_price}
-                sandingPrice={sandingPrice}
-                mountingLabel={mountingLabel}
-                mountingPrice={mountingPrice}
-                finishLabel={finishLabel}
-                finishPrice={finishPrice}
-                lightLabel={lightLabel}
-                lightPrice={lightPrice}
-                total={total}
-              />
               <div className="flex gap-3">
                 <Button
                   variant="outline"
@@ -419,18 +441,6 @@ export function KonfiguratorClient({ arc, pricing, expiredReservation }: Konfigu
                 light={light}
                 isSanded={arc.is_sanded}
                 sandingChoice={sandingChoice}
-              />
-              <Separator />
-              <PreisAufschluesselung
-                base={arc.base_price}
-                sandingPrice={sandingPrice}
-                mountingLabel={mountingLabel}
-                mountingPrice={mountingPrice}
-                finishLabel={finishLabel}
-                finishPrice={finishPrice}
-                lightLabel={lightLabel}
-                lightPrice={lightPrice}
-                total={total}
               />
               <div className="bg-muted px-5 py-4 text-sm space-y-1">
                 <p className="font-medium">Reservierung für 24 Stunden</p>
