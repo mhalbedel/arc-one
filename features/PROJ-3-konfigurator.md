@@ -1,10 +1,10 @@
 # PROJ-3: Konfigurator
 
-## Status: In Progress
+## Status: Approved
 **Created:** 2026-05-26
 **Last Updated:** 2026-06-01
 
-> **Refinement (2026-06-01) — Frontend implementiert, QA ausstehend:** Zwei Änderungen in diesem Increment. (1) Neue "Ohne"-Optionen: "Ohne Befestigung", "Ohne Licht" und Finish "Unbehandelt". (2) **Verfügbarkeitsmodell umgestellt von Whitelist (`compat_*`) auf Opt-out (`blocked_options`):** per Default sind ALLE Optionen verfügbar; der Admin sperrt unmögliche Optionen pro Arc. Die Admin-Sperr-UI gehört zu PROJ-5; bis dahin werden Sperren per SQL gesetzt. Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Die deployte v1 bleibt live; dies ist ein Increment darauf. Nächster Schritt: `/qa`.
+> **Refinement (2026-06-01) — QA bestanden (Approved), bereit für Deploy:** Zwei Änderungen in diesem Increment. (1) Neue "Ohne"-Optionen: "Ohne Befestigung", "Ohne Licht" und Finish "Unbehandelt". (2) **Verfügbarkeitsmodell umgestellt von Whitelist (`compat_*`) auf Opt-out (`blocked_options`):** per Default sind ALLE Optionen verfügbar; der Admin sperrt unmögliche Optionen pro Arc. Die Admin-Sperr-UI gehört zu PROJ-5; bis dahin werden Sperren per SQL gesetzt. Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Die deployte v1 bleibt live; dies ist ein Increment darauf. Nächster Schritt: `/qa`.
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — `arcs`-Tabelle, Reservierungsfelder (`reserved_until`, `reserved_by`), Aufpreis-Spalten, `blocked_options`-Spalte
@@ -355,6 +355,66 @@ src/
 - 404 bei unbekannter arc_id korrekt ✅
 - Sperrseite bei RESERVED Arc implementiert ✅
 - Preis-Aufschlüsselung blendet 0-€-Zeilen aus ✅
+
+## QA Test Results — Refinement (Opt-out-Verfügbarkeit + Unbehandelt)
+
+**Datum:** 2026-06-01
+**Tester:** Claude QA Engineer
+**Build:** ✅ `npm run build` sauber (inkl. TS-Check)
+
+### Neue/Geänderte Acceptance Criteria
+
+| # | Kriterium | Status | Anmerkung |
+|---|-----------|--------|-----------|
+| V-1 | `blocked_options = {}` → alle Optionen jedes Schritts sichtbar | ✅ | E2E Befestigung/Finish/Licht + Detailseite |
+| V-2 | Key in `blocked_options` → Option ausgeblendet | ⚠️ | Per Logik + symmetrisch zum bewiesenen "Spinne ausgeblendet"-Pfad; kein dedizierter E2E-Test (keine gesperrten Seed-Arcs) — siehe Bug L-1 |
+| B-1 | Befestigung: Wand/Decke/Spinne/Ohne sichtbar (minus blocked) | ✅ | ARV-0001: Wand/Decke/Ohne sichtbar, Spinne aus (max null) |
+| B-2 | "Ohne Befestigung" wählbar → 0 €, kein Spinne-Stepper | ✅ | E2E |
+| F-1 | Finish: Unbehandelt/Öl/Lack/Schellack sichtbar | ✅ | E2E "Finish: Alle Optionen inkl. Unbehandelt" |
+| F-2 | "Unbehandelt" wählbar → 0 €, Weiter → Licht | ✅ | E2E + Unit (pricing) |
+| L-1 | Licht: Porzellan/BG-LED/True-LED/Ohne sichtbar | ✅ | E2E "Licht: Alle 4 Optionen inkl. Ohne Licht" |
+| L-2 | "Ohne Licht" wählbar → 0 € | ✅ | E2E + Unit (pricing) |
+| Z-1 | Zusammenfassung zeigt "Ohne …"/"Unbehandelt"; keine 0-€-Aufpreiszeile | ✅ | E2E "Ohne Befestigung + Unbehandelt + Ohne Licht gültig" |
+| K-1 | Katalog-Detailseite listet verfügbare Optionen aus `blocked_options` | ✅ | ARV-0010: "Ohne Befestigung" + "Unbehandelt" sichtbar, HTTP 200 |
+
+### Automatisierte Tests
+
+```
+Vitest:     24/24 ✅ (+1 neu: 0-€ für mounting:ohne/finish:unbehandelt/light:ohne)
+Playwright: tests/PROJ-3-konfigurator.spec.ts 22/22 ✅ (Suite an aktuelles Modell angepasst)
+```
+
+### Sicherheits-Audit (Red Team)
+
+| Check | Ergebnis |
+|-------|----------|
+| `blocked_options` ist read-only (Server liest Arc, kein User-Input schreibt es) | ✅ Kein neuer Schreib-/Injection-Vektor (Admin-UI erst PROJ-5) |
+| Reserve-API akzeptiert kein `blocked_options` | ✅ |
+| Config-Werte (mounting/finish/light) server-seitig nicht enum-validiert | ⚠️ Pre-existing; `pricing.ts` defaultet Unbekanntes auf 0 € → kein Preis-/Fraud-Risiko (Order spiegelt exakt die gesendete Config) |
+| Preis wird im Checkout server-seitig aus Arc + Config berechnet (nicht vom Client) | ✅ `calcCheckoutPrices` |
+
+### Bugs / Findings
+
+| # | Schwere | Beschreibung |
+|---|---------|--------------|
+| L-1 | **Low** | Kein dedizierter E2E-Test für "gesperrte Option ausgeblendet" — es gibt keine Seed-Arcs mit gesetztem `blocked_options`. Empfehlung: in PROJ-5/Seed einen Test-Arc mit Sperren anlegen. Verhalten ist per Logik + "Spinne ausgeblendet"-Mechanismus abgedeckt. |
+
+### Regression — vorbestehende Failures (NICHT durch dieses Feature)
+
+Die E2E-Suiten **PROJ-2** und **PROJ-4** sind unabhängig von diesem Increment rot. Bewiesene Ursachen:
+- **Homepage-Copy auf Englisch umgestellt** ("EveryArc - One of a kind." statt "Unikat") — bricht PROJ-2-Homepage/Browse-Tests. **Achtung:** widerspricht PRD ("Nur Deutsch in v1") — potenzieller eigener Bug, gehört zu PROJ-2.
+- **Test-Daten-Drift:** ARV-0001 ist seit Migration 004 `is_sanded = false` (öffnet auf Schliff, nicht Befestigung); reservierte Arcs/fehlende localStorage-Config brechen PROJ-4-Checkout-Tests.
+- Verifiziert, dass die in diesem Increment berührten Flächen fehlerfrei rendern (Katalog-Detailseite 200, Checkout-Labels rein additiv).
+
+**Empfehlung:** PROJ-2/PROJ-4-E2E-Suiten separat sanieren (eigenes QA/Spec-Update) — außerhalb des PROJ-3-Scopes.
+
+### Produktionsreife-Entscheidung (Refinement)
+
+**✅ READY für PROJ-3** — Keine Critical/High-Bugs im Feature. Alle neuen Acceptance Criteria erfüllt, Unit + E2E grün. Offene Punkte (L-1, vorbestehende PROJ-2/4-Suiten, englische Homepage) sind außerhalb des PROJ-3-Scopes dokumentiert.
+
+> **Deploy-Voraussetzung:** Migration `007_blocked_options.sql` muss in der Ziel-Umgebung ausgeführt sein (lokal/Prod-Supabase bereits erledigt).
+
+---
 
 ## QA Test Results
 

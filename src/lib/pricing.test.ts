@@ -88,6 +88,19 @@ describe('calcCheckoutPrices', () => {
     expect(geschliffen.sandingPrice).toBe(0)
   })
 
+  it('charges 0 for the opt-out options (mounting ohne, finish unbehandelt, light ohne)', () => {
+    const prices = calcCheckoutPrices(
+      baseArc,
+      { sandingChoice: 'schleifen', mounting: 'ohne', finish: 'unbehandelt', light: 'ohne' },
+      'DE',
+    )
+    expect(prices.mountingPrice).toBe(0)
+    expect(prices.finishPrice).toBe(0)
+    expect(prices.lightPrice).toBe(0)
+    // nur Grundpreis + Schliff + Versand
+    expect(prices.subtotal).toBe(baseArc.base_price + 2000)
+  })
+
   it('calculates spinne mounting price by count', () => {
     const prices = calcCheckoutPrices(
       baseArc,
