@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test'
+import { ARC, NONEXISTENT_ID } from './fixtures/seed'
 
-// Arc IDs from seed data (is_sanded = false → Flow startet auf dem Schliff-Schritt)
-const ARC_ID_ARV_0001 = 'd837b8f1-d073-4e42-b730-b820e52449a1' // blocked_options leer, max_spinne_pendants null
-const ARC_ID_ARV_0002 = '55c8dcaa-25cf-4fae-b989-dfd9e6fd2dc7' // max_spinne_pendants null
+// Arc IDs aus den Fixtures (is_sanded = false → Flow startet auf dem Schliff-Schritt)
+const ARC_ID_ARV_0001 = ARC.ARV_0001.id // blocked_options leer, max_spinne_pendants null
+const ARC_ID_ARV_0002 = ARC.ARV_0002.id // max_spinne_pendants null
 
 /**
  * ARV-0001 ist ein Rohling (is_sanded = false) und öffnet auf dem Schliff-Schritt.
  * Helper wählt "Schleifen lassen" (damit der Finish-Schritt im Flow erscheint) und
  * navigiert zum Befestigungs-Schritt.
  */
-async function goToBefestigung(page) {
+async function goToBefestigung(page: import('@playwright/test').Page) {
   await page.goto(`/konfigurator/${ARC_ID_ARV_0001}`)
   await page.getByRole('button', { name: 'Schleifen lassen', exact: true }).click()
   await page.getByRole('button', { name: 'Weiter' }).click()
@@ -25,7 +26,7 @@ test('Konfigurator: READY Rohling lädt mit Schritt 1 (Schliff)', async ({ page 
 })
 
 test('Konfigurator: Unbekannte arc_id → 404', async ({ page }) => {
-  await page.goto('/konfigurator/00000000-0000-0000-0000-000000000000')
+  await page.goto(`/konfigurator/${NONEXISTENT_ID}`)
   await expect(page).toHaveTitle(/404/)
 })
 
@@ -230,7 +231,7 @@ test('Edge Case: Reserve API lehnt nicht-UUID sessionId ab (400)', async ({ requ
 test('Edge Case: Reserve API lehnt nicht-existierende arcId ab (409)', async ({ request }) => {
   const response = await request.post('/api/konfigurator/reserve', {
     data: {
-      arcId: '00000000-0000-0000-0000-000000000000',
+      arcId: NONEXISTENT_ID,
       sessionId: '00000000-0000-0000-0000-000000000001',
     },
   })

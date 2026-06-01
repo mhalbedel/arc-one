@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test'
+import { ARC, NONEXISTENT_ID } from './fixtures/seed'
 
-// ARV-0005 UUID — used for checkout tests (must be RESERVED or READY in the DB)
-const ARC_ID = '95416a37-cca2-479d-850b-2d63774aa22d'
-// ARV-0010 UUID — a READY arc (not reserved)
-const READY_ARC_ID = '16757ea9-2f68-4738-8604-885c2cce3575'
+// ARV-0011 — reservierter Arc fuer die Checkout-Tests (aus den Fixtures)
+const ARC_ID = ARC.RESERVED.id
+// ARV-0010 — READY (nicht reserviert) → Checkout muss 404 liefern
+const READY_ARC_ID = ARC.ARV_0010.id
 
 // ── Entry & Reservation Check ─────────────────────────────────
 
 test('Checkout: non-existent arc_id returns 404', async ({ page }) => {
-  await page.goto('/checkout/00000000-0000-0000-0000-000000000000')
+  await page.goto(`/checkout/${NONEXISTENT_ID}`)
   await expect(page).toHaveTitle(/404/)
 })
 
@@ -45,7 +46,7 @@ async function seedConfig(page: import('@playwright/test').Page) {
 
 test('Checkout: shows arc, config, and price breakdown for reserved arc', async ({ page }) => {
   await seedConfig(page)
-  await expect(page.getByText('ARV-0005')).toBeVisible()
+  await expect(page.getByText('ARV-0011')).toBeVisible()
   await expect(page.getByText('Konfiguration')).toBeVisible()
   await expect(page.getByText('Preisaufschlüsselung')).toBeVisible()
   await expect(page.getByText('Jetzt fällig (30% Deposit)')).toBeVisible()

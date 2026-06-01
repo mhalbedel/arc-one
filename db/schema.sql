@@ -185,6 +185,7 @@ CREATE TABLE orders (
   mounting_price    INTEGER NOT NULL DEFAULT 0,
   finish_price      INTEGER NOT NULL DEFAULT 0,
   light_price       INTEGER NOT NULL DEFAULT 0,
+  sanding_price     INTEGER NOT NULL DEFAULT 0,
   shipping_price    INTEGER NOT NULL DEFAULT 0,
   total_price       INTEGER NOT NULL,
   estimated_days    INTEGER NOT NULL,
@@ -287,6 +288,10 @@ CREATE TABLE arcs (
   price_light_porcelain       INTEGER,
   price_light_bg_led          INTEGER,
   price_light_true_led        INTEGER,
+  price_sanding               INTEGER,  -- Schliff-Aufpreis in Cent (NULL = nicht kalkuliert)
+
+  -- Geschliffen-Status: TRUE = bereits geschliffen, FALSE = Rohling (base_price bezieht sich auf Rohling)
+  is_sanded           BOOLEAN NOT NULL DEFAULT FALSE,
 
   -- Featured on homepage (set by admin in PROJ-5)
   is_featured         BOOLEAN DEFAULT FALSE,
