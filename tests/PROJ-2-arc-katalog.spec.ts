@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test'
 
 test('Homepage: Hero section with headline and CTA is visible', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Unikat')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('EveryArc')
   await expect(page.getByRole('link', { name: 'Alle Arcs entdecken' })).toBeVisible()
 })
 
