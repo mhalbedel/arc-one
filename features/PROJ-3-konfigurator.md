@@ -1,10 +1,10 @@
 # PROJ-3: Konfigurator
 
-## Status: Approved
+## Status: Deployed
 **Created:** 2026-05-26
 **Last Updated:** 2026-06-01
 
-> **Refinement (2026-06-01) — QA bestanden (Approved), bereit für Deploy:** Zwei Änderungen in diesem Increment. (1) Neue "Ohne"-Optionen: "Ohne Befestigung", "Ohne Licht" und Finish "Unbehandelt". (2) **Verfügbarkeitsmodell umgestellt von Whitelist (`compat_*`) auf Opt-out (`blocked_options`):** per Default sind ALLE Optionen verfügbar; der Admin sperrt unmögliche Optionen pro Arc. Die Admin-Sperr-UI gehört zu PROJ-5; bis dahin werden Sperren per SQL gesetzt. Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Die deployte v1 bleibt live; dies ist ein Increment darauf. Nächster Schritt: `/qa`.
+> **Refinement (2026-06-01) — Deployed:** Zwei Änderungen in diesem Increment. (1) Neue "Ohne"-Optionen: "Ohne Befestigung", "Ohne Licht" und Finish "Unbehandelt". (2) **Verfügbarkeitsmodell umgestellt von Whitelist (`compat_*`) auf Opt-out (`blocked_options`):** per Default sind ALLE Optionen verfügbar; der Admin sperrt unmögliche Optionen pro Arc. Die Admin-Sperr-UI gehört zu PROJ-5; bis dahin werden Sperren per SQL gesetzt. Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Die deployte v1 bleibt live; dies ist ein Increment darauf. Nächster Schritt: `/qa`.
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — `arcs`-Tabelle, Reservierungsfelder (`reserved_until`, `reserved_by`), Aufpreis-Spalten, `blocked_options`-Spalte
@@ -501,3 +501,9 @@ Playwright: 36/36 ✅ (Chromium + Mobile Safari)
 **is_sanded Erweiterung — 2026-05-27**
 - 4-Schritt-Flow für Rohlinge live ✅
 - DB Migration `004_is_sanded.sql` muss manuell im Supabase SQL-Editor ausgeführt werden
+
+**Opt-out-Verfügbarkeit + Finish "Unbehandelt" — 2026-06-01**
+- Verfügbarkeitsmodell Whitelist → Opt-out (`blocked_options`); neue Optionen "Ohne Befestigung"/"Ohne Licht"/"Unbehandelt" live ✅
+- DB Migration `007_blocked_options.sql` in Prod-Supabase ausgeführt ✅
+- Keine neuen Env-Vars
+- Tag: `v1.5.0-PROJ-3`
