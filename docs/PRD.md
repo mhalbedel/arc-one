@@ -22,8 +22,9 @@ Kleines Team (1-3 Personen), das Arcs erfasst, Bestellungen verwaltet, Drops pla
 | P0 (MVP) | Datenbank-Schema & Supabase-Setup | Approved |
 | P0 (MVP) | Arc-Katalog (Homepage + Browse + Detail) | Deployed |
 | P0 (MVP) | Konfigurator (5 Schritte + Reservierung) | Deployed |
+| P0 (MVP) | Preisgestaltung (zentrale Preismatrix, PROJ-3a) | Planned |
 | P0 (MVP) | Pre-Order & Stripe (30%/70%-Split) | Deployed |
-| P0 (MVP) | Admin-Backend (verstecktes CMS) | Roadmap |
+| P0 (MVP) | Admin-Backend (verstecktes CMS — inkl. Pflege Preismatrix PROJ-3a) | Roadmap |
 | P1 | Drop & Warteliste | Roadmap |
 | P1 | E-Mail-System (Resend) | Roadmap |
 | P2 | B2B-Portal (Architekten) | Roadmap |
