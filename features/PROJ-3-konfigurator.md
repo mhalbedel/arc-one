@@ -2,7 +2,9 @@
 
 ## Status: Deployed
 **Created:** 2026-05-26
-**Last Updated:** 2026-05-27
+**Last Updated:** 2026-06-01
+
+> **Refinement (2026-06-01) — Planned, noch nicht implementiert:** Neue Optionen "Ohne Befestigung" und "Ohne Licht". Betroffene Acceptance Criteria sind mit **(NEU 2026-06-01)** markiert. Nächster Schritt: `/frontend`.
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — `arcs`-Tabelle, Reservierungsfelder (`reserved_until`, `reserved_by`), neue Aufpreis-Spalten
@@ -13,6 +15,8 @@
 
 - Als Endkunde möchte ich meinen Arc Schritt für Schritt konfigurieren (ggf. Schliff, Befestigung, ggf. Finish, Licht), damit ich ein auf meine Bedürfnisse abgestimmtes Angebot erhalte.
 - Als Endkunde möchte ich bei einem Rohling wählen können, ob er geschliffen werden soll, damit ich den Oberflächenzustand meines Arcs bestimme.
+- Als Endkunde möchte ich meinen Arc auch **ohne Befestigung** konfigurieren können, damit ich den Arc selbst montiere oder anderweitig verwende. **(NEU 2026-06-01)**
+- Als Endkunde möchte ich meinen Arc auch **ohne Licht** konfigurieren können, damit ich ihn als reines Objekt ohne Leuchtmittel erhalte. **(NEU 2026-06-01)**
 - Als Endkunde möchte ich klar sehen, wenn ein Arc bereits geschliffen ist und diese Eigenschaft nicht mehr geändert werden kann.
 - Als Endkunde möchte ich den Gesamtpreis nach jeder Auswahl live sehen, damit ich die Kosten vor der Reservierung kenne.
 - Als Endkunde möchte ich zwischen den Schritten frei hin- und herwechseln, damit ich meine Konfiguration anpassen kann.
@@ -50,6 +54,8 @@
 ### Schritt 1 (bei `is_sanded = true`) / Schritt 2 (bei `is_sanded = false`): Befestigung
 
 - [ ] Angenommen der Befestigungs-Schritt angezeigt wird, dann sind nur die Befestigungsoptionen sichtbar, die der Arc laut Kompatibilitäts-Flags unterstützt.
+- [ ] **(NEU 2026-06-01)** Angenommen der Befestigungs-Schritt angezeigt wird, dann erscheint zusätzlich zu den kompatiblen Optionen immer eine Karte "Ohne Befestigung" — unabhängig von den Kompatibilitäts-Flags des Arcs.
+- [ ] **(NEU 2026-06-01)** Angenommen der Nutzer wählt "Ohne Befestigung", wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum nächsten Schritt; es wird kein Befestigungs-Aufpreis berechnet (0 €) und kein Spinne-Stepper angezeigt.
 - [ ] Angenommen "Spinne" ist eine kompatible Option und der Nutzer wählt sie aus, dann erscheint direkt darunter ein Stepper für die Pendelanzahl (Minimum: 1, Maximum: `max_spinne_pendants`).
 - [ ] Angenommen "Spinne" ist ausgewählt und der Nutzer ändert die Auswahl, dann verschwindet der Stepper.
 - [ ] Angenommen der Nutzer hat eine Befestigungsart ausgewählt, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zum nächsten Schritt.
@@ -62,11 +68,15 @@
 ### Licht-Schritt
 
 - [ ] Angenommen der Licht-Schritt angezeigt wird, dann werden immer alle drei Lichtoptionen angezeigt: "Porzellan Fassung", "Hintergrund LED", "True Light LED".
+- [ ] **(NEU 2026-06-01)** Angenommen der Licht-Schritt angezeigt wird, dann erscheint zusätzlich immer eine vierte Karte "Ohne Licht".
+- [ ] **(NEU 2026-06-01)** Angenommen der Nutzer wählt "Ohne Licht", wenn er auf "Weiter" klickt, dann wechselt die Ansicht zur Zusammenfassung; es wird kein Licht-Aufpreis berechnet (0 €).
 - [ ] Angenommen der Nutzer wählt eine Lichtoption, wenn er auf "Weiter" klickt, dann wechselt die Ansicht zur Zusammenfassung.
 
 ### Zusammenfassung
 
 - [ ] Angenommen die Zusammenfassung angezeigt wird, dann sind alle gewählten Optionen (Oberfläche, Befestigung, ggf. Finish, Licht) und die Preisaufschlüsselung sichtbar.
+- [ ] **(NEU 2026-06-01)** Angenommen "Ohne Befestigung" gewählt wurde, dann zeigt die Befestigungs-Zeile "Ohne Befestigung" und es gibt keine Befestigungs-Aufpreiszeile.
+- [ ] **(NEU 2026-06-01)** Angenommen "Ohne Licht" gewählt wurde, dann zeigt die Licht-Zeile "Ohne Licht" und es gibt keine Licht-Aufpreiszeile.
 - [ ] Angenommen `is_sanded = true`, dann zeigt die Oberflächen-Zeile "Geschliffen" (fest, nicht klickbar).
 - [ ] Angenommen Schliff-Wahl = "Schleifen lassen", dann zeigt die Oberflächen-Zeile "Wird geschliffen".
 - [ ] Angenommen Schliff-Wahl = "Ungeschliffen belassen", dann zeigt die Oberflächen-Zeile "Ungeschliffen – Rohling" und es gibt keine Finish-Zeile.
@@ -104,6 +114,9 @@
 - **Arc mit `is_sanded = false` und gesetzten `price_finish_*` Spalten:** Finish-Aufpreise werden nur berücksichtigt, wenn Schliff-Wahl = "Schleifen lassen".
 - **Arc wechselt `is_sanded` während aktiver Session:** Der Konfigurator lädt `is_sanded` einmalig beim Seitenaufruf. Ändert ein Admin den Wert während der Session, hat das keine Auswirkung bis zum Reload.
 - **`price_sanding = null`:** Der Schliff-Schritt wird trotzdem angeboten; in der Preisaufschlüsselung erscheint keine Schliff-Zeile (Preis = 0, wie andere Aufpreise ohne Wert).
+- **"Ohne Befestigung" + "Ohne Licht" zusammen (NEU 2026-06-01):** Gültige Konfiguration — ein Arc kann sowohl ohne Befestigung als auch ohne Licht reserviert werden (Arc als reines Objekt). Beide Schritte bleiben im Flow, nur die jeweilige "Ohne ..."-Karte ist gewählt.
+- **Arc ohne kompatible Befestigungsoption (NEU 2026-06-01):** Der Befestigungs-Schritt zeigt mindestens die Karte "Ohne Befestigung" — der Schritt ist nie leer.
+- **"Ohne Befestigung" gewählt, danach zu Spinne gewechselt (NEU 2026-06-01):** Wechselt der Nutzer von "Ohne Befestigung" zu "Spinne", erscheint der Spinne-Stepper wie gewohnt; wechselt er zurück zu "Ohne Befestigung", verschwindet der Stepper.
 
 ## Technical Requirements
 
@@ -135,6 +148,9 @@
 | Schliff-Wahl ändert → alle nachfolgenden Selections zurücksetzen | Schliff-Entscheid ist fundamental (bestimmt ob Finish verfügbar ist); inkonsistente Downstream-Auswahlen wären schlimmer als ein Reset | 2026-05-27 |
 | Schrittanzahl dynamisch (5 oder 6) je nach Schliff-Wahl | Step-Indikator spiegelt den tatsächlichen Flow — erst nach der Schliff-Wahl wird klar ob Finish erscheint | 2026-05-27 |
 | `price_sanding` als nullable Spalte in `arcs` | Konsistentes Muster mit anderen Aufpreisen; Admin füllt den Preis aus wenn er ihn kalkuliert hat | 2026-05-27 |
+| "Ohne Befestigung" & "Ohne Licht" immer für jeden Arc wählbar (kein Admin-Flag) | Einfachste Umsetzung, konsistent mit "Lichtoptionen immer alle sichtbar"; kein neues Schema, keine Admin-Pflege (PROJ-5) nötig | 2026-06-01 |
+| "Ohne ..."-Optionen als zusätzliche Auswahl-Karte (kein Schritt-Skip) | Konsistent mit dem bestehenden Card-Pattern; Schritt-Indikator bleibt stabil; bewusste, explizite Nutzerwahl statt impliziter Skip | 2026-06-01 |
+| Aufpreis für "Ohne Befestigung"/"Ohne Licht" = 0 € (keine neue Preis-Spalte) | Wegfall einer Komponente kostet nichts; 0-€-Zeilen werden ohnehin in der Preisaufschlüsselung ausgeblendet | 2026-06-01 |
 
 ### Technical Decisions
 <!-- Added by /architecture -->
@@ -149,6 +165,8 @@
 | Keine neuen Pakete | Alle benötigten shadcn/ui Komponenten (Button, Card, Separator, Badge) bereits installiert | 2026-05-26 |
 | Steps-Array aus `is_sanded` zur Laufzeit berechnet | `KonfiguratorClient` erhält `is_sanded` als Prop und baut das Steps-Array einmalig beim Mount — kein Feature-Flag, kein Conditional im JSX auf Step-Ebene | 2026-05-27 |
 | Finish-Aufpreise bei `is_sanded=false` aus Preisberechnung ausschließen | Auch wenn `price_finish_*` in der DB gesetzt sind, werden sie ignoriert — Quelle der Wahrheit ist `is_sanded`, nicht das Vorhandensein eines Aufpreises | 2026-05-27 |
+| "Ohne Befestigung"/"Ohne Licht" als Client-State-Wert `'none'`, kein neues DB-Schema | `MountingType` und `LightType` erhalten jeweils den Wert `'none'`; Preisbeitrag fix 0 — keine Migration, keine neuen Spalten | 2026-06-01 |
+| "Ohne Befestigung"-Karte unabhängig von Kompatibilitäts-Flags rendern | Die Option ist nie inkompatibel (Weglassen ist immer möglich) — sie wird im Befestigungs-Schritt fest angehängt, nicht aus den Flags abgeleitet | 2026-06-01 |
 
 ---
 
@@ -176,13 +194,14 @@
     │
     ├── Step: Befestigung  (immer Schritt 1)
     │   ├── OptionCard × n  (nur kompatible Optionen)
+    │   ├── OptionCard "Ohne Befestigung"  (immer angehängt, mountingType='none')
     │   └── SpinneStepper  (bedingt — nur wenn "Spinne" gewählt)
     │
     ├── Step: Finish  [NUR wenn is_sanded = true]
     │   └── OptionCard × n  (nur kompatible Optionen)
     │
     ├── Step: Licht  (Schritt 2 bei is_sanded=false, Schritt 3 bei is_sanded=true)
-    │   └── OptionCard × 3  (immer alle 3)
+    │   └── OptionCard × 4  (3 Lichtoptionen + "Ohne Licht", lightType='none')
     │
     ├── Step: Zusammenfassung  (Schritt 3 oder 4)
     │   ├── KonfigSummary  (read-only: Befestigung, ggf. Finish, Licht, Oberflächenzustand)
