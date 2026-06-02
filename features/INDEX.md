@@ -16,7 +16,7 @@
 | ID | Feature | Status | Spec | Created |
 |----|---------|--------|------|---------|
 | PROJ-1 | Datenbank-Schema & Supabase-Setup | Approved | [PROJ-1](PROJ-1-datenbank-supabase-setup.md) | 2026-05-26 |
-| PROJ-2 | Arc-Katalog | Approved | [PROJ-2](PROJ-2-arc-katalog.md) | 2026-05-26 |
+| PROJ-2 | Arc-Katalog | Deployed | [PROJ-2](PROJ-2-arc-katalog.md) | 2026-05-26 |
 | PROJ-3 | Konfigurator | Deployed | [PROJ-3](PROJ-3-konfigurator.md) | 2026-05-26 |
 | PROJ-3a | Preisgestaltung (Konfigurator) | Deployed | [PROJ-3a](PROJ-3a-preisgestaltung.md) | 2026-06-01 |
 | PROJ-4 | Pre-Order & Stripe | Deployed | [PROJ-4](PROJ-4-pre-order-stripe.md) | 2026-05-26 |

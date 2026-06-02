@@ -1,6 +1,6 @@
 # PROJ-2: Arc-Katalog
 
-## Status: Approved
+## Status: Deployed
 **Created:** 2026-05-26
 **Last Updated:** 2026-06-02
 
@@ -427,3 +427,10 @@ Die 3 offenen ACs (H-3, H-5, D-2) sind **Testdaten-Limitierungen**, keine Code-F
 **is_sanded Erweiterung — 2026-05-27**
 - Badge + Hinweistext auf Detailseite live ✅
 - DB Migration `004_is_sanded.sql` muss manuell im Supabase SQL-Editor ausgeführt werden
+
+**Homepage-Sektionen — 2026-06-02**
+- **Production URL:** https://arc-one-seven.vercel.app (Deploy via `vercel --prod`)
+- Brand Statement, USP-3-Säulen, Featured-Drop-Teaser und Manufaktur-Teaser live ✅
+- Live verifiziert: Home 200, alle Sektionen vorhanden, `/icon.svg` 200 (favicon-404 behoben), `/arcs` 200 (keine Regression)
+- Keine neuen Env-Vars, keine DB-Migration (liest bestehende `arcs`/`drops`-Tabellen)
+- Tag: `v1.8.0-PROJ-2-homepage`
