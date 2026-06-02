@@ -2,17 +2,23 @@
 
 ## Status: In Progress
 **Created:** 2026-05-26
-**Last Updated:** 2026-05-27
+**Last Updated:** 2026-06-02
+
+> **Refinement (2026-06-02) — Spec-only, noch nicht implementiert:** Basierend auf der Gap-Analyse (`docs/planning/GAP-ANALYSE_Sitemap-Copywriting.md`) und einer Produktklärung. Drei Änderungen: (1) **Homepage erweitert** um Brand Statement, USP-3-Säulen, Featured-Drop-Teaser und Manufaktur-Teaser (Copy aus dem Copywriting-Deck). (2) **Abgrenzung geschärft:** Katalog und Konfigurator gelten ausschließlich für konfigurierbare **Arcs**; fertige Nicht-Arc-Objekte (Tischlampen-als-Fertigprodukt, Möbel, Tische, Schalen) gehören in die neue Showcase-Seite **PROJ-12** (kein Konfigurator, kein Stripe). (3) **Series-/Montage-Filter** (Tisch/Decke/Cluster) bleibt bewusst **deferred**. Neue Acceptance Criteria sind mit **(NEU 2026-06-02)** markiert. Die deployte v1 bleibt live; dies ist ein Increment darauf.
 
 ## Dependencies
 - PROJ-1 (Datenbank-Schema & Supabase-Setup) — Arc-Daten, RLS-Policies
 - PROJ-5 (Admin-Backend) — Admin wählt Highlight-Arcs für die Homepage aus
 - PROJ-3 (Konfigurator) — CTA "Arc konfigurieren" auf der Detailseite verlinkt dorthin
-- PROJ-6 (Drop & Warteliste) — Leerzustand der Browse-Seite verlinkt zur Warteliste
+- PROJ-6 (Drop & Warteliste) — Leerzustand der Browse-Seite verlinkt zur Warteliste; Featured-Drop-Teaser auf der Homepage zieht den aktuellen Drop **(NEU 2026-06-02)**
+- PROJ-11 (Die Manufaktur) — Manufaktur-Teaser auf der Homepage verlinkt zur Manufaktur-Seite **(NEU 2026-06-02)**
+- PROJ-12 (Kollektionen / Showcase) — nimmt fertige Nicht-Arc-Objekte auf, die NICHT im Arc-Katalog/Konfigurator erscheinen **(NEU 2026-06-02)**
 
 ## User Stories
 
 - Als Endkunde möchte ich die Homepage besuchen, damit ich einen ersten Eindruck von ARC-ONE bekomme und zum Katalog weiterfinde.
+- Als Endkunde möchte ich auf der Homepage die Markenhaltung (Brand Statement) und die drei Kern-Argumente (Unikat, Handschliff, CRI 98) verstehen, damit ich nachvollziehe, wofür ARC-ONE steht. **(NEU 2026-06-02)**
+- Als Endkunde möchte ich auf der Homepage einen Hinweis auf den aktuellen Drop und einen Einstieg in die Manufaktur-Geschichte sehen, damit ich tiefer in die Marke eintauchen kann. **(NEU 2026-06-02)**
 - Als Endkunde möchte ich alle verfügbaren Arcs in einer Übersicht sehen, damit ich den richtigen Arc für mich finden kann.
 - Als Endkunde möchte ich Arcs nach Preis sortieren, damit ich Arcs in meinem Budget-Rahmen schnell erkenne.
 - Als Endkunde möchte ich die Details eines Arcs sehen (Fotos, Maße, Charakter, Kompatibilität, Preis, Oberflächenzustand), damit ich eine fundierte Kaufentscheidung treffen kann.
@@ -22,6 +28,8 @@
 
 ## Out of Scope
 
+- **Nicht-Arc-Produkte** (fertige Tischlampen-als-Produkt, Möbel, Tische, Schalen & Accessoires) — gehören in die separate Showcase-Seite **PROJ-12** (Präsentation + Anfrage, kein Konfigurator, kein Stripe). Der Arc-Katalog und der Konfigurator gelten ausschließlich für konfigurierbare **Arcs** aus der `arcs`-Tabelle. **(NEU 2026-06-02)**
+- **Series-/Montage-Filter** (Tischlampe / Hängeleuchte / Cluster als Ansicht über konfigurierbare Arcs) — Konzept akzeptiert (Lampen-„Series" sind nur Montage-Varianten eines Arcs: Standfuß / Decke / Spinne), aber bewusst **deferred** (zu wenig Arcs im MVP); wird in einem späteren Increment gespeect. **(NEU 2026-06-02)**
 - **3D-Scan-Viewer** — model-viewer Web Component wird in einer späteren Iteration ergänzt
 - **Filter** (nach Maßen, Befestigungsart, Finish, Waldsektor) — zu wenig Arcs im MVP für sinnvolle Filter; deferred
 - **Pagination / Infinite Scroll** — alle READY-Arcs auf einer Seite; deferred wenn nötig
@@ -38,6 +46,10 @@
 
 - [ ] Angenommen ein Nutzer öffnet die Homepage, wenn die Seite lädt, dann wird ein Hero-Bereich mit Headline, kurzer Markenstory und einem CTA-Button "Alle Arcs entdecken" angezeigt.
 - [ ] Angenommen der Nutzer klickt auf "Alle Arcs entdecken", wenn der Button geklickt wird, dann wird er zur Browse-Ansicht (`/arcs`) weitergeleitet.
+- [ ] **(NEU 2026-06-02)** Angenommen die Homepage lädt, dann wird unterhalb des Hero ein **Brand-Statement-Abschnitt** mit dem Marken-Text aus dem Copy-Deck angezeigt (Quelle: Copywriting v1, „01 — Homepage / Brand Statement").
+- [ ] **(NEU 2026-06-02)** Angenommen die Homepage lädt, dann werden die **drei USP-Säulen** angezeigt: „Kein zweites auf der Welt", „Zwei Stunden Schliff. Pro Stück." und „Licht mit CRI 98" (je Headline + Kurztext aus dem Copy-Deck).
+- [ ] **(NEU 2026-06-02)** Angenommen ein aktiver Drop existiert (PROJ-6, Status SCHEDULED/LIVE), wenn die Homepage lädt, dann wird ein **Featured-Drop-Teaser** (Label „Aktueller Drop", Headline, Kurzbeschreibung, CTA) angezeigt; existiert kein aktiver Drop, ist der Teaser vollständig ausgeblendet.
+- [ ] **(NEU 2026-06-02)** Angenommen die Homepage lädt, dann wird ein **Manufaktur-Teaser** („Vom Wald in die Werkstatt.") mit CTA „Die Geschichte dahinter" angezeigt, der zur Manufaktur-Seite (PROJ-11) verlinkt (bis PROJ-11 live ist: Platzhalter-Ziel).
 - [ ] Angenommen der Admin hat mindestens einen Highlight-Arc ausgewählt, wenn die Homepage geladen wird, dann werden bis zu 3 Highlight-Arc-Karten (Foto, Seriennummer, Preis, CTA "Arc entdecken") unterhalb der Markenstory angezeigt.
 - [ ] Angenommen kein Highlight-Arc ausgewählt wurde, wenn die Homepage geladen wird, dann ist der Highlight-Abschnitt vollständig ausgeblendet (keine leere Section, kein Platzhalter).
 - [ ] Angenommen eine Highlight-Arc-Karte angezeigt wird, wenn der Nutzer darauf klickt, dann wird er zur Detailseite dieses Arcs (`/arcs/[serial-number]`) weitergeleitet.
@@ -115,8 +127,11 @@ isSanded: boolean
 
 ## Open Questions
 
-- [ ] Welche Ziel-URL hat der Konfigurator? (wird in PROJ-3 definiert — CTA vorerst als Platzhalter `/konfigurator/[arc-id]`)
-- [ ] Welche Felder der Highlight-Arc-Auswahl werden im Schema gespeichert — `is_featured` Boolean in `arcs` oder separate Config-Tabelle? (wird in PROJ-5 / Architecture entschieden)
+- [x] Welche Ziel-URL hat der Konfigurator? → `/konfigurator/[arc_id]` (in PROJ-3 definiert und live)
+- [x] Welche Felder der Highlight-Arc-Auswahl werden im Schema gespeichert? → `is_featured` Boolean auf `arcs` (entschieden, siehe Decision Log)
+- [x] Gehören Tischlampen/Möbel/Tische in den Arc-Katalog? → Nein. Katalog/Konfigurator = nur konfigurierbare Arcs; fertige Nicht-Arc-Objekte → eigene Showcase-Seite PROJ-12 (2026-06-02)
+- [ ] Series-/Montage-Filter (Tisch/Decke/Cluster): Wann wird er gespeect, und reicht das `mounting`-Modell als Filterquelle oder braucht es ein Kategorie-Feld? (deferred — eigenes Increment)
+- [ ] Manufaktur-Teaser-Ziel: harte URL der Manufaktur-Seite (wird in PROJ-11 definiert — CTA vorerst Platzhalter)
 
 ## Decision Log
 
@@ -124,6 +139,11 @@ isSanded: boolean
 
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| Katalog + Konfigurator gelten ausschließlich für konfigurierbare Arcs | Der Konfigurator lädt strukturell nur aus der `arcs`-Tabelle; fertige Nicht-Arc-Objekte (Tischlampen-Produkt, Möbel, Tische, Schalen) dürfen nie in den Konfigurator-Flow geraten | 2026-06-02 |
+| Nicht-Arc-Objekte bekommen eine eigene Showcase-Seite (PROJ-12) statt Katalog-Eintrag | Klare Trennung: Arcs = konfigurierbar + Pre-Order/Stripe; Nicht-Arc-Objekte = Präsentation + Anfrage. Verhindert Vermischung im Katalog, dessen Karten alle zum Konfigurator führen | 2026-06-02 |
+| Homepage um Brand Statement, USP-3-Säulen, Featured-Drop- und Manufaktur-Teaser erweitert | Copy-Deck liefert eine vollständigere Markenführung als der reine Hero; stärkt den ersten Eindruck und die Journey-Einstiege (Drop, Manufaktur) | 2026-06-02 |
+| Series = Montage-Varianten von Arcs, Filter statt eigener Seite — aber deferred | „Tischlampe/Hängeleuchte/Cluster" sind nur Montagearten (Standfuß/Decke/Spinne) konfigurierbarer Arcs; ein Filter über das `mounting`-Modell genügt, lohnt sich aber erst bei mehr Arcs | 2026-06-02 |
+| Copy-Deck (`docs/planning/ARCO_ONE_Copywriting_v1_2.docx`) als verbindliche Textquelle; Markenname konsistent „ARC-ONE" | Einheitliche Texte + Schreibweise (nicht „ARCO ONE"), siehe Gap-Analyse-Entscheidung 9.1 | 2026-06-02 |
 | Grundpreis bezieht sich immer auf den ungeschliffenen Rohling | Rohlinge sind die physische Ausgangsbasis; Schliff/Finish werden im Konfigurator gewählt und separat bepreist | 2026-05-27 |
 | `is_sanded` als Boolean-Spalte in `arcs` | Einfachste Abbildung: jeder Arc ist entweder geschliffen oder nicht — kein Enum nötig | 2026-05-27 |
 | Hinweistext "Grundpreis = Rohling" nur bei `is_sanded=false` | Bei bereits geschliffenen Arcs ist der Hinweis nicht nötig; vermeidet Verwirrung | 2026-05-27 |

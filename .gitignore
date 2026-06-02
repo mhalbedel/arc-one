@@ -46,3 +46,6 @@ next-env.d.ts
 # Test Results
 playwright-report
 test-results
+
+# Planning source documents (binary)
+docs/planning/*.docx

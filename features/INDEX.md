@@ -26,7 +26,12 @@
 | PROJ-8 | B2B-Portal | Roadmap | — | 2026-05-26 |
 | PROJ-9 | Art Tier | Roadmap | — | 2026-05-26 |
 | PROJ-10 | SEO & Performance | Roadmap | — | 2026-05-26 |
+| PROJ-11 | Die Manufaktur (Content-Seiten) | Roadmap | — | 2026-06-02 |
+| PROJ-12 | Kollektionen / Showcase (Nicht-Arc-Objekte) | Roadmap | — | 2026-06-02 |
+| PROJ-13 | Service & Rechtliches (FAQ, Versand, Kontakt, Impressum, Datenschutz) | Roadmap | — | 2026-06-02 |
 
 <!-- Add features above this line -->
 
-## Next Available ID: PROJ-11
+> Hinweis: PROJ-12 ist eine **Showcase-/Anfrage-Seite für fertige Nicht-Arc-Objekte** (Tischlampen-Produkt, Möbel, Tische, Schalen) — kein Konfigurator, kein Stripe. Lampen-„Series" (Tisch/Decke/Cluster) bleiben dagegen Montage-Varianten konfigurierbarer Arcs und werden später als Filter im Arc-Katalog (PROJ-2) abgebildet.
+
+## Next Available ID: PROJ-14

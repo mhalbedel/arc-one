@@ -1,0 +1,237 @@
+
+<h2 class="sr-only">ARCO ONE – Sitemap v3 inkl. Befestigungssysteme im Konfigurator</h2>
+
+<style>
+.jtab{padding:6px 14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;background:transparent;color:var(--color-text-secondary);transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.jtab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500}
+.jtab[data-j="sammler"].active{border-color:#534AB7;color:#534AB7}
+.jtab[data-j="architekt"].active{border-color:#0F6E56;color:#0F6E56}
+.jtab[data-j="drop"].active{border-color:#854F0B;color:#854F0B}
+.jtab[data-j="admin"].active{border-color:#5F5E5A;color:var(--color-text-primary)}
+.sec-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 14px;transition:opacity .25s}
+.adm-card{background:var(--color-background-secondary);border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:12px 14px;transition:opacity .25s}
+.sec-card.dimmed,.adm-card.dimmed{opacity:.22}
+.sec-hdr{display:flex;align-items:center;gap:6px;margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.sec-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.page-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;color:var(--color-text-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);transition:all .2s}
+.page-item:last-child{border-bottom:none}
+.page-item.active{color:var(--color-text-primary);font-weight:500}
+.page-item.dimmed{opacity:.15}
+.page-item.pi-div{font-size:11px;justify-content:center;pointer-events:none;font-style:italic}
+.page-item.pi-new{border-left:2px solid var(--color-border-info);padding-left:6px}
+.page-item.pi-new.active{border-left-color:var(--color-border-info)}
+.jbadge{font-size:10px;padding:1px 5px;border-radius:3px;margin-left:2px;font-weight:500;line-height:1.7}
+.jbadge-s{background:#EEEDFE;color:#3C3489}
+.jbadge-a{background:#E1F5EE;color:#085041}
+.jbadge-d{background:#FAEEDA;color:#633806}
+.jbadge-m{background:#D3D1C7;color:#2C2C2A}
+.jstep{padding:4px 10px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;white-space:nowrap}
+.jstep-sammler{background:#EEEDFE;color:#3C3489}
+.jstep-architekt{background:#E1F5EE;color:#085041}
+.jstep-drop{background:#FAEEDA;color:#633806}
+.jstep-admin{background:#D3D1C7;color:#2C2C2A}
+.jarr{font-size:13px;color:var(--color-text-tertiary);padding:0 2px}
+.adm-sep{display:flex;align-items:center;gap:10px;margin:20px 0 12px}
+.adm-sep-line{flex:1;height:0.5px;background:var(--color-border-secondary)}
+.adm-sep-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-tertiary);padding:4px 10px;border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);white-space:nowrap}
+@media (prefers-color-scheme:dark){
+  .jbadge-s,.jstep-sammler{background:#26215C;color:#AFA9EC}
+  .jbadge-a,.jstep-architekt{background:#04342C;color:#5DCAA5}
+  .jbadge-d,.jstep-drop{background:#412402;color:#EF9F27}
+  .jbadge-m,.jstep-admin{background:#444441;color:#D3D1C7}
+  .jtab[data-j="sammler"].active{border-color:#AFA9EC;color:#AFA9EC}
+  .jtab[data-j="architekt"].active{border-color:#5DCAA5;color:#5DCAA5}
+  .jtab[data-j="drop"].active{border-color:#EF9F27;color:#EF9F27}
+}
+</style>
+
+<div style="padding:0.75rem 0">
+
+<div style="display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap">
+  <button class="jtab active" data-j="all" onclick="setJ('all')">Alle Seiten</button>
+  <button class="jtab" data-j="sammler" onclick="setJ('sammler')">Sammler-Journey</button>
+  <button class="jtab" data-j="architekt" onclick="setJ('architekt')">Architekt-Journey</button>
+  <button class="jtab" data-j="drop" onclick="setJ('drop')">Drop-Journey</button>
+  <button class="jtab" data-j="admin" onclick="setJ('admin')"><i class="ti ti-lock" style="font-size:12px" aria-hidden="true"></i>Admin</button>
+</div>
+
+<div id="jflow" style="display:none;margin-bottom:1.25rem;padding:12px 16px;border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary)">
+  <p id="jdesc" style="font-size:12px;color:var(--color-text-secondary);margin:0 0 10px;line-height:1.5"></p>
+  <div id="jsteps" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"></div>
+</div>
+
+<div id="sitemap" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start"></div>
+
+<div class="adm-sep">
+  <div class="adm-sep-line"></div>
+  <div class="adm-sep-pill"><i class="ti ti-lock" style="font-size:11px" aria-hidden="true"></i>Admin-Backend · kein Link im Frontend · nicht indexiert</div>
+  <div class="adm-sep-line"></div>
+</div>
+
+<div id="adm-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+
+<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+  <span style="font-size:11px;color:var(--color-text-tertiary)">Journey-Tags:</span>
+  <span class="jbadge jbadge-s">S Sammler</span>
+  <span class="jbadge jbadge-a">A Architekt</span>
+  <span class="jbadge jbadge-d">D Drop</span>
+  <span class="jbadge jbadge-m">ADM Admin</span>
+  <span style="font-size:11px;color:var(--color-border-info);margin-left:8px">│ neu</span>
+  <span style="font-size:11px;color:var(--color-text-tertiary)">Tab auswählen, um Pfad zu sehen</span>
+</div>
+</div>
+
+<script>
+const jData={
+  sammler:{desc:'Privater Sammler entdeckt ein Unikat, konfiguriert Befestigung, Finish und Lichtsystem und bestellt sein persönliches Objekt.',steps:['Home','Unikat-Katalog','Rohling-Detail','Konfigurator','Pre-Order']},
+  architekt:{desc:'Innenarchitekt recherchiert für ein Luxusprojekt, lädt CAD-Unterlagen herunter und stellt eine Projektanfrage.',steps:['Home','B2B-Portal','CAD & Specs','Smart Home Info','Projektanfrage']},
+  drop:{desc:'Design-Enthusiast registriert sich für einen Drop, erhält den Alert per E-Mail und sichert ein limitiertes Objekt.',steps:['Home','Drops & Releases','Warteliste','Drop-Alert (E-Mail)','Checkout']},
+  admin:{desc:'Administrator erfasst neue Rohlinge (3D-Scan, Fotos, Metadaten), plant Drops, verarbeitet Bestellungen und pflegt Website-Inhalte. Zugang nur über interne URL /admin.',steps:['Admin-Login','+Rohling erfassen','Drop planen','Aufträge verwalten','Inhalte pflegen']}
+};
+
+const secs=[
+  {id:'home',title:'Home / Landing',icon:'ti-home',col:0,pages:[
+    {l:'Brand Story & Vision',j:['sammler','architekt','drop']},
+    {l:'Featured Unikat (Hero)',j:['sammler','drop']},
+    {l:'Drops-Preview & CTA',j:['drop']},
+    {l:'Manufaktur-Teaser',j:[]},
+    {l:'B2B-Zugang (Link)',j:['architekt']}
+  ]},
+  {id:'manufaktur',title:'Die Manufaktur',icon:'ti-tool',col:1,pages:[
+    {l:'Geschichte & Herkunft',j:[]},
+    {l:'Material: Eukalyptusholz',j:[]},
+    {l:'Portugal & Mecklenburg',j:[]},
+    {l:'Handwerk & Schleifprozess',j:['sammler']},
+    {l:'Werkstatt-Einblicke (Film)',j:[]}
+  ]},
+  {id:'katalog',title:'Unikat-Katalog',icon:'ti-3d-cube-sphere',col:0,pages:[
+    {l:'3D-Rohling-Browser (~3.000)',j:['sammler']},
+    {l:'Filter & Suche',j:['sammler']},
+    {l:'Rohling-Detail + 3D-Viewer',j:['sammler']},
+    {l:'Maße & technische Daten',j:['sammler','architekt']},
+    {l:'Unique Seriality – Unikat-Garantie',j:['sammler']},
+    {l:'── Konfigurator ──',j:[],div:true},
+    {l:'Befestigung: Ohne / Wand / Decke / Spinne',j:['sammler','architekt'],isnew:true},
+    {l:'Finish: Öl / Lack / Schellack',j:['sammler']},
+    {l:'Lichtsystem: Std / LED / 98 CRI',j:['sammler']},
+    {l:'Lichtvisualisierung (Live-Preview)',j:['sammler']},
+    {l:'Echtzeit-Kalkulation',j:['sammler']},
+    {l:'Pre-Order & Checkout',j:['sammler','drop']}
+  ]},
+  {id:'drops',title:'Drops & Warteliste',icon:'ti-bell',col:1,pages:[
+    {l:'Aktuelle Drops',j:['drop']},
+    {l:'Kommende Drops',j:['drop']},
+    {l:'Warteliste beitreten',j:['drop']},
+    {l:'Drop-Archiv',j:[]}
+  ]},
+  {id:'kollektionen',title:'Kollektionen (Series)',icon:'ti-layout-grid',col:0,pages:[
+    {l:'Tischlampen',j:[]},
+    {l:'Hängeleuchten',j:[]},
+    {l:'Accessoires & Schalen',j:[]},
+    {l:'Cluster-Installationen',j:['architekt']}
+  ]},
+  {id:'art',title:'Art Tier (Wurzelholz)',icon:'ti-palette',col:1,pages:[
+    {l:'Wurzelholz-Ornamentik',j:[]},
+    {l:'Monumentale Tischplatten',j:[]},
+    {l:'Galerie-Ansicht',j:[]},
+    {l:'Anfrage (ab 10.000 €)',j:['architekt']}
+  ]},
+  {id:'b2b',title:'B2B / Architekt-Portal',icon:'ti-building-arch',col:0,pages:[
+    {l:'Zugang & Registrierung',j:['architekt']},
+    {l:'CAD-Daten & Downloads',j:['architekt']},
+    {l:'Technische Spezifikationen',j:['architekt']},
+    {l:'Smart Home: DALI / KNX',j:['architekt']},
+    {l:'Brandschutz & CE-Zertifizierung',j:['architekt']},
+    {l:'Projektanfrage & Kontakt',j:['architekt']}
+  ]},
+  {id:'meta',title:'Service & Rechtliches',icon:'ti-info-circle',col:1,pages:[
+    {l:'FAQ & Pflege-Hinweise',j:['sammler']},
+    {l:'Versand & Lieferzeit',j:['sammler','drop']},
+    {l:'Kontakt / Atelier',j:['sammler','architekt']},
+    {l:'Impressum & Datenschutz',j:[]}
+  ]}
+];
+
+const admSecs=[
+  {id:'adm-rohling',title:'Rohling-Verwaltung',icon:'ti-database',pages:[
+    {l:'3D-Scan & Foto-Upload (2 Seiten)',j:['admin']},
+    {l:'Maße & Metadaten erfassen',j:['admin']},
+    {l:'Kategorie & Finish-Eignung',j:['admin']},
+    {l:'Befestigungs-Kompatibilität',j:['admin'],isnew:true},
+    {l:'Status-Workflow: Roh → Fertig → Sold',j:['admin']},
+    {l:'Drop zuweisen / archivieren',j:['admin']}
+  ]},
+  {id:'adm-drop',title:'Drop & Auftragsmanagement',icon:'ti-package',pages:[
+    {l:'Drop erstellen & terminieren',j:['admin']},
+    {l:'Unikate einem Drop zuweisen',j:['admin']},
+    {l:'Warteliste einsehen',j:['admin']},
+    {l:'Drop-Alert manuell auslösen',j:['admin']},
+    {l:'Pre-Orders & Konfigurationen',j:['admin']},
+    {l:'Produktionsstatus & Versand',j:['admin']}
+  ]},
+  {id:'adm-content',title:'Content & System',icon:'ti-settings',pages:[
+    {l:'Homepage & CMS-Texte',j:['admin']},
+    {l:'Preis-Kalkulations-Regeln',j:['admin']},
+    {l:'B2B-Accounts & Anfragen',j:['admin']},
+    {l:'CAD-Datei-Verwaltung',j:['admin']},
+    {l:'Benutzerverwaltung',j:['admin']},
+    {l:'System-Einstellungen & Logs',j:['admin']}
+  ]}
+];
+
+function buildCard(s,cls){
+  const card=document.createElement('div');
+  card.className=cls;
+  card.id='sec-'+s.id;
+  let h=`<div class="sec-hdr"><i class="ti ${s.icon}" style="font-size:14px;color:var(--color-text-secondary)" aria-hidden="true"></i><span class="sec-title">${s.title}</span></div>`;
+  s.pages.forEach(p=>{
+    const badges=p.j.map(jj=>{
+      const c=jj==='sammler'?'s':jj==='architekt'?'a':jj==='drop'?'d':'m';
+      const l=jj==='sammler'?'S':jj==='architekt'?'A':jj==='drop'?'D':'ADM';
+      return`<span class="jbadge jbadge-${c}">${l}</span>`;
+    }).join('');
+    let dcls='page-item'+(p.div?' pi-div':'')+(p.isnew?' pi-new':'');
+    h+=`<div class="${dcls}" data-j="${p.j.join(' ')}"><span>${p.l}${p.isnew?' <span style="font-size:10px;color:var(--color-text-info);font-style:normal">neu</span>':''}</span><span>${badges}</span></div>`;
+  });
+  card.innerHTML=h;
+  return card;
+}
+
+const grid=document.getElementById('sitemap');
+const colDivs=[0,1].map(()=>{
+  const d=document.createElement('div');
+  d.style.cssText='display:flex;flex-direction:column;gap:10px';
+  grid.appendChild(d);
+  return d;
+});
+secs.forEach(s=>colDivs[s.col].appendChild(buildCard(s,'sec-card')));
+
+const admGrid=document.getElementById('adm-grid');
+admSecs.forEach(s=>admGrid.appendChild(buildCard(s,'adm-card')));
+
+function setJ(j){
+  document.querySelectorAll('.jtab').forEach(t=>t.classList.toggle('active',t.dataset.j===j));
+  const flow=document.getElementById('jflow');
+  if(j==='all'){
+    flow.style.display='none';
+    document.querySelectorAll('.sec-card,.adm-card').forEach(c=>c.classList.remove('dimmed'));
+    document.querySelectorAll('.page-item').forEach(p=>p.classList.remove('active','dimmed'));
+  } else {
+    flow.style.display='block';
+    const d=jData[j];
+    document.getElementById('jdesc').textContent=d.desc;
+    document.getElementById('jsteps').innerHTML=d.steps.map((s,i)=>
+      `<span class="jstep jstep-${j}">${s}</span>`+(i<d.steps.length-1?'<span class="jarr">→</span>':'')).join('');
+    document.querySelectorAll('.page-item').forEach(p=>{
+      if(p.classList.contains('pi-div'))return;
+      const m=(p.dataset.j||'').split(' ').filter(Boolean).includes(j);
+      p.classList.toggle('active',m);
+      p.classList.toggle('dimmed',!m);
+    });
+    document.querySelectorAll('.sec-card,.adm-card').forEach(c=>{
+      const has=c.querySelectorAll('.page-item.active').length>0;
+      c.classList.toggle('dimmed',!has);
+    });
+  }
+}
+</script>
