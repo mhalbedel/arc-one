@@ -407,4 +407,9 @@ Status/Notiz), Preismatrix-Pflege. Plus QA-Fixes LOW-1..4.
 - **Prod-Admin** vorhanden: `auth.users` mit `app_metadata.role='admin'` UND `admin_profiles`-Zeile (`auth_user_id`) — beides noetig fuers Gate und alle Schreibvorgaenge (RLS `is_admin()`).
 
 ### Post-Deploy-Verifikation
-_Wird nach dem Vercel-Build ergaenzt._
+Vercel-Build **Ready** (42s, Production). Gegen https://arc-one-seven.vercel.app geprueft:
+- `GET /` → 200.
+- `GET /admin` (nicht eingeloggt) → 307 → `/admin/login` (Auth-Gate live).
+- `GET /admin/arcs` (nicht eingeloggt) → 307 → `/admin/login`.
+- `GET /admin/login` → 200, rendert das Login-Formular ("ARC-ONE Admin").
+- Homepage enthaelt **keine** `/admin`-Links (verstecktes CMS bestaetigt).
