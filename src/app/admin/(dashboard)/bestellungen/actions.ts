@@ -27,11 +27,15 @@ export async function updateOrderStatus(
     patch.confirmed_by = user?.id ?? null
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('orders')
     .update(patch as never)
     .eq('id', id)
+    .select('id')
   if (error) return { error: error.message }
+  if (!data || data.length === 0) {
+    return { error: 'Bestellung nicht gefunden oder kein Schreibzugriff.' }
+  }
 
   revalidatePath('/admin/bestellungen')
   revalidatePath(`/admin/bestellungen/${id}`)
@@ -40,11 +44,15 @@ export async function updateOrderStatus(
 
 export async function saveAdminNotes(id: string, notes: string): Promise<{ error?: string }> {
   const supabase = await createClient()
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('orders')
     .update({ admin_notes: notes.trim() || null } as never)
     .eq('id', id)
+    .select('id')
   if (error) return { error: error.message }
+  if (!data || data.length === 0) {
+    return { error: 'Bestellung nicht gefunden oder kein Schreibzugriff.' }
+  }
 
   revalidatePath(`/admin/bestellungen/${id}`)
   return {}

@@ -36,11 +36,15 @@ export async function saveArc(input: ArcInput): Promise<{ error?: string; id?: s
   const { id, ...fields } = input
 
   if (id) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('arcs')
       .update(fields as never)
       .eq('id', id)
+      .select('id')
     if (error) return { error: mapArcError(error) }
+    if (!data || data.length === 0) {
+      return { error: 'Arc nicht gefunden oder kein Schreibzugriff.' }
+    }
     revalidatePath('/admin/arcs')
     revalidatePath(`/admin/arcs/${id}`)
     return { id }
@@ -59,11 +63,15 @@ export async function saveArc(input: ArcInput): Promise<{ error?: string; id?: s
 export async function archiveArc(id: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const status: ArcStatus = 'ARCHIVED'
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('arcs')
     .update({ status } as never)
     .eq('id', id)
+    .select('id')
   if (error) return { error: error.message }
+  if (!data || data.length === 0) {
+    return { error: 'Arc nicht gefunden oder kein Schreibzugriff.' }
+  }
   revalidatePath('/admin/arcs')
   revalidatePath(`/admin/arcs/${id}`)
   return {}

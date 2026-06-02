@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -257,44 +257,49 @@ export function ArcForm({ arc }: { arc?: Arc }) {
         <h2 className="text-sm font-medium text-muted-foreground">Stammdaten</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Seriennummer *" error={errors.serial}>
-            <Input value={serial} onChange={(e) => setSerial(e.target.value)} placeholder="z.B. ARC-001" />
+            {(id) => (
+              <Input id={id} value={serial} onChange={(e) => setSerial(e.target.value)} placeholder="z.B. ARC-001" />
+            )}
           </Field>
           <Field label="Basispreis (EUR) *" error={errors.basePrice}>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={basePriceEur}
-              onChange={(e) => setBasePriceEur(e.target.value)}
-            />
+            {(id) => (
+              <Input
+                id={id}
+                type="number"
+                step="0.01"
+                min="0"
+                value={basePriceEur}
+                onChange={(e) => setBasePriceEur(e.target.value)}
+              />
+            )}
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-4">
           <Field label="Breite (cm) *" error={errors.width}>
-            <Input type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} />
+            {(id) => <Input id={id} type="number" step="0.1" value={width} onChange={(e) => setWidth(e.target.value)} />}
           </Field>
           <Field label="Hoehe (cm) *" error={errors.height}>
-            <Input type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} />
+            {(id) => <Input id={id} type="number" step="0.1" value={height} onChange={(e) => setHeight(e.target.value)} />}
           </Field>
           <Field label="Tiefe (cm) *" error={errors.depth}>
-            <Input type="number" step="0.1" value={depth} onChange={(e) => setDepth(e.target.value)} />
+            {(id) => <Input id={id} type="number" step="0.1" value={depth} onChange={(e) => setDepth(e.target.value)} />}
           </Field>
           <Field label="Gewicht (g) *" error={errors.weight}>
-            <Input type="number" step="1" value={weight} onChange={(e) => setWeight(e.target.value)} />
+            {(id) => <Input id={id} type="number" step="1" value={weight} onChange={(e) => setWeight(e.target.value)} />}
           </Field>
         </div>
         <Field label="Charakter (Katalogtext)">
-          <Textarea value={character} onChange={(e) => setCharacter(e.target.value)} rows={3} />
+          {(id) => <Textarea id={id} value={character} onChange={(e) => setCharacter(e.target.value)} rows={3} />}
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Erntedatum">
-            <Input type="date" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />
+            {(id) => <Input id={id} type="date" value={harvestDate} onChange={(e) => setHarvestDate(e.target.value)} />}
           </Field>
           <Field label="Waldabschnitt">
-            <Input value={forestSection} onChange={(e) => setForestSection(e.target.value)} />
+            {(id) => <Input id={id} value={forestSection} onChange={(e) => setForestSection(e.target.value)} />}
           </Field>
           <Field label="Schnittnummer">
-            <Input type="number" value={cutNumber} onChange={(e) => setCutNumber(e.target.value)} />
+            {(id) => <Input id={id} type="number" value={cutNumber} onChange={(e) => setCutNumber(e.target.value)} />}
           </Field>
         </div>
       </section>
@@ -306,22 +311,26 @@ export function ArcForm({ arc }: { arc?: Arc }) {
         <h2 className="text-sm font-medium text-muted-foreground">Status</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Status">
-            <Select value={status} onValueChange={(v) => setStatus(v as ArcStatus)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ARC_STATUSES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {SYSTEM_STATUSES.includes(status) && (
-              <p className="text-xs text-amber-700">
-                System-Status — wird normalerweise vom Konfigurator/Checkout gesetzt.
-              </p>
+            {(id) => (
+              <>
+                <Select value={status} onValueChange={(v) => setStatus(v as ArcStatus)}>
+                  <SelectTrigger id={id}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ARC_STATUSES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {SYSTEM_STATUSES.includes(status) && (
+                  <p className="text-xs text-amber-700">
+                    System-Status — wird normalerweise vom Konfigurator/Checkout gesetzt.
+                  </p>
+                )}
+              </>
             )}
           </Field>
           <div className="flex flex-col justify-end gap-3 pb-1">
@@ -363,14 +372,17 @@ export function ArcForm({ arc }: { arc?: Arc }) {
           ))}
         </div>
         <Field label="Max. Spinnen-Pendants">
-          <Input
-            type="number"
-            min="1"
-            value={maxSpinne}
-            onChange={(e) => setMaxSpinne(e.target.value)}
-            placeholder="leer = Spinne nicht waehlbar"
-            className="max-w-xs"
-          />
+          {(id) => (
+            <Input
+              id={id}
+              type="number"
+              min="1"
+              value={maxSpinne}
+              onChange={(e) => setMaxSpinne(e.target.value)}
+              placeholder="leer = Spinne nicht waehlbar"
+              className="max-w-xs"
+            />
+          )}
         </Field>
       </section>
 
@@ -426,12 +438,13 @@ function Field({
 }: {
   label: string
   error?: string
-  children: React.ReactNode
+  children: (id: string) => React.ReactNode
 }) {
+  const id = useId()
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
+      <Label htmlFor={id}>{label}</Label>
+      {children(id)}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
@@ -452,9 +465,10 @@ function MediaInput({
   onPick: (file: File | null) => void
   isModel?: boolean
 }) {
+  const id = useId()
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <div className="flex items-center gap-3">
         {!isModel && url && !file ? (
           <Image
@@ -471,6 +485,7 @@ function MediaInput({
           </div>
         )}
         <Input
+          id={id}
           type="file"
           accept={accept}
           onChange={(e) => onPick(e.target.files?.[0] ?? null)}

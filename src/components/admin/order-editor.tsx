@@ -65,9 +65,9 @@ export function OrderEditor({
   return (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <Label>Bestellstatus</Label>
+        <Label htmlFor="order-status">Bestellstatus</Label>
         <Select value={status} onValueChange={handleStatusChange} disabled={pending}>
-          <SelectTrigger className="max-w-xs">
+          <SelectTrigger id="order-status" className="max-w-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -81,8 +81,9 @@ export function OrderEditor({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Admin-Notiz</Label>
+        <Label htmlFor="order-notes">Admin-Notiz</Label>
         <Textarea
+          id="order-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}

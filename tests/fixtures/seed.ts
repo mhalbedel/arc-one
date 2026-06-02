@@ -113,6 +113,15 @@ export const ARC = {
 
 export const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000'
 
+// ── Test-Admin (PROJ-5) ───────────────────────────────────────
+// Wird von global-setup angelegt: auth.users mit app_metadata.role='admin'
+// PLUS admin_profiles-Zeile. Beides ist noetig (RLS is_admin() + Gate-Lookup).
+export const ADMIN = {
+  email: 'qa-admin@arc-one.test',
+  password: 'qa-admin-passwort-123',
+  name: 'QA Admin',
+}
+
 // ── Preismatrix (PROJ-3a) ─────────────────────────────────────
 // Spiegelt db/migrations/008_pricing_matrix.sql, damit E2E-Preis-Assertions
 // deterministisch sind (in Cent). global-setup setzt diese Werte bei jedem Lauf.

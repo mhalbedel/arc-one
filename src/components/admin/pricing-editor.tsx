@@ -214,7 +214,7 @@ export function PricingEditor({
                 {group.variants.map(([variant, vLabel]) => (
                   <TableRow key={variant ?? 'schliff'}>
                     <TableCell className="font-medium">{vLabel}</TableCell>
-                    {group.tiers.map(([tier]) => {
+                    {group.tiers.map(([tier, tierLabel]) => {
                       const key = ruleKey(group.component, variant, tier)
                       return (
                         <TableCell key={tier}>
@@ -225,6 +225,7 @@ export function PricingEditor({
                               min="0"
                               value={prices[key] ?? ''}
                               placeholder="0"
+                              aria-label={`${vLabel} – ${tierLabel} (Aufpreis in Euro)`}
                               onChange={(e) => setPrice(key, e.target.value)}
                               className="text-right tabular-nums"
                             />
@@ -252,24 +253,24 @@ export function PricingEditor({
           <div className="space-y-3">
             <p className="text-sm font-medium">Größe (Fläche = Breite × Höhe, cm²)</p>
             <div className="space-y-1.5">
-              <Label>Klein bis max. (cm²)</Label>
-              <Input type="number" min="1" value={sizeKlein} onChange={(e) => setSizeKlein(e.target.value)} />
+              <Label htmlFor="bound-size-klein">Klein bis max. (cm²)</Label>
+              <Input id="bound-size-klein" type="number" min="1" value={sizeKlein} onChange={(e) => setSizeKlein(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Mittel bis max. (cm²)</Label>
-              <Input type="number" min="1" value={sizeMittel} onChange={(e) => setSizeMittel(e.target.value)} />
+              <Label htmlFor="bound-size-mittel">Mittel bis max. (cm²)</Label>
+              <Input id="bound-size-mittel" type="number" min="1" value={sizeMittel} onChange={(e) => setSizeMittel(e.target.value)} />
               <p className="text-xs text-muted-foreground">Darüber = Groß.</p>
             </div>
           </div>
           <div className="space-y-3">
             <p className="text-sm font-medium">Gewicht (g)</p>
             <div className="space-y-1.5">
-              <Label>Leicht bis max. (g)</Label>
-              <Input type="number" min="1" value={weightLeicht} onChange={(e) => setWeightLeicht(e.target.value)} />
+              <Label htmlFor="bound-weight-leicht">Leicht bis max. (g)</Label>
+              <Input id="bound-weight-leicht" type="number" min="1" value={weightLeicht} onChange={(e) => setWeightLeicht(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label>Mittel bis max. (g)</Label>
-              <Input type="number" min="1" value={weightMittel} onChange={(e) => setWeightMittel(e.target.value)} />
+              <Label htmlFor="bound-weight-mittel">Mittel bis max. (g)</Label>
+              <Input id="bound-weight-mittel" type="number" min="1" value={weightMittel} onChange={(e) => setWeightMittel(e.target.value)} />
               <p className="text-xs text-muted-foreground">Darüber = Schwer.</p>
             </div>
           </div>

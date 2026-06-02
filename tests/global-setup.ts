@@ -1,5 +1,31 @@
-import { createClient } from '@supabase/supabase-js'
-import { ARCS, DROP, NONEXISTENT_ID, PRICING_RULES, PRICING_SETTINGS } from './fixtures/seed'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { ADMIN, ARCS, DROP, NONEXISTENT_ID, PRICING_RULES, PRICING_SETTINGS } from './fixtures/seed'
+
+/**
+ * Legt den Test-Admin idempotent an: vorhandenen User per E-Mail loeschen
+ * (CASCADE entfernt die admin_profiles-Zeile), dann frisch mit
+ * app_metadata.role='admin' erstellen und admin_profiles-Zeile schreiben.
+ */
+async function seedAdmin(supabase: SupabaseClient) {
+  const { data: list } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+  const existing = list?.users.find((u) => u.email === ADMIN.email)
+  if (existing) await supabase.auth.admin.deleteUser(existing.id)
+
+  const { data: created, error: createError } = await supabase.auth.admin.createUser({
+    email: ADMIN.email,
+    password: ADMIN.password,
+    email_confirm: true,
+    app_metadata: { role: 'admin' },
+  })
+  if (createError || !created.user) {
+    throw new Error(`Seed Admin-User fehlgeschlagen: ${createError?.message}`)
+  }
+
+  const { error: profileError } = await supabase
+    .from('admin_profiles')
+    .insert({ auth_user_id: created.user.id, name: ADMIN.name, role: 'SUPER_ADMIN' })
+  if (profileError) throw new Error(`Seed admin_profiles fehlgeschlagen: ${profileError.message}`)
+}
 
 /**
  * Setzt die Test-Datenbank vor jedem E2E-Lauf auf einen bekannten Zustand zurück.
@@ -44,5 +70,7 @@ export default async function globalSetup() {
   const { error: rulesError } = await supabase.from('pricing_rules').insert(PRICING_RULES)
   if (rulesError) throw new Error(`Seed pricing_rules fehlgeschlagen: ${rulesError.message}`)
 
-  console.log(`[global-setup] Test-DB zurückgesetzt: ${ARCS.length} Arcs, 1 Drop, ${PRICING_RULES.length} Preisregeln.`)
+  await seedAdmin(supabase)
+
+  console.log(`[global-setup] Test-DB zurückgesetzt: ${ARCS.length} Arcs, 1 Drop, ${PRICING_RULES.length} Preisregeln, 1 Admin.`)
 }

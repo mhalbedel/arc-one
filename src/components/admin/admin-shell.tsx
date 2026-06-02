@@ -42,7 +42,8 @@ export function AdminShell({
 
   async function handleSignOut() {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    // scope 'local': nur diese Browser-Session beenden, nicht das Konto kontoweit
+    await supabase.auth.signOut({ scope: 'local' })
     window.location.href = '/admin/login'
   }
 
