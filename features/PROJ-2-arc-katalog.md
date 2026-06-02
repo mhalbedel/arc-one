@@ -261,6 +261,14 @@ src/
 
 ## Implementation Notes
 
+**Homepage-Sektionen (2026-06-02)**
+- `src/app/page.tsx` — vier neue Sektionen inline ergänzt (gleicher Inline-Section-Pattern wie Hero/Highlights): **Brand Statement**, **USP-3-Säulen** (`USP_PILLARS`-Konstante, 3-Spalten-Grid), **Featured-Drop-Teaser** (bedingt) und **Manufaktur-Teaser**. Reihenfolge: Hero → Brand Statement → USP → Drop-Teaser → Manufaktur → Highlight-Arcs. Copy wörtlich aus dem Copywriting-Deck (v1).
+- Featured-Drop-Teaser: Server-seitige Query auf `drops` (`status in (SCHEDULED, LIVE)`, nach `scheduled_at`, `maybeSingle()`); Sektion wird nur gerendert wenn ein aktiver Drop existiert (sonst — auch bei RLS-Block — komplett ausgeblendet). Ergebnis via `as Pick<Drop, …>` gecastet (gleiche postgrest-Typ-Limitierung wie der bestehende `as ArcWithDrop[]`-Cast).
+- Platzhalter-Ziele (Routen folgen mit anderen Features): Drop-CTA → `/arcs` (Warteliste/Drop-Detail = PROJ-6); Manufaktur-CTA → `/arcs` (bis PROJ-11 live ist, kein toter Link). Im Code als Kommentar markiert.
+- Design konsistent mit Bestand: `font-serif`-Headlines, uppercase-getrackte Labels, `Separator` zwischen Sektionen, `text-muted-foreground`, responsive (mobil 1-spaltig, ab `md:` 3-spaltig bei USP).
+- Verifiziert: `tsc --noEmit` ohne Fehler in `page.tsx`; `npm run build` erfolgreich (Route `/` = dynamisch/SSR). Vorbestehende `src/types/index.test.ts`-tsc-Fehler (veraltete Licht-/Status-Werte) sind unabhängig und vom `next build` ausgeschlossen.
+- Noch offen: Brand-Statement/USP/Manufaktur-Teaser sind statischer Code (kein CMS); spätere CMS-Pflege wäre PROJ-5. Series-/Montage-Filter weiterhin deferred.
+
 **is_sanded Erweiterung (2026-05-27)**
 - `db/migrations/004_is_sanded.sql` — `ALTER TABLE arcs ADD COLUMN is_sanded BOOLEAN NOT NULL DEFAULT FALSE` mit Kommentar
 - `src/types/database.ts` — `is_sanded: boolean` in `ArcRow` und `is_sanded?: boolean` in Insert ergänzt
