@@ -1,6 +1,6 @@
 # PROJ-5: Admin-Backend (verstecktes CMS)
 
-## Status: Approved
+## Status: Deployed
 **Created:** 2026-06-02
 **Last Updated:** 2026-06-02
 
@@ -391,4 +391,20 @@ Edge Cases gemaess Spec geprueft (last-write-wins, System-Status-Hinweis, Zahlun
 **APPROVED** — keine Critical/High-Bugs; alle 4 Low-Findings (LOW-1..4) wurden im Anschluss an die QA behoben und per E2E (32/32 parallel) verifiziert. Migration 009 bleibt zwingende Deploy-Voraussetzung.
 
 ## Deployment
-_To be added by /deploy_
+
+- **Production URL:** https://arc-one-seven.vercel.app (Admin unter `/admin` — verstecktes CMS, keine oeffentlichen Links)
+- **Deployed:** 2026-06-02
+- **Methode:** Push auf `main` → Vercel Auto-Deploy (wie PROJ-2/3/4/3a)
+- **Tag:** `v1.7.0-PROJ-5`
+
+### Geschiffter Umfang
+Auth-Gate (`/admin/login` + `proxy.ts` + Layout-Gate), Dashboard, Arc-Verwaltung
+(Liste/Anlegen/Bearbeiten/Archivieren/Medien), Bestellverwaltung (Liste/Detail/
+Status/Notiz), Preismatrix-Pflege. Plus QA-Fixes LOW-1..4.
+
+### Erfuellte Produktions-Voraussetzungen (vom Nutzer bestaetigt)
+- **Migration `009_arcs_media_storage.sql`** in der Prod-Supabase angewendet (arcs-media Bucket + Policies) — sonst schluege der Medien-Upload fehl.
+- **Prod-Admin** vorhanden: `auth.users` mit `app_metadata.role='admin'` UND `admin_profiles`-Zeile (`auth_user_id`) — beides noetig fuers Gate und alle Schreibvorgaenge (RLS `is_admin()`).
+
+### Post-Deploy-Verifikation
+_Wird nach dem Vercel-Build ergaenzt._
