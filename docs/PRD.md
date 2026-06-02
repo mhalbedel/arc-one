@@ -24,7 +24,7 @@ Kleines Team (1-3 Personen), das Arcs erfasst, Bestellungen verwaltet, Drops pla
 | P0 (MVP) | Konfigurator (5 Schritte + Reservierung) | Deployed |
 | P0 (MVP) | Preisgestaltung (zentrale Preismatrix, PROJ-3a) | Deployed |
 | P0 (MVP) | Pre-Order & Stripe (30%/70%-Split) | Deployed |
-| P0 (MVP) | Admin-Backend (verstecktes CMS — inkl. Pflege Preismatrix PROJ-3a) | Roadmap |
+| P0 (MVP) | Admin-Backend (verstecktes CMS — inkl. Pflege Preismatrix PROJ-3a) | Planned |
 | P1 | Drop & Warteliste | Roadmap |
 | P1 | E-Mail-System (Resend) | Roadmap |
 | P2 | B2B-Portal (Architekten) | Roadmap |
