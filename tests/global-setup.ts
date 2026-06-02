@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { ARCS, DROP, NONEXISTENT_ID } from './fixtures/seed'
+import { ARCS, DROP, NONEXISTENT_ID, PRICING_RULES, PRICING_SETTINGS } from './fixtures/seed'
 
 /**
  * Setzt die Test-Datenbank vor jedem E2E-Lauf auf einen bekannten Zustand zurück.
@@ -36,5 +36,13 @@ export default async function globalSetup() {
   const { error: arcError } = await supabase.from('arcs').insert(ARCS)
   if (arcError) throw new Error(`Seed arcs fehlgeschlagen: ${arcError.message}`)
 
-  console.log(`[global-setup] Test-DB zurückgesetzt: ${ARCS.length} Arcs, 1 Drop.`)
+  // Preismatrix (PROJ-3a) deterministisch setzen
+  await supabase.from('pricing_rules').delete().neq('id', NONEXISTENT_ID)
+  await supabase.from('pricing_settings').delete().neq('id', NONEXISTENT_ID)
+  const { error: settingsError } = await supabase.from('pricing_settings').insert(PRICING_SETTINGS)
+  if (settingsError) throw new Error(`Seed pricing_settings fehlgeschlagen: ${settingsError.message}`)
+  const { error: rulesError } = await supabase.from('pricing_rules').insert(PRICING_RULES)
+  if (rulesError) throw new Error(`Seed pricing_rules fehlgeschlagen: ${rulesError.message}`)
+
+  console.log(`[global-setup] Test-DB zurückgesetzt: ${ARCS.length} Arcs, 1 Drop, ${PRICING_RULES.length} Preisregeln.`)
 }

@@ -112,3 +112,47 @@ export const ARC = {
 }
 
 export const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000'
+
+// ── Preismatrix (PROJ-3a) ─────────────────────────────────────
+// Spiegelt db/migrations/008_pricing_matrix.sql, damit E2E-Preis-Assertions
+// deterministisch sind (in Cent). global-setup setzt diese Werte bei jedem Lauf.
+
+export const PRICING_SETTINGS = {
+  size_klein_max_cm2: 3000,
+  size_mittel_max_cm2: 6000,
+  weight_leicht_max_g: 2000,
+  weight_mittel_max_g: 5000,
+}
+
+export const PRICING_RULES: { component: string; variant: string | null; tier: string; price_cents: number }[] = [
+  { component: 'schliff', variant: null, tier: 'klein', price_cents: 8000 },
+  { component: 'schliff', variant: null, tier: 'mittel', price_cents: 12000 },
+  { component: 'schliff', variant: null, tier: 'gross', price_cents: 18000 },
+  { component: 'finish', variant: 'oel', tier: 'klein', price_cents: 4000 },
+  { component: 'finish', variant: 'oel', tier: 'mittel', price_cents: 6000 },
+  { component: 'finish', variant: 'oel', tier: 'gross', price_cents: 8000 },
+  { component: 'finish', variant: 'lack', tier: 'klein', price_cents: 5000 },
+  { component: 'finish', variant: 'lack', tier: 'mittel', price_cents: 7500 },
+  { component: 'finish', variant: 'lack', tier: 'gross', price_cents: 10000 },
+  { component: 'finish', variant: 'schellack', tier: 'klein', price_cents: 6000 },
+  { component: 'finish', variant: 'schellack', tier: 'mittel', price_cents: 9000 },
+  { component: 'finish', variant: 'schellack', tier: 'gross', price_cents: 12000 },
+  { component: 'mounting', variant: 'wand', tier: 'leicht', price_cents: 4000 },
+  { component: 'mounting', variant: 'wand', tier: 'mittel', price_cents: 6000 },
+  { component: 'mounting', variant: 'wand', tier: 'schwer', price_cents: 9000 },
+  { component: 'mounting', variant: 'decke', tier: 'leicht', price_cents: 6000 },
+  { component: 'mounting', variant: 'decke', tier: 'mittel', price_cents: 9000 },
+  { component: 'mounting', variant: 'decke', tier: 'schwer', price_cents: 13000 },
+  { component: 'mounting', variant: 'spinne', tier: 'leicht', price_cents: 2500 },
+  { component: 'mounting', variant: 'spinne', tier: 'mittel', price_cents: 3500 },
+  { component: 'mounting', variant: 'spinne', tier: 'schwer', price_cents: 5000 },
+  { component: 'light', variant: 'porzellan', tier: 'klein', price_cents: 1000 },
+  { component: 'light', variant: 'porzellan', tier: 'mittel', price_cents: 1500 },
+  { component: 'light', variant: 'porzellan', tier: 'gross', price_cents: 2000 },
+  { component: 'light', variant: 'bg_led', tier: 'klein', price_cents: 3000 },
+  { component: 'light', variant: 'bg_led', tier: 'mittel', price_cents: 4500 },
+  { component: 'light', variant: 'bg_led', tier: 'gross', price_cents: 6000 },
+  { component: 'light', variant: 'true_led', tier: 'klein', price_cents: 5000 },
+  { component: 'light', variant: 'true_led', tier: 'mittel', price_cents: 7500 },
+  { component: 'light', variant: 'true_led', tier: 'gross', price_cents: 10000 },
+]

@@ -336,7 +336,70 @@ Keine. Alle benötigten Bausteine (Supabase-Client, Typen, bestehende Konfigurat
 - Neue Coverage empfohlen: Aufpreis je Karte sichtbar, „inklusive" bei 0, Spinne-Gesamt aktualisiert sich mit Pendelanzahl.
 
 ## QA Test Results
-_To be added by /qa_
+
+**Datum:** 2026-06-02
+**Tester:** Claude QA Engineer
+**Build:** ✅ `npm run build` sauber (inkl. TS-Check)
+
+### Acceptance Criteria
+
+| Bereich | Kriterium | Status | Nachweis |
+|---------|-----------|--------|----------|
+| Klassifizierung | Größe aus H×W (klein/mittel/groß), untere Grenze gehört zur höheren Klasse | ✅ | Unit: `size/weight classification` (3000→klein, 3001→mittel, 6001→groß) |
+| Klassifizierung | Gewicht (leicht/mittel/schwer) an Admin-Grenzen | ✅ | Unit (2000→leicht, 2001→mittel, 5001→schwer) |
+| Klassifizierung | Admin ändert Grenzen → neue Klassen | ✅ | Unit (Settings als Eingabe) |
+| Schliff | Preis nach Größe; nur bei „Schleifen" | ✅ | Unit + E2E (Karte „+ 120 €", ARV-0001 mittel) |
+| Finish | Typ × Größe; „Unbehandelt" = 0 | ✅ | Unit + E2E („Finish: Öl"-Zeile; Unbehandelt inklusive) |
+| Befestigung | Typ × Gewicht; je schwerer desto teurer | ✅ | Unit (wand leicht 40 € < schwer 90 €) |
+| Befestigung | Spinne = Pro-Pendel × Anzahl | ✅ | Unit (×3) + E2E (25 €→50 € bei Pendel+1) |
+| Licht | Typ × Größe | ✅ | Unit + E2E („Licht: True Light LED") |
+| Gesamtpreis | Basis + Aufpreise; Live-Update; Server = Client | ✅ | Unit (Summen) + E2E (Aufschlüsselung); gemeinsame `pricing.ts` |
+| Preisanzeige | Aufpreis je Optionskarte; 0 € = „inklusive" | ✅ | E2E „Aufpreis je Optionskarte …" + Browser |
+| Preisanzeige | Durchgehende Aufschlüsselung (Grundpreis + Zwischensumme/Gesamt) in jedem Schritt | ✅ | E2E „durchgehende Aufschlüsselung …" + Browser |
+| Admin-Pflege | Matrix + Grenzwerte als pflegbare Daten (Tabellen) | ✅ Datenseite | `pricing_rules`/`pricing_settings` + RLS vorhanden; Pflege-UI = PROJ-5 (out of scope) |
+
+### Edge Cases
+
+| Fall | Status | Nachweis |
+|------|--------|----------|
+| Fehlende Regel → 0 € | ✅ | Unit „missing rule defaults to 0" |
+| Fehlende Maße/Gewicht → kleinste Klasse | ✅ | Unit „falls back to smallest class" |
+| cm²-Grenze exakt (3000 vs 3001) | ✅ | Unit |
+| Per-Arc `price_*`-Spalten werden nicht mehr gelesen | ✅ | `grep` — nur noch Test-Fixture referenziert sie (null) |
+
+### Automatisierte Tests
+
+```
+Vitest:     28/28 ✅  (pricing.test.ts: Klassifizierung + Matrix-Berechnung)
+Playwright: 108/108 ✅  (Chromium + Mobile Safari; PROJ-2 34, PROJ-3 48, PROJ-4 26)
+```
+
+- E2E-Suite `tests/PROJ-3-konfigurator.spec.ts` an das neue Modell angepasst: `exact:true`-Optionskarten-Selektoren → Anker-Regex (`/^…/`, da Karten-Name jetzt den Preis enthält und „Lack" sonst „Schellack" träfe); `getByText`-Kollisionen mit der Aufschlüsselung via `{ exact: true }` aufgelöst; neuer Test-Block für Per-Option-Preis, „inklusive" und Spinne-Live-Gesamt.
+- `tests/fixtures/seed.ts` + `tests/global-setup.ts`: Preismatrix (30 Regeln + Settings) wird pro Lauf deterministisch geseedet.
+- **Kein Regress:** PROJ-2 (Katalog) und PROJ-4 (Checkout inkl. „price breakdown for reserved arc", „AT shipping 49 €") grün — die neue Pricing-Verdrahtung im Checkout funktioniert.
+
+### Sicherheits-Audit (Red Team)
+
+| Check | Ergebnis |
+|-------|----------|
+| RLS `pricing_rules`/`pricing_settings`: public read, nur Admin schreibbar | ✅ Keine anon-Schreibpolicy → INSERT/UPDATE/DELETE für anon/b2b blockiert |
+| Kein Schreib-/Mutations-Endpunkt für Preise im App-Code | ✅ Pflege erst PROJ-5 (admin-authentifiziert) |
+| Checkout-Preis server-seitig aus Matrix (nicht vom Client) | ✅ `getPricingData` + `calcCheckoutPrices` in der Route (Service Role) |
+| Service-Role-Loader nicht im Client-Bundle | ✅ `pricing-data.ts` mit `import 'server-only'` |
+| Preisregeln als Props an Client = nicht geheim | ✅ Preise sind ohnehin sichtbar; kein Secret-Leak |
+| Lookup ohne User-Input (Keys aus DB-Zeilen) | ✅ Keine Injection-Fläche |
+
+### Bugs / Findings
+
+| # | Schwere | Beschreibung |
+|---|---------|--------------|
+| P3a-L1 | **Low (pre-existing)** | Checkout-Zod begrenzt `spinneCount` nur auf `min(1)`, kein Maximum. Ein manipulierter Wert erhöht nur den selbst zu zahlenden Preis (kein Fraud-Vorteil); die UI begrenzt auf `max_spinne_pendants`. Bestand bereits vor PROJ-3a. Empfehlung: optional Max serverseitig prüfen. |
+
+### Produktionsreife-Entscheidung
+
+**✅ READY** — Keine Critical/High-Bugs. Alle Acceptance Criteria erfüllt (Pflege-UI bewusst PROJ-5). Unit + E2E vollständig grün.
+
+> **Deploy-Voraussetzung:** Migration `008_pricing_matrix.sql` in Prod-Supabase ausgeführt (bestätigt) sowie in der Test-Supabase vorhanden.
 
 ## Deployment
 _To be added by /deploy_
