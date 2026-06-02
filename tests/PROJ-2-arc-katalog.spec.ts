@@ -19,6 +19,45 @@ test('Homepage: No highlight section when no featured arcs', async ({ page }) =>
   await expect(page.getByText('Ausgewählte Arcs')).not.toBeVisible()
 })
 
+// ── Homepage (/): Brand-/USP-/Drop-/Manufaktur-Sektionen (NEU 2026-06-02) ──
+
+test('Homepage: Brand statement section is visible', async ({ page }) => {
+  await page.goto('/')
+  await expect(
+    page.getByRole('heading', { name: 'Fürchterliches Licht gibt es genug.' })
+  ).toBeVisible()
+})
+
+test('Homepage: Three USP pillars are visible', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'Kein zweites auf der Welt' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Zwei Stunden Schliff. Pro Stück.' })
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Licht mit CRI 98' })).toBeVisible()
+})
+
+test('Homepage: Manufaktur teaser is visible and links to /arcs (PROJ-11 placeholder)', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await expect(
+    page.getByRole('heading', { name: 'Vom Wald in die Werkstatt.' })
+  ).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: 'Die Geschichte dahinter →' })
+  ).toHaveAttribute('href', '/arcs')
+})
+
+test('Homepage: Featured-Drop-Teaser shows active drop with placeholder CTA', async ({ page }) => {
+  // Setzt einen aktiven Drop (SCHEDULED/LIVE) im Seed voraus; sonst ist der Teaser bewusst ausgeblendet.
+  await page.goto('/')
+  await expect(page.getByText('Aktueller Drop', { exact: true })).toBeVisible()
+  const cta = page.getByRole('link', { name: /Jetzt ansehen/ })
+  await expect(cta).toBeVisible()
+  await expect(cta).toHaveAttribute('href', '/arcs')
+})
+
 // ── Browse (/arcs): Grid, Badge, Sort, Leerstand ─────────────
 
 test('Browse: All READY arcs shown in grid with serial number, dimensions, price', async ({ page }) => {

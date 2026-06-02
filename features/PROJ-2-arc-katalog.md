@@ -1,6 +1,6 @@
 # PROJ-2: Arc-Katalog
 
-## Status: In Progress
+## Status: Approved
 **Created:** 2026-05-26
 **Last Updated:** 2026-06-02
 
@@ -283,6 +283,70 @@ src/
 - Leerzustand auf `/arcs` korrekt wenn keine READY-Arcs vorhanden
 - Fotos: "KEIN FOTO" Platzhalter korrekt (Seed hat keine photo_front_url)
 - Kein API-Layer — Server Components → Supabase direkt (per Architecture-Entscheidung)
+
+## QA Test Results — Homepage-Sektionen (2026-06-02)
+
+**Datum:** 2026-06-02
+**Tester:** Claude QA Engineer
+**Build:** ✅ `npm run build` sauber (Route `/` = dynamisch/SSR); `tsc` ohne Fehler in `page.tsx`
+
+### Neue Acceptance Criteria (NEU 2026-06-02)
+
+| # | Kriterium | Status | Anmerkung |
+|---|-----------|--------|-----------|
+| HS-1 | Brand-Statement-Abschnitt sichtbar (Copy-Deck) | ✅ | Manuell (a11y-Snapshot, h2 „Fürchterliches Licht gibt es genug.") + E2E |
+| HS-2 | Drei USP-Säulen sichtbar (Unikat / Schliff / CRI 98) | ✅ | Manuell + E2E; 3-Spalten-Grid ab `md:`, mobil 1-spaltig |
+| HS-3 | Featured-Drop-Teaser bei aktivem Drop sichtbar | ✅ | Seed-Drop „Drop #01 — Die ersten Bögen" (SCHEDULED) wird gerendert (Label, Headline, Description, CTA); E2E |
+| HS-4 | Featured-Drop-Teaser ausgeblendet wenn kein aktiver Drop | ✅ (Code) | Bedingtes Rendern `{activeDrop && …}`; deterministischer E2E-Nachweis bräuchte einen Seed ohne aktiven Drop — per Logik + „ausgeblendet bei RLS-Block" abgedeckt |
+| HS-5 | Manufaktur-Teaser sichtbar mit CTA | ✅ | Manuell + E2E; CTA „Die Geschichte dahinter →" → `/arcs` (PROJ-11-Platzhalter) |
+| HS-6 | Section-Reihenfolge Hero → Brand → USP → Drop → Manufaktur → Highlights | ✅ | Verifiziert per DOM-Reihenfolge (curl + a11y-Snapshot) |
+
+### Manuelle Prüfung
+
+- Gegen laufenden Dev-Server (`:3000`, `.env.local`): alle fünf neuen Sektionen rendern; Reihenfolge korrekt; alle drei Platzhalter-CTAs (Hero/Drop/Manufaktur) → `/arcs`.
+- a11y-Snapshot: saubere Überschriften-Struktur (h1 Hero → h2 Brand → h3×3 USP → h2 Drop → h2 Manufaktur → h2 Highlights).
+
+### Responsive
+
+| Breakpoint | Ergebnis |
+|------------|----------|
+| Mobile 375px | ✅ (per Analyse) USP `grid` ohne Base-Spalten = 1-spaltig; Sektionen `max-w-3xl/6xl px-6` |
+| Tablet/Desktop | ✅ (per Analyse) USP `md:grid-cols-3`; konsistent mit bereits abgenommenem Layout |
+
+### Automatisierte Tests
+
+```
+Vitest:     35/35 ✅ (keine Regression)
+Playwright: tests/PROJ-2-arc-katalog.spec.ts gegen .env.test (kanonisch):
+            chromium       21/21 ✅
+            Mobile Safari  21/21 ✅
+            (inkl. 4 neue Homepage-Tests HS-1/2/3/5)
+```
+
+> **E2E-Umgebung — aufgelöst:** Die kanonische Suite (`npm run test:e2e`, eigener Dev-Server `:3100` gegen Test-Supabase `.env.test`) lief nach Stoppen des Nutzer-Dev-Servers (`:3000`) vollständig grün — chromium 21/21 und Mobile Safari 21/21. Ein zwischenzeitlicher Lauf gegen `.env.local` hatte 7 bestehende Detail-/Browse-Tests gezeigt, die rein durch Test-Daten-Differenz (andere Seriennummern/Featured-Arc/Charakter-Texte) fehlschlugen — bestätigt als **keine Regression**.
+
+### Security Audit (Red Team)
+
+| Check | Ergebnis |
+|-------|----------|
+| Drop-Query read-only, kein User-Input | ✅ Kein Injection-Vektor (statische `.in()`-Statusliste) |
+| Drops-Direktlesen via anon-Key | ✅ RLS erlaubt nur SCHEDULED/LIVE-Lesezugriff; DRAFT/CLOSED nicht exponiert (Query filtert + RLS) |
+| Kein Secret im HTML/Network | ✅ Nur öffentliche Drop-Felder (title/description/slug) gerendert |
+| Server Component, kein Client-DB-Zugriff | ✅ |
+
+### Bugs / Findings
+
+| # | Schwere | Beschreibung |
+|---|---------|--------------|
+| HS-L1 | **Low** | USP-Säulen nutzen `h3` ohne übergeordnete `h2` für den Abschnitt — kleiner Heading-Level-Sprung (a11y). Bewusst ohne Abschnittsüberschrift gestaltet; rein semantischer Hinweis, kein Funktionsfehler. |
+| HS-L2 | **Low** | `GET /favicon.ico` → 404 in der Konsole. **Vorbestehend**, unabhängig von diesem Increment. |
+| — | Info | Manufaktur-CTA zeigt bewusst auf `/arcs` bis PROJ-11 die `/manufaktur`-Route liefert (kein toter Link). |
+
+### Produktionsreife-Entscheidung (Homepage-Sektionen)
+
+**✅ APPROVED** — Keine Critical/High-Bugs. Alle neuen Acceptance Criteria erfüllt (manuell + E2E). Kanonische E2E-Suite gegen `.env.test` vollständig grün (chromium 21/21, Mobile Safari 21/21). Offene Low-Findings (HS-L1/L2) sind kosmetisch und nicht deploy-blockierend.
+
+---
 
 ## QA Test Results
 
