@@ -502,13 +502,14 @@ CREATE POLICY "Admins have full access to pricing_settings"
 -- Or uncomment and run via SQL if storage extension is enabled:
 -- ============================================================
 
+-- arcs-media bucket + policies: applied via db/migrations/009_arcs_media_storage.sql (PROJ-5).
 -- INSERT INTO storage.buckets (id, name, public)
 -- VALUES ('arcs-media', 'arcs-media', TRUE);
 
 -- INSERT INTO storage.buckets (id, name, public)
 -- VALUES ('b2b-cad', 'b2b-cad', FALSE);
 
--- Storage RLS for arcs-media (public read):
+-- Storage RLS for arcs-media (public read): see migration 009.
 -- CREATE POLICY "Public read arcs-media"
 --   ON storage.objects FOR SELECT
 --   USING (bucket_id = 'arcs-media');

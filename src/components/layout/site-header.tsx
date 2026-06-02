@@ -1,7 +1,15 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 
 export function SiteHeader() {
+  const pathname = usePathname()
+
+  // Verstecktes Admin-CMS: keine oeffentliche Navigation im /admin-Bereich
+  if (pathname?.startsWith('/admin')) return null
+
   return (
     <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-16">

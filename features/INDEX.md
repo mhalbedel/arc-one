@@ -20,7 +20,7 @@
 | PROJ-3 | Konfigurator | Deployed | [PROJ-3](PROJ-3-konfigurator.md) | 2026-05-26 |
 | PROJ-3a | Preisgestaltung (Konfigurator) | Deployed | [PROJ-3a](PROJ-3a-preisgestaltung.md) | 2026-06-01 |
 | PROJ-4 | Pre-Order & Stripe | Deployed | [PROJ-4](PROJ-4-pre-order-stripe.md) | 2026-05-26 |
-| PROJ-5 | Admin-Backend | Planned | [PROJ-5](PROJ-5-admin-backend.md) | 2026-05-26 |
+| PROJ-5 | Admin-Backend | In Progress | [PROJ-5](PROJ-5-admin-backend.md) | 2026-05-26 |
 | PROJ-6 | Drop & Warteliste | Roadmap | — | 2026-05-26 |
 | PROJ-7 | E-Mail-System (Resend) | Roadmap | — | 2026-05-26 |
 | PROJ-8 | B2B-Portal | Roadmap | — | 2026-05-26 |

@@ -1,6 +1,6 @@
 # PROJ-5: Admin-Backend (verstecktes CMS)
 
-## Status: Planned
+## Status: In Progress
 **Created:** 2026-06-02
 **Last Updated:** 2026-06-02
 
@@ -120,12 +120,198 @@ _Alle Fragen resolved._
 <!-- Added by /architecture -->
 | Decision | Rationale | Date |
 |----------|-----------|------|
+| Admin-Gating ueber Mitgliedschaft in `admin_profiles` (Lookup per `auth_user_id`), nicht ueber JWT-`app_metadata.role` | Tabelle existiert bereits (PROJ-1); kein Auth-Hook/Custom-Claims-Setup noetig (einfacher). Ersetzt die `app_metadata.role`-Formulierung aus den Technical Requirements der Spec. | 2026-06-02 |
+| Schutz zweistufig: `middleware.ts` (Session-Refresh + Redirect unauth → Login) + Admin-Layout (Server Component prueft `admin_profiles`) | Standard-Supabase-SSR-Muster; das in `server.ts` bereits erwartete Middleware existiert noch nicht und wird hier eingefuehrt | 2026-06-02 |
+| Medien-Upload direkt vom Browser in den `arcs-media` Bucket (authentifizierter Supabase-Client), nicht durch eine API-Route | Vermeidet das Durchschleusen grosser Dateien durch Serverless-Funktionen; erfuellt PRD-Ziel "Arc in < 10 Min"; RLS aus PROJ-1 erlaubt Admin-Schreibrechte | 2026-06-02 |
+| Schreib-/Leseoperationen ueber den cookie-gebundenen Server-Client + Server Actions, NICHT ueber den Service-Role-Client | RLS bleibt die Sicherheitsgrenze; Service-Role wuerde RLS umgehen. Service-Role bleibt reserviert fuer den Stripe-Webhook (PROJ-4-Uebergang) | 2026-06-02 |
+| Preismatrix-Bearbeitung als Upsert auf bestehende `pricing_rules`/`pricing_settings` (gleiche Tabellen wie PROJ-3a) | Konfigurator liest dieselben Tabellen; keine zweite Quelle der Wahrheit | 2026-06-02 |
+| Eingabe/Anzeige aller Preise in Euro, Speicherung in Cent (Konvertierung in der UI-Schicht) | Konsistent mit PROJ-3a/PROJ-4 (`price_cents`, `base_price` in Cent) | 2026-06-02 |
+| Keine neuen npm-Pakete | Alle benoetigten shadcn-Komponenten (table, form, dialog, alert-dialog, select, tabs, sonner) sind installiert; Supabase-JS deckt Upload ab | 2026-06-02 |
 
 ---
 <!-- Sections below are added by subsequent skills -->
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Ueberblick
+PROJ-5 baut die Bedienoberflaeche fuer ein Datenmodell, das **bereits vollstaendig existiert** (PROJ-1/3a/4). Es wird kein neues DB-Schema angelegt — die Arbeit ist (1) ein Auth-Tor, (2) Verwaltungs-Oberflaechen fuer Arcs, Bestellungen und Preismatrix. Es ist die erste Funktion mit echtem Login.
+
+### A) Seiten- & Komponentenstruktur
+
+```
+/admin  (geschuetzter Bereich — verstecktes CMS, keine oeffentlichen Links)
++-- /admin/login                 Login-Formular (E-Mail + Passwort)
+|
++-- Admin-Layout (Server)        prueft Admin-Mitgliedschaft, sonst Redirect
+|   +-- Seitennavigation         Arcs · Bestellungen · Preismatrix · Abmelden
+|
++-- /admin  (Dashboard)
+|   +-- Zaehl-Karten             z.B. "READY-Arcs", "offene Bestellungen"
+|   +-- Navigations-Kacheln      Einstieg in die drei Bereiche
+|
++-- /admin/arcs  (Arc-Verwaltung)
+|   +-- Arc-Tabelle              alle Status; Seriennr. · Status-Badge · Vorschaubild
+|   +-- "Neuer Arc"-Button
+|   +-- /admin/arcs/neu          Arc-Formular (anlegen)
+|   +-- /admin/arcs/[id]         Arc-Formular (bearbeiten)
+|       +-- Stammdaten           Seriennummer, Maße, Gewicht, Charakter, Herkunft
+|       +-- Status-Dropdown      alle 9 Status (mit Hinweis bei RESERVED/ORDERED)
+|       +-- Kompatibilitaet      Befestigung/Finish-Schalter, max. Spinnen-Pendants
+|       +-- Medien-Upload        Foto A · Foto B · optional .glb (3D-Scan)
+|       +-- Basispreis (EUR)
+|       +-- Archivieren-Aktion   Bestaetigungsdialog → Status ARCHIVED
+|
++-- /admin/bestellungen  (Bestellverwaltung)
+|   +-- Bestell-Tabelle          Nr. · Kunde · Arc · Gesamtpreis · Status · Zahlung
+|   +-- Leerzustand              aussagekraeftige Meldung statt leerer Tabelle
+|   +-- /admin/bestellungen/[id] Bestell-Detail
+|       +-- Kunde + Adresse
+|       +-- Konfigurations-Snapshot (read-only)
+|       +-- Preis-Aufschluesselung
+|       +-- Zahlungsstatus       Deposit/Rest — read-only Referenz (aus Stripe)
+|       +-- Status-Dropdown      Bestellstatus aendern (setzt confirmedAt/By)
+|       +-- Admin-Notiz          Freitextfeld, gespeichert an der Bestellung
+|
++-- /admin/preismatrix  (Preismatrix-Pflege)
+    +-- Aufpreis-Tabelle         ~30 Werte (Schliff/Finish/Befestigung/Licht je Klasse), EUR
+    +-- Grenzwert-Felder         Groesse klein-/mittel-max (cm2), Gewicht leicht-/mittel-max (g)
+    +-- Speichern                Validierung (konsistente Grenzwerte, keine negativen Preise)
+```
+
+Wiederverwendete shadcn-Bausteine (alle bereits installiert): `table`, `form`, `input`, `textarea`, `select`, `dialog`, `alert-dialog`, `tabs`, `badge`, `button`, `sonner` (Toasts). Keine neuen UI-Komponenten von Grund auf.
+
+### B) Datenmodell (Klartext — existiert bereits, PROJ-5 schreibt nur)
+
+```
+Arc (Tabelle arcs)            — wird von der Arc-Verwaltung gepflegt
+  Pflicht: Seriennummer (eindeutig), Basispreis (Cent), Maße (B/H/T), Gewicht
+  Optional: Charakter-Text, Herkunft (Datum/Waldabschnitt/Schnittnr.),
+            3 Medien-URLs (Foto A, Foto B, 3D-Scan)
+  Schalter: Kompatibilitaet (Befestigung/Finish), max. Spinnen-Pendants
+  Status: einer von 9 Werten (RAW … READY … ARCHIVED)
+
+Bestellung (Tabelle orders)   — Status + Notiz + Bestaetigung pflegbar; Rest read-only
+  Lesefelder: Bestellnr., Konfig-Snapshot (JSON), Preis-Aufschluesselung,
+              Zahlungs-Zeitstempel (deposit_paid_at / remaining_paid_at)
+  Schreibfelder (Admin): status, admin_notes, confirmed_at, confirmed_by
+  Verknuepft: customer (Kunde + Adresse als JSON)
+
+Preismatrix (Tabellen pricing_rules + pricing_settings) — dieselben wie PROJ-3a
+  pricing_rules: je (Komponente, Variante, Klasse) ein Aufpreis in Cent
+  pricing_settings: 4 Grenzwerte (Groesse/Gewicht) fuer die Klassifizierung
+
+Admin (Tabelle admin_profiles) — nur gelesen fuers Gating (auth_user_id → Mitglied?)
+
+Medien: Supabase Storage Bucket arcs-media (Fotos + .glb)
+```
+
+Speicherort: durchgehend Supabase (PostgreSQL + Storage). Kein localStorage, keine zweite Datenquelle.
+
+### C) Auth & Schutz (WAS und WARUM)
+
+- **Login:** Supabase Auth mit E-Mail + Passwort auf `/admin/login`. Admins werden vorab im Supabase-Dashboard angelegt (kein Self-Signup, keine User-Verwaltung in der UI).
+- **Wer ist Admin?** Statt einer JWT-Rolle pruefen wir die **Mitgliedschaft in `admin_profiles`** (Zeile mit passender `auth_user_id`). Grund: Die Tabelle existiert bereits; das spart das Einrichten von Custom-JWT-Claims (einfacher, weniger bewegliche Teile). Dies ersetzt die `app_metadata.role`-Formulierung in den Technical Requirements der Spec.
+- **Zwei Schutzebenen:**
+  1. `middleware.ts` (neu) frischt die Supabase-Session bei jedem Request auf und leitet nicht eingeloggte Besucher von `/admin/*` zur Login-Seite um. (Diese Middleware wird von `server.ts` bereits erwartet, fehlte aber.)
+  2. Das **Admin-Layout** (Server Component) prueft die `admin_profiles`-Mitgliedschaft — ein eingeloggter Nicht-Admin (z.B. spaeteres B2B-Konto) wird abgewiesen.
+- **Schreibrechte:** Alle Schreibvorgaenge laufen ueber den **cookie-gebundenen Server-Client** (Server Actions), damit die **RLS aus PROJ-1/3a die Sicherheitsgrenze bleibt**. Der Service-Role-Client (RLS-Bypass) wird hier bewusst NICHT verwendet.
+- **Versteckt:** Keine oeffentlichen Links auf `/admin`; Zugang nur ueber direkte URL + Login.
+
+### D) Server-Aktionen (Was passiert, keine Implementierung)
+
+| Aktion | Ergebnis |
+|--------|----------|
+| Anmelden / Abmelden | Supabase-Session setzen/beenden |
+| Arc anlegen / bearbeiten | Upsert in `arcs`; Eindeutigkeit der Seriennummer durch DB-Constraint |
+| Arc archivieren | Status → `ARCHIVED` (kein Loeschen, FK-Schutz fuer Bestellungen) |
+| Medien hochladen | Datei → `arcs-media` Bucket; resultierende URL am Arc speichern |
+| Bestellstatus aendern | `orders.status` setzen; bei erstem `CONFIRMED` → `confirmed_at` + `confirmed_by` |
+| Admin-Notiz speichern | `orders.admin_notes` aktualisieren |
+| Preismatrix speichern | Upsert `pricing_rules`/`pricing_settings` nach Validierung |
+
+### E) Abhaengigkeiten (Pakete)
+**Keine neuen Pakete.** Alle shadcn-Komponenten sind installiert; `@supabase/ssr` und `@supabase/supabase-js` (inkl. Storage-Upload) sind vorhanden.
+
+### Offene Punkte aus dieser Design-Phase
+- Spec-Formulierung "Rolle aus JWT (`app_metadata.role = 'admin'`)" in den Technical Requirements ist durch die `admin_profiles`-Mitgliedschaftspruefung ersetzt (siehe Technical Decisions). Keine Aenderung am Datenmodell noetig.
+
+## Implementation Notes (Frontend — /frontend)
+
+**Status:** Frontend komplett gebaut, Build gruen (`npm run build` ok). Backend-/QA-Schritt steht noch aus.
+
+### Gebaute Dateien
+- **Auth-Gate:** `src/proxy.ts` (erweitert — Next.js 16 nutzt die `proxy`-Konvention statt `middleware`; Redirect unauth `/admin/*` → `/admin/login`). `src/app/admin/login/page.tsx` (E-Mail+Passwort, Browser-Client). `src/app/admin/(dashboard)/layout.tsx` (Server-Gate: prueft `admin_profiles`-Mitgliedschaft, sonst Redirect `?denied=1`).
+- **Shell + Dashboard:** `src/components/admin/admin-shell.tsx` (shadcn-Sidebar, sans-serif/dicht, mountet sonner-`Toaster`). `src/app/admin/(dashboard)/page.tsx` (Zaehl-Karten READY/Reserviert/offene Bestellungen + Nav-Kacheln).
+- **Arcs:** `arcs/page.tsx` (Tabelle), `arcs/neu` + `arcs/[id]` (Formular), `arcs/actions.ts` (`saveArc`/`archiveArc`), `components/admin/arc-form.tsx`, `components/admin/arc-status-badge.tsx`.
+- **Bestellungen:** `bestellungen/page.tsx` (Tabelle + Leerzustand), `bestellungen/[id]/page.tsx` (Detail), `bestellungen/actions.ts` (`updateOrderStatus`/`saveAdminNotes`), `components/admin/order-editor.tsx`, `components/admin/order-status-badge.tsx`.
+- **Preismatrix:** `preismatrix/page.tsx`, `preismatrix/actions.ts` (`savePricing`), `components/admin/pricing-editor.tsx`.
+- **Sonstiges:** `site-header.tsx` versteckt die oeffentliche Navigation auf `/admin/*`.
+
+### Abweichungen / wichtige Entscheidungen
+- **`proxy.ts` statt neuer `middleware.ts`:** Das Projekt hatte unter Next.js 16 bereits `src/proxy.ts` (Session-Refresh). Der Admin-Redirect wurde dort ergaenzt; der urspruenglich angelegte `middleware.ts`-Entwurf wurde wieder entfernt (Konvention-Konflikt).
+- **Kompatibilitaet = `blocked_options` (Opt-out), nicht `compat_*`:** Das Arc-Formular pflegt `blocked_options` — die Spalte, die der Konfigurator tatsaechlich liest. Die `compat_*`-Flags sind deprecated und ohne Wirkung; sie zu editieren waere ein stiller No-op gewesen.
+- **Arc-Pflichtfelder folgen den DB-`NOT NULL`-Spalten:** Seriennummer, Basispreis, Breite/Hoehe/Tiefe, Gewicht. `character` ist im UI optional (wird als `''` gesendet). Der Spec-Edge-Case „Speichern ohne Maße/Gewicht" ist durch die DB-`NOT NULL`-Constraints faktisch ausgeschlossen.
+- **Order-Status-Dropdown** bietet alle 9 `order_status`-Werte (deutsche Labels). `confirmed_at`/`confirmed_by` (= `auth.users`-ID) werden nur beim erstmaligen `CONFIRMED` gesetzt. Zahlungsstatus bleibt read-only (Stripe-Webhook).
+- **Preismatrix-Speichern:** Update-by-id fuer bestehende Regeln + Insert fuer fehlende (kein `onConflict`-Upsert, da der Unique-Index `COALESCE(variant,'')` nutzt). Gleiche `pricing_rules`/`pricing_settings`-Tabellen wie PROJ-3a.
+- **Denied-Feedback:** Eingeloggter Nicht-Admin wird mit sichtbarer Meldung „Dieses Konto hat keinen Admin-Zugriff." abgewiesen (statt stiller Redirect-Schleife).
+
+### Voraussetzungen fuers Funktionieren (Setup, nicht Code) — fuer /backend zu verifizieren
+1. **Admin-User:** `auth.users` mit `app_metadata.role = 'admin'` **und** passende `admin_profiles`-Zeile (`auth_user_id`). Die RLS auf `admin_profiles` erlaubt SELECT nur via `is_admin()` (JWT-Rolle) — d.h. die JWT-Rolle ist Pflicht, sowohl fuers Gate als auch fuer alle Schreibvorgaenge (arcs/orders/pricing nutzen alle `is_admin()`). Ersetzt die offene Frage aus der Design-Phase: Gate via `admin_profiles` funktioniert nur **zusammen** mit gesetzter JWT-Rolle.
+2. **Storage:** Bucket `arcs-media` (public) + Policies (`select` public, `insert`/`update` mit `is_admin()`) — in `db/schema.sql` noch auskommentiert; muss in Supabase angelegt werden, sonst schlaegt der Medien-Upload fehl.
+
+### Offen / Handoff
+- **Backend:** RLS/Setup gemaess obiger Voraussetzungen verifizieren (JWT-Rolle, Storage-Policies). Schreibpfade laufen ueber den cookie-gebundenen Server-Client (Server Actions), RLS bleibt Sicherheitsgrenze — kein Service-Role.
+- **QA:** E2E gegen die Test-Supabase erfordert, dass `tests/global-setup.ts` einen Test-Admin (User + `app_metadata.role` + `admin_profiles`) seedet; ggf. `arcs-media`-Bucket. Keine neuen Env-Vars noetig.
+
+## Implementation Notes (Backend — /backend)
+
+**Status:** Datenschicht verifiziert, Build gruen (`npm run build`), Validierungs-Tests gruen (7/7). Naechster Schritt: `/qa`.
+
+### Befund: kein neues Schema, kein API-Layer noetig
+Das Datenmodell existiert vollstaendig (PROJ-1/3a/4). Alle Admin-Mutationen laufen
+wie in der Tech-Design-Phase entschieden ueber **Server Actions** mit dem
+cookie-gebundenen Server-Client — keine `/api`-Routen. RLS bleibt die
+Sicherheitsgrenze. Verifizierte Pfade: `arcs/actions.ts` (`saveArc`/`archiveArc`),
+`bestellungen/actions.ts` (`updateOrderStatus`/`saveAdminNotes`),
+`preismatrix/actions.ts` (`savePricing`).
+
+### RLS verifiziert (db/schema.sql)
+`arcs`, `orders`, `pricing_rules`, `pricing_settings`, `admin_profiles` haben je
+eine `FOR ALL USING (is_admin()) WITH CHECK (is_admin())`-Policy. `is_admin()`
+liest `auth.jwt() -> app_metadata ->> role = 'admin'`. Public-Read-Policies
+(READY-Arcs, pricing_*) bleiben unveraendert. Keine RLS-Aenderung noetig.
+
+### Geschlossene Luecke: Storage-Bucket `arcs-media`
+Bucket + Policies lagen in `schema.sql` nur auskommentiert vor — Medien-Upload
+haette in jeder frischen DB fehlgeschlagen. Neu: **`db/migrations/009_arcs_media_storage.sql`**
+legt den public Bucket an und setzt `storage.objects`-Policies: public SELECT,
+`is_admin()` fuer INSERT **und** UPDATE (das Arc-Formular nutzt `upsert: true`).
+`schema.sql` verweist jetzt auf die Migration. **Aktion fuer Deploy/QA:** Migration 009
+in Supabase ausfuehren, sonst schlaegt der Upload fehl.
+
+### Bestaetigt: Admin-Gate braucht BEIDES (JWT-Rolle + Profil-Zeile)
+Das Layout gated ueber eine `admin_profiles`-SELECT — die RLS dort verlangt aber
+selbst `is_admin()` (JWT-Rolle). Korrekt sicher: ein eingeloggter Nicht-Admin
+bekommt keine Zeile und wird mit `?denied=1` abgewiesen. Operativ heisst das: ein
+Admin-User braucht `app_metadata.role='admin'` **und** eine `admin_profiles`-Zeile
+(`auth_user_id`). `db/seed.sql` dokumentiert beide Schritte bereits. Die
+Tech-Design-Annahme "Gate ohne JWT-Claims" trifft damit nicht zu — keine
+Sicherheitsluecke, nur ein Setup-Hinweis (kein RLS-Change ohne Freigabe).
+
+### Validierung getestet
+`preismatrix`-Validierung (Grenzwert-Konsistenz, nicht-negative Ganzzahl-Preise)
+aus dem `'use server'`-File in `preismatrix/validation.ts` extrahiert (dort nur
+async Exports erlaubt) und mit `validation.test.ts` abgedeckt: konsistente Grenzen,
+Preis 0, Grenzwert <= 0, klein-max >= mittel-max, leicht-max >= mittel-max,
+negativer/nicht-ganzzahliger Preis. 7/7 gruen. Types werden aus `actions.ts`
+re-exportiert (kein Aufruferwechsel noetig).
+
+### Abweichungen / Hinweise
+- Keine neuen npm-Pakete (wie geplant).
+- Keine Server-Action-Integrationstests: die Mutationen brauchen eine live
+  authentifizierte Supabase-Session + RLS; das deckt `/qa` per E2E mit
+  geseedetem Test-Admin ab (siehe Frontend-Handoff). Unit-getestet wurde die
+  pure Logik (Preis-Validierung).
 
 ## QA Test Results
 _To be added by /qa_

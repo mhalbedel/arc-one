@@ -26,7 +26,18 @@ export async function proxy(request: NextRequest) {
   )
 
   // Refresh session so it doesn't expire mid-visit
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Verstecktes Admin-CMS: nicht eingeloggte Besucher zur Login-Seite umleiten.
+  // Die feinere Admin-Pruefung (admin_profiles) erfolgt im Admin-Layout.
+  const { pathname } = request.nextUrl
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login' && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/admin/login'
+    return NextResponse.redirect(url)
+  }
 
   return supabaseResponse
 }
