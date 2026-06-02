@@ -402,4 +402,12 @@ Playwright: 108/108 ✅  (Chromium + Mobile Safari; PROJ-2 34, PROJ-3 48, PROJ-4
 > **Deploy-Voraussetzung:** Migration `008_pricing_matrix.sql` in Prod-Supabase ausgeführt (bestätigt) sowie in der Test-Supabase vorhanden.
 
 ## Deployment
-_To be added by /deploy_
+
+- **Deployed:** 2026-06-02
+- **Production URL:** https://arc-one-seven.vercel.app
+- **Deployment-ID:** `dpl_8a49WKsvJ8NVmt4P2J8tRWVZztmA` (Vercel, target production, READY)
+- **DB-Migration:** `008_pricing_matrix.sql` in Prod-Supabase ausgeführt (vom Nutzer bestätigt); Tabellen `pricing_rules` (30 Seed-Regeln) + `pricing_settings` (1 Datensatz, Defaults 3000/6000 cm², 2000/5000 g)
+- **Neue Env-Vars:** keine
+- **Tag:** `v1.6.0-PROJ-3a`
+- **Post-Deploy verifiziert:** Live-Konfigurator zeigt Matrix-Aufpreise (Schliff „+ 120 €", „inklusive" bei 0 €) + durchgehende Aufschlüsselung (Grundpreis + Zwischensumme). Nur erwarteter `favicon.ico` 404 in der Konsole.
+- **Pre-Deploy:** `npm run build` grün (inkl. TS-Check), Vitest 28/28, Playwright 108/108. Hinweis: `npm run lint` ist durch Next.js 16 (Entfernung von `next lint`) als Script defekt — Linting läuft über `next build`; kein Code-Lint-Fehler.
