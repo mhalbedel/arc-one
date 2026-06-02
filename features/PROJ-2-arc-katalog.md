@@ -338,8 +338,8 @@ Playwright: tests/PROJ-2-arc-katalog.spec.ts gegen .env.test (kanonisch):
 
 | # | Schwere | Beschreibung |
 |---|---------|--------------|
-| HS-L1 | **Low** | USP-Säulen nutzen `h3` ohne übergeordnete `h2` für den Abschnitt — kleiner Heading-Level-Sprung (a11y). Bewusst ohne Abschnittsüberschrift gestaltet; rein semantischer Hinweis, kein Funktionsfehler. |
-| HS-L2 | **Low** | `GET /favicon.ico` → 404 in der Konsole. **Vorbestehend**, unabhängig von diesem Increment. |
+| HS-L1 | ~~**Low**~~ | ~~USP-Säulen nutzen `h3` ohne übergeordnete `h2`~~ → **BEHOBEN (2026-06-02):** `sr-only`-`h2` „Warum ARC-ONE" in der USP-Sektion ergänzt; Heading-Hierarchie h1→h2→h3 korrekt, kein visueller Eingriff. |
+| HS-L2 | ~~**Low**~~ | ~~`GET /favicon.ico` → 404~~ → **BEHOBEN (2026-06-02):** `src/app/icon.svg` (Brand-Arc-Monogramm) ergänzt; Next injiziert `<link rel="icon" type="image/svg+xml">`, Browser probt `/favicon.ico` nicht mehr — Konsole error-frei verifiziert. |
 | — | Info | Manufaktur-CTA zeigt bewusst auf `/arcs` bis PROJ-11 die `/manufaktur`-Route liefert (kein toter Link). |
 
 ### Produktionsreife-Entscheidung (Homepage-Sektionen)

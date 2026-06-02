@@ -91,6 +91,7 @@ export default async function HomePage() {
       {/* USP — drei Saeulen */}
       <Separator />
       <section className="mx-auto max-w-6xl px-6 py-20 md:py-24">
+        <h2 className="sr-only">Warum ARC-ONE</h2>
         <div className="grid gap-12 md:grid-cols-3 md:gap-10">
           {USP_PILLARS.map((pillar) => (
             <div key={pillar.title}>
