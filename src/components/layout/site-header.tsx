@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
+import { CartIndicator } from '@/components/shop/cart-indicator'
 
 export function SiteHeader() {
   const pathname = usePathname()
@@ -34,6 +35,7 @@ export function SiteHeader() {
           >
             Shop
           </Link>
+          <CartIndicator />
         </nav>
       </div>
       <Separator />

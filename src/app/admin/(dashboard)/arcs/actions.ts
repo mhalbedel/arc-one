@@ -35,6 +35,16 @@ export async function saveArc(input: ArcInput): Promise<{ error?: string; id?: s
   const supabase = await createClient()
   const { id, ...fields } = input
 
+  // FIXED (Shop) ist nur aus READY (oder bereits FIXED) erreichbar — nie aus
+  // RESERVED/ORDERED o. Ä. (PROJ-9 Edge Case: aktive Reservierung/Bestellung).
+  if (id && fields.status === 'FIXED') {
+    const { data: current } = await supabase.from('arcs').select('status').eq('id', id).maybeSingle()
+    const status = (current as { status: ArcStatus } | null)?.status
+    if (status && status !== 'READY' && status !== 'FIXED') {
+      return { error: 'Auf FIXED nur aus dem Status READY umstellbar.' }
+    }
+  }
+
   if (id) {
     const { data, error } = await supabase
       .from('arcs')

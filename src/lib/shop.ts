@@ -1,4 +1,5 @@
-import type { Arc, Product, ShopItem } from '@/types'
+import type { Arc, Product, ResolvedCartItem, ShopItem, ShippingCountry } from '@/types'
+import { SHIPPING_PRICES } from '@/types'
 
 /**
  * Mapping der beiden Shop-Quellen auf die vereinheitlichte Anzeige-Form.
@@ -34,4 +35,26 @@ export function fixedArcToShopItem(arc: Arc): ShopItem {
     imageUrl: arc.photo_front_url,
     isSold: arc.order_id != null,
   }
+}
+
+/**
+ * Kombinierter Versand: **eine** Landpauschale pro Bestellung (DE 29 € / AT-CH 49 €)
+ * plus die Summe aller produktspezifischen Versand-Overrides.
+ *
+ * Nur verfügbare Positionen zählen. Ist keine verfügbar, ist der Versand 0.
+ * Die Landpauschale fällt unabhängig von Overrides genau einmal an.
+ */
+export function calcShipping(
+  items: Pick<ResolvedCartItem, 'shippingOverrideCents' | 'available'>[],
+  country: ShippingCountry,
+): number {
+  const available = items.filter((i) => i.available)
+  if (available.length === 0) return 0
+  const overrides = available.reduce((sum, i) => sum + (i.shippingOverrideCents ?? 0), 0)
+  return SHIPPING_PRICES[country] + overrides
+}
+
+/** Zwischensumme der verfügbaren Positionen (ohne Versand). */
+export function calcSubtotal(items: Pick<ResolvedCartItem, 'priceCents' | 'available'>[]): number {
+  return items.filter((i) => i.available).reduce((sum, i) => sum + i.priceCents, 0)
 }

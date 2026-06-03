@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingCart, Tag, LogOut } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Tag, Store, Inbox, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Toaster } from '@/components/ui/sonner'
 import {
@@ -23,6 +23,8 @@ import {
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/arcs', label: 'Arcs', icon: Package, exact: false },
+  { href: '/admin/shop', label: 'Shop', icon: Store, exact: false },
+  { href: '/admin/anfragen', label: 'Anfragen', icon: Inbox, exact: false },
   { href: '/admin/bestellungen', label: 'Bestellungen', icon: ShoppingCart, exact: false },
   { href: '/admin/preismatrix', label: 'Preismatrix', icon: Tag, exact: false },
 ]

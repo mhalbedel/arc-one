@@ -36,6 +36,7 @@ const ARC_STATUSES: ArcStatus[] = [
   'RAW',
   'IN_PROGRESS',
   'READY',
+  'FIXED',
   'RESERVED',
   'ORDERED',
   'IN_PRODUCTION',
@@ -328,6 +329,12 @@ export function ArcForm({ arc }: { arc?: Arc }) {
                 {SYSTEM_STATUSES.includes(status) && (
                   <p className="text-xs text-amber-700">
                     System-Status — wird normalerweise vom Konfigurator/Checkout gesetzt.
+                  </p>
+                )}
+                {status === 'FIXED' && (
+                  <p className="text-xs text-muted-foreground">
+                    Fertiger Arc: erscheint im Shop zum Basispreis (oben) und verlässt Konfigurator + Katalog.
+                    Nur aus READY möglich. Reversibel: zurück auf READY stellen.
                   </p>
                 )}
               </>

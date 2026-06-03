@@ -1,6 +1,6 @@
 # PROJ-9: Shop (fertige Produkte)
 
-## Status: In Progress
+## Status: In Review
 **Created:** 2026-06-03
 **Last Updated:** 2026-06-03
 
@@ -379,8 +379,117 @@ Kernentscheidung revidiert: Shop bekommt einen **Warenkorb** (mehrere Unikate, k
 - Neu nötig: Cart-Zustand (`localStorage`), `ShopItem` ggf. um `shippingOverrideCents` ergänzen für die Warenkorb-Versandberechnung (Anzeige), verbindliche Berechnung bleibt serverseitig.
 - Storefront-Browse/Detail (Increment 1) bleiben ansonsten gültig.
 
+### Backend — Core (Increment 2, 2026-06-03)
+Datenbank + serverseitige Shop-Endpunkte. Build grün, 41 Unit-Tests grün.
+
+**Migration** (`db/migrations/010_shop.sql`)
+- Neuer Arc-Status `FIXED` (`ALTER TYPE arc_status ADD VALUE`).
+- Neue Enums: `product_category`, `product_tier`, `purchase_mode`, `product_status`, `inquiry_status`, `order_type`.
+- `orders.order_type` (Default `ARC_PREORDER`) + Index.
+- Neue Tabellen `products`, `product_inquiries`, `order_items` mit RLS, Triggern, Indizes und Check-Constraints (`products_direct_needs_price`, `order_items_one_source`).
+- **RLS:** `products` öffentlich lesbar nur `is_published AND status <> ARCHIVED` (verkaufte bleiben sichtbar); `product_inquiries`/`order_items` nur Admin (Inserts laufen über Service-Rolle).
+- **Wichtige Korrektur:** Neue Policy `Public can read FIXED arcs` — ohne sie konnte die (anonyme) Storefront FIXED-Arcs gar nicht lesen (bestehende Policy erlaubte nur `READY`). Da RLS-Policies ge-OR-t werden, filtern Arc-Katalog (`/arcs`), Homepage-Featured und Arc-Detail (`/arcs/[serial]`) jetzt **explizit** auf `status = 'READY'`, damit FIXED nicht in Katalog/Konfigurator leakt (AC erfüllt).
+
+**Typen / Lib**
+- `OrderItemRow` (Re-Export `OrderItem`) + `order_items` im `Database`-Typ registriert.
+- `CartRef` + `ResolvedCartItem` in `src/types/index.ts`.
+- `src/lib/shop.ts`: `calcShipping` (eine Landpauschale + Σ Overrides, nur verfügbare Positionen) + `calcSubtotal` — mit Unit-Tests (`shop.test.ts`).
+- `src/lib/shop-server.ts`: `resolveCartItems` (server-only) — löst Cart-Refs gegen echte Daten auf; nur veröffentlichte, direkt-kaufbare Produkte bzw. FIXED-Arcs; verkaufte mit `available=false`.
+- `src/lib/rate-limit.ts`: leichtgewichtiges In-Memory-Rate-Limit (Anfrage-Spam-Schutz).
+
+**API-Routen** (alle ohne Client-Trust, Beträge/Verfügbarkeit serverseitig):
+- `POST /api/shop/inquiries` — Anfrage anlegen (nur `purchase_mode = inquiry`), Zod-Validierung, Rate-Limit 5/10 min pro IP.
+- `POST /api/shop/cart/resolve` — Cart-Refs → Live-Positionen + Zwischensumme/Versand/Gesamt (Versand nur bei gewähltem Land).
+- `POST /api/shop/checkout` — Verfügbarkeit prüfen + **atomar sperren** (`held_until` bei Produkten, `reserved_until`/`reserved_by` bei Arcs, bedingtes Update nur wenn verfügbar/nicht gesperrt), nicht mehr verfügbare Positionen entfernen + melden, kombinierter Versand, Kunde + Order (`order_type=SHOP`, 100 % über Deposit-Felder) + `order_items` (Preis-/Name-Snapshot), **ein** PaymentIntent.
+- `POST /api/shop/checkout/confirm` — **idempotenter** Abschluss nach Zahlung: PaymentIntent bei Stripe verifizieren, Positionen atomar als verkauft markieren (`products.status → SOLD` bzw. FIXED-Arc `order_id`, bedingt `WHERE … AVAILABLE`/`order_id IS NULL`), Order `CONFIRMED` mit `deposit_paid_at` + `remaining_paid_at`.
+
+**Storefront-Anbindung**
+- `src/hooks/use-cart.ts`: localStorage-Warenkorb (nur Refs, tab-synchron via Custom-Event, Menge fix 1).
+- `src/components/shop/add-to-cart-button.tsx`: Direktkauf-CTA „In den Warenkorb" / „Im Warenkorb · zur Kasse".
+- `/shop/[code]`: „Jetzt kaufen"-Link → `AddToCartButton` (ersetzt den alten Einzelprodukt-Checkout-Link).
+
+**Tests:** Pure Business-Logik (Versand-/Summenformel) unit-getestet. Vollständige Route-Integrationstests bewusst nicht ergänzt — der Codebestand hat kein Supabase-Builder-Mock-Muster; das Mocken der verketteten Conditional-Updates + Stripe wäre brittle/overengineered. Die riskante Logik (kombinierter Versand) ist isoliert und getestet.
+
+**Storage:** Kein neues Bucket — Produktfotos nutzen den bestehenden `arcs-media`-Bucket unter `products/` (vorhandene Policies decken Admin-Upload ab).
+
+**Noch offen (→ `/frontend` Increment 3):** `/warenkorb`-Seite + Header-Cart-Indikator, `/shop/checkout` (+ Bestätigungsseite, ruft `confirm` auf), Admin-UI (Produktverwaltung `/admin/shop`, Anfragen `/admin/anfragen`, FIXED-Umschaltung im Arc-Formular, Shop-Kennzeichnung in der Bestellübersicht, Sidebar-Einträge). `db/schema.sql` (Fresh-Install) wurde **nicht** mitgepflegt — nur die Migration; ggf. nachziehen.
+
+### Frontend — Cart, Checkout & Admin (Increment 3, 2026-06-03)
+Vervollständigt die kundenseitige Kauf-/Anfrage-Strecke und die komplette Admin-Verwaltung. Build grün, 41 Unit-Tests grün.
+
+**Storefront — Warenkorb & Checkout**
+- `src/components/shop/cart-indicator.tsx`: Header-Warenkorb-Icon mit Positionsanzahl (in `site-header` eingehängt).
+- `/warenkorb` (`src/app/warenkorb/page.tsx`): löst Refs serverseitig auf (`/api/shop/cart/resolve`), zeigt Positionen (Foto, Name, Einzelpreis, Entfernen), Lieferland-Select, kombinierten Versand + Gesamt (`CartTotals`), markiert „Nicht mehr verfügbar", Leerzustand mit Shop-Link, „Zur Kasse" (deaktiviert ohne verfügbare Stücke).
+- `/shop/checkout` + `shop-checkout-client.tsx`: Zwei-Phasen-Checkout (Formular → Zahlung). Wiederverwendet `ContactForm` (PROJ-4); Übersicht aller Positionen + Beträge; bei Submit `POST /api/shop/checkout`; zwischenzeitlich verkaufte Stücke werden gemeldet, aus dem lokalen Warenkorb entfernt und vom Betrag ausgenommen; danach `ShopPaymentForm` (Stripe Payment Element, 100 %, Redirect auf die Shop-Bestätigung).
+- `/shop/checkout/bestaetigung`: Server-Component, ruft `finalizeShopOrder` (idempotent) auf, zeigt Bestellnummer + gekaufte Stücke + Versand/Gesamt, leert den Warenkorb (`ClearCart`-Client). 404 ohne erfolgreichen PaymentIntent.
+- `/shop/[code]`: Direktkauf-CTA jetzt `AddToCartButton` (in den Warenkorb / „Im Warenkorb · zur Kasse").
+- **Refactor:** Abschlusslogik in `finalizeShopOrder` (`shop-server.ts`) extrahiert — Bestätigungsseite **und** `POST /api/shop/checkout/confirm` teilen sie.
+
+**Admin — Produktverwaltung** (`/admin/shop`, `/admin/shop/neu`, `/admin/shop/[id]`)
+- `product-form.tsx`: Name, Kategorie, Tier, Kaufmodus (Preis-Pflicht nur bei Direktkauf, bei Anfrage deaktiviert), Versand-Override (optional), Beschreibung, Maße (optional), Mehrfach-Foto-Upload (≥1 Pflicht, einzeln entfernbar, Upload in `arcs-media` unter `products/`), optionales `.glb`, Sichtbarkeits-Toggle.
+- `shop/actions.ts`: `saveProduct` (Produktcode-Generierung `P-XXXXX` beim Anlegen), `deleteProduct` (verhindert bei verknüpfter Order/Anfrage → Hinweis „archivieren"), `setProductStatus` (Archivieren). Löschen mit `AlertDialog`-Bestätigung.
+- Produktliste mit Kategorie, Tier-Badge, Modus, Preis, Verkaufsstatus, Sichtbarkeit; Leerzustand.
+
+**Admin — Anfragen** (`/admin/anfragen`)
+- Liste (Datum, Produkt, Name, Kontakt, Nachricht, Status); `InquiryStatusSelect` ändert Status NEU → KONTAKTIERT → ABGESCHLOSSEN (Server Action, optimistisch mit Rollback).
+
+**Admin — FIXED-Umschaltung & Bestellungen**
+- `arc-form.tsx`: Status `FIXED` im Dropdown + Hinweistext (Festpreis = Basispreis; nur aus READY; reversibel). Server-Guard in `saveArc`: `→ FIXED` nur aus `READY`/`FIXED`, sonst Fehler (deckt Edge Case RESERVED/ORDERED).
+- Bestellübersicht: neue Spalte **Typ** (Badge „Shop" / „Pre-Order"), Artikel-Spalte zeigt Stückzahl für Shop bzw. Seriennummer für Pre-Order; Detailseite shop-aware (Artikel-Liste statt Konfiguration, 100-%-Zahlungszeile).
+- `admin-shell.tsx`: Sidebar-Einträge **Shop** + **Anfragen**.
+
+**Bekannte Einschränkungen / Hinweise**
+- Atomare Sperre nutzt `held_until` (Produkte) / `reserved_until` (Arcs) mit 15-min-Fenster; ein Käufer, der die Zahlung abbricht, kann dasselbe Stück erst nach Ablauf erneut in den Checkout nehmen (bewusst, Sicherheit vor Komfort bei Unikaten).
+- `db/schema.sql` (Fresh-Install) weiterhin nicht mitgepflegt — nur Migration `010_shop.sql`.
+- E-Mail-Benachrichtigungen (Anfrage/Kaufbestätigung) bleiben PROJ-7 (nur DB-Persistenz + Hinweistexte).
+
 ## QA Test Results
-_To be added by /qa_
+
+**QA-Datum:** 2026-06-03 · **Tester:** QA Engineer (Claude) · **Methode:** Code-Review + automatisierte Tests + Live-API-Smoke-Tests gegen Dev-Server.
+
+### Zusammenfassung
+- **Akzeptanzkriterien:** 40+ AC geprüft — kein Verstoß gefunden. Die kundenseitige Kauf-Happy-Path (Add-to-Cart → Checkout → Stripe-Zahlung → Bestätigung) und die FIXED-Arc-Admin-Umschaltung wurden **per Code-Review** verifiziert, **nicht live ausgeführt** (keine Seed-Produkte in der angebundenen DB; Stripe-Charge nicht durchgespielt).
+- **Bugs:** 0 Critical · 0 High · 1 Medium (**SHOP-M1 behoben**) · 4 Low/Informational (offen).
+- **Automatisierte Tests:** `npm test` → **52 passed** (11 neu: Shop-Mapping + Rate-Limit). `npm run build` → grün (auch nach SHOP-M1-Fix). PROJ-2-E2E-Regression → **21 passed** (READY-Filter bricht Katalog/Home/Detail nicht).
+- **Production-Ready:** Keine Critical/High; das einzige Medium (SHOP-M1) ist behoben. **Empfehlung vor Deploy:** eine echte Stripe-Test-Mode-Bestellung durchspielen (Geld-Pfad wurde nicht live ausgeführt).
+
+### Verifiziert (Live, Dev-Server)
+| Bereich | Ergebnis |
+|---|---|
+| `/shop` Leerzustand (keine veröffentlichten Objekte) | ✅ Hinweistext statt leerer Seite |
+| `/shop/<unbekannt>` → 404 | ✅ `notFound()` |
+| `/warenkorb`, `/shop/checkout`, `/`, `/arcs` rendern (HTTP 200) | ✅ kein Crash |
+| `POST /api/shop/cart/resolve` leere/ungültige Refs | ✅ nicht-existente Refs werden serverseitig verworfen (items []) |
+| `POST /api/shop/inquiries` ungültige E-Mail → 400; unbekanntes Produkt → 404 | ✅ |
+| `POST /api/shop/checkout` ungültiger Body → 400 | ✅ |
+| `POST /api/shop/checkout/confirm` Fake-PaymentIntent → 409 | ✅ keine Order, idempotent |
+| Rate-Limit Anfragen (5/10 min pro IP) | ✅ exakt nach 5 Treffern → 429 |
+
+### Verifiziert (Code-Review)
+Atomare Kaufsicherung (bedingtes `held_until`/`reserved_until`-Update nur wenn verfügbar), 100-%-PaymentIntent = Summe + kombinierter Versand, idempotenter Abschluss (`finalizeShopOrder` von Bestätigungsseite **und** `/confirm` geteilt), Teil-Verfügbarkeit (entfernte Positionen werden gemeldet + vom Betrag ausgenommen), Versandformel (eine Landpauschale + Σ Overrides, nur verfügbare Positionen), RLS (öffentlich nur veröffentlichte/nicht-archivierte; FIXED-Arcs via neuer Policy; Katalog/Home/Detail filtern explizit `READY`), FIXED-Guard (`→ FIXED` nur aus `READY`/`FIXED`), Produkt-Löschschutz bei verknüpfter Order/Anfrage, vereinheitlichte Bestellübersicht (Shop-Kennzeichnung), kein Client-Trust (Preise/Verfügbarkeit serverseitig).
+
+### Bugs
+
+**SHOP-M1 (Medium) — Möglicher Charge ohne Ware bei Hold-Ablauf während der Zahlung — ✅ BEHOBEN (2026-06-03)**
+`finalizeShopOrder` markierte Positionen mit bedingtem Update als verkauft (`WHERE status = AVAILABLE` bzw. `order_id IS NULL`), ohne zu prüfen, ob die Zeile getroffen wurde. Die Checkout-Sperre (`held_until`/`reserved_until`) gilt 15 min. Braucht ein Kunde **länger als 15 min** auf der Stripe-Zahlungsseite, läuft die Sperre ab; ein zweiter Käufer kann dasselbe Unikat kaufen. Schloss der erste Kunde danach die Zahlung ab, wurde die Order auf `CONFIRMED` gesetzt und **voll belastet**, das bedingte `SOLD`-Update traf aber 0 Zeilen → der Kunde zahlte für ein bereits anderweitig verkauftes Unikat, **ohne Erkennung/Hinweis/Refund**.
+*Fix:* `finalizeShopOrder` wertet jetzt das Ergebnis jedes bedingten Updates aus (`.select('id').maybeSingle()`). Nicht beanspruchte Positionen (`unclaimed`) werden gesammelt; die Order wird klar per `admin_notes` (`[ACHTUNG] … Rückerstattung prüfen: …`) für die manuelle Erstattung markiert und in `FinalizeResult` zurückgegeben. Die Bestätigungsseite weist den Kunden auf das vergebene Stück und die kommende Rückerstattung hin. **Offen/Folgeschritt:** Die Rückerstattung erfolgt manuell durch den Admin (Stripe-Refund-API-Automatisierung ist bewusst nicht Teil dieses Fixes); Hold-Fenster an die Stripe-Session-Lebensdauer koppeln wäre eine ergänzende Härtung.
+
+**SHOP-L1 (Low) — Anfrage-Endpoint ignoriert Sichtbarkeit/Status**
+`POST /api/shop/inquiries` prüft nur `purchase_mode === 'inquiry'`, nicht `is_published`/`status <> ARCHIVED`. Wer einen Produktcode kennt, kann Anfragen zu ausgeblendeten/archivierten Anfrage-Produkten senden. Geringe Wirkung (Anfragen nur Admin-sichtbar, rate-limited), aber inkonsistent zum Storefront-Sichtbarkeitsmodell.
+
+**SHOP-L2 (Low) — Re-Submit im Checkout sperrt den Käufer 15 min aus**
+Submit der Checkout-Formularphase erzeugt Hold + Order + PaymentIntent. Geht der Käufer zurück und submittet erneut (z. B. Adresskorrektur), schlägt `tryHold` für die bereits (vom eigenen Vorlauf) gehaltenen Positionen fehl → 409 „Keines der Stücke ist mehr verfügbar." Der Käufer kann erst nach Ablauf der 15-min-Sperre kaufen; pro Submit entstehen außerdem verwaiste `PENDING_CONFIRMATION`-Orders + PaymentIntents. Workaround: warten.
+
+**SHOP-L3 (Low) — `FIXED → READY` auch für verkauften FIXED-Arc erlaubt**
+Der Guard in `saveArc` sichert nur den Übergang **nach** FIXED. Ein verkaufter FIXED-Arc (`order_id` gesetzt) kann zurück auf `READY` gestellt werden und landet damit wieder im Konfigurator/Katalog (verkauftes Unikat erneut konfigurierbar). Admin-only, eng.
+
+**SHOP-L4 (Informational) — `npm run lint` ist defekt**
+`next lint` wurde in Next 16 entfernt; das Script bricht mit „Invalid project directory … /lint" ab. Vorbestehend (nicht PROJ-9), aber Linting läuft im Repo aktuell nicht. TypeScript-Prüfung erfolgt über `npm run build` (grün).
+
+### Nicht abgedeckt / Empfohlene Folgeschritte
+- **Live-Stripe-Test-Mode-Bestellung** durch den kompletten Mehr-Artikel-Checkout inkl. `confirm`/Bestätigungsseite (Geld-Pfad + atomare `SOLD`-Markierung) — vor Deploy empfohlen.
+- **E2E-Tests für PROJ-9** erfordern eine Erweiterung des `tests/global-setup.ts`-Seeds (Produkte, Anfrage-Produkte, FIXED-Arcs) **und** die Anwendung von `010_shop.sql` auf die Test-Supabase. Bewusst nicht hinzugefügt, da Tests sonst gegen eine nicht migrierte Test-DB rot liefen. Als Infrastruktur-Folgeaufgabe.
+- **Atomare Doppelverkauf-Race** (zwei parallele Käufer) nur per Code-Review verifiziert.
 
 ## Deployment
 _To be added by /deploy_

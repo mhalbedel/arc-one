@@ -22,6 +22,7 @@ export type {
   AdminProfileRow as AdminProfile,
   ProductRow as Product,
   ProductInquiryRow as ProductInquiry,
+  OrderItemRow as OrderItem,
   Database,
 } from './database'
 
@@ -148,4 +149,25 @@ export interface ShopItem {
   imageUrl: string | null
   /** true = verkauft (sichtbar, nicht kaufbar) */
   isSold: boolean
+}
+
+// ── Warenkorb (PROJ-9) ─────────────────────────────────────
+
+/** Im localStorage gehaltene Referenz — nur Quelle + Code, keine Preise. */
+export interface CartRef {
+  source: 'product' | 'arc'
+  code: string
+}
+
+/** Serverseitig aufgelöste Warenkorb-Position (Preis/Verfügbarkeit verbindlich). */
+export interface ResolvedCartItem {
+  source: 'product' | 'arc'
+  code: string
+  name: string
+  priceCents: number
+  imageUrl: string | null
+  /** Versand-Override des Produkts in Cent; sonst null (Standard-Landpauschale) */
+  shippingOverrideCents: number | null
+  /** false = inzwischen verkauft/ausgeblendet/gelöscht → vom Gesamtbetrag ausgenommen */
+  available: boolean
 }

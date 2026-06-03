@@ -27,6 +27,7 @@ export default async function HomePage() {
     .from('arcs')
     .select('*, drops(id, title, status)')
     .eq('is_featured', true)
+    .eq('status', 'READY') // FIXED-Arcs erscheinen nur im Shop (PROJ-9)
     .limit(3)
 
   const typedFeatured = (featuredArcs ?? []) as ArcWithDrop[]

@@ -247,6 +247,19 @@ export interface ProductInquiryRow {
   created_at: string
 }
 
+/** Eine Position einer Shop-Bestellung — referenziert genau eine Quelle. */
+export interface OrderItemRow {
+  id: string
+  order_id: string
+  /** Genau eine der beiden Quellen ist gesetzt */
+  product_id: string | null
+  arc_id: string | null
+  /** Snapshot zum Kaufzeitpunkt */
+  name_snapshot: string
+  price_cents: number
+  created_at: string
+}
+
 export interface PricingRuleRow {
   id: string
   /** schliff | finish | mounting | light */
@@ -409,6 +422,16 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<ProductInquiryRow>
+      }
+      order_items: {
+        Row: OrderItemRow
+        Insert: Omit<OrderItemRow, 'id' | 'created_at'> & {
+          id?: string
+          product_id?: string | null
+          arc_id?: string | null
+          created_at?: string
+        }
+        Update: Partial<OrderItemRow>
       }
       pricing_rules: {
         Row: PricingRuleRow

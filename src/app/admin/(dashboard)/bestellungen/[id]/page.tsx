@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { OrderEditor } from '@/components/admin/order-editor'
 import { OrderStatusBadge } from '@/components/admin/order-status-badge'
+import { Badge } from '@/components/ui/badge'
 import { formatPrice, formatDate } from '@/lib/utils'
-import type { OrderStatus } from '@/types'
+import type { OrderStatus, OrderType } from '@/types'
 
 interface OrderDetail {
   id: string
   order_number: string
+  order_type: OrderType
   config: Record<string, unknown> | null
   base_price: number
   sanding_price: number
@@ -36,6 +38,7 @@ interface OrderDetail {
     address: { delivery?: Address; billing?: Address | null } | null
   } | null
   arcs: { serial_number: string }[] | null
+  order_items: { id: string; name_snapshot: string; price_cents: number }[] | null
 }
 
 interface Address {
@@ -94,7 +97,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const { data } = await supabase
     .from('orders')
     .select(
-      'id, order_number, config, base_price, sanding_price, mounting_price, finish_price, light_price, shipping_price, total_price, deposit_amount, remaining_amount, deposit_paid_at, remaining_paid_at, estimated_days, status, admin_notes, confirmed_at, created_at, customers(name, email, phone, address), arcs(serial_number)',
+      'id, order_number, order_type, config, base_price, sanding_price, mounting_price, finish_price, light_price, shipping_price, total_price, deposit_amount, remaining_amount, deposit_paid_at, remaining_paid_at, estimated_days, status, admin_notes, confirmed_at, created_at, customers(name, email, phone, address), arcs(serial_number), order_items(id, name_snapshot, price_cents)',
     )
     .eq('id', id)
     .maybeSingle()
@@ -102,6 +105,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const order = data as unknown as OrderDetail | null
   if (!order) notFound()
 
+  const isShop = order.order_type === 'SHOP'
   const config = order.config ?? {}
   const delivery = order.customers?.address?.delivery
   const sanding = String(config.sandingChoice ?? '')
@@ -123,6 +127,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <div className="mt-2 flex items-center gap-3">
           <h1 className="text-2xl font-semibold">{order.order_number}</h1>
           <OrderStatusBadge status={order.status} />
+          <Badge
+            variant={isShop ? 'default' : 'outline'}
+            className="text-[10px] uppercase tracking-[0.1em]"
+          >
+            {isShop ? 'Shop' : 'Pre-Order'}
+          </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
           Eingegangen am {formatDate(order.created_at)}
@@ -161,28 +171,47 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </CardContent>
           </Card>
 
-          {/* Konfiguration */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Konfiguration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {sanding && <Row label="Schliff" value={SANDING_LABELS[sanding] ?? sanding} />}
-              {mounting && (
-                <Row
-                  label="Befestigung"
-                  value={
-                    <>
-                      {MOUNTING_LABELS[mounting] ?? mounting}
-                      {mounting === 'spinne' && spinneCount ? ` (${spinneCount} Pendel)` : ''}
-                    </>
-                  }
-                />
-              )}
-              <Row label="Finish" value={finish ? (FINISH_LABELS[finish] ?? finish) : '—'} />
-              {light && <Row label="Licht" value={LIGHT_LABELS[light] ?? light} />}
-            </CardContent>
-          </Card>
+          {/* Konfiguration (Arc-Pre-Order) bzw. Artikel (Shop) */}
+          {isShop ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Artikel</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {(order.order_items ?? []).map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm">
+                    <span>{item.name_snapshot}</span>
+                    <span className="tabular-nums">{formatPrice(item.price_cents)}</span>
+                  </div>
+                ))}
+                {(order.order_items?.length ?? 0) === 0 && (
+                  <p className="text-sm text-muted-foreground">Keine Positionen.</p>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Konfiguration</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {sanding && <Row label="Schliff" value={SANDING_LABELS[sanding] ?? sanding} />}
+                {mounting && (
+                  <Row
+                    label="Befestigung"
+                    value={
+                      <>
+                        {MOUNTING_LABELS[mounting] ?? mounting}
+                        {mounting === 'spinne' && spinneCount ? ` (${spinneCount} Pendel)` : ''}
+                      </>
+                    }
+                  />
+                )}
+                <Row label="Finish" value={finish ? (FINISH_LABELS[finish] ?? finish) : '—'} />
+                {light && <Row label="Licht" value={LIGHT_LABELS[light] ?? light} />}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Preis */}
           <Card>
@@ -212,30 +241,47 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <CardTitle className="text-base">Zahlung (Stripe)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Row
-                label="Anzahlung (30%)"
-                value={
-                  order.deposit_paid_at ? (
-                    <span className="text-emerald-700">
-                      {formatPrice(order.deposit_amount)} · {formatDate(order.deposit_paid_at)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">{formatPrice(order.deposit_amount)} · offen</span>
-                  )
-                }
-              />
-              <Row
-                label="Restbetrag (70%)"
-                value={
-                  order.remaining_paid_at ? (
-                    <span className="text-emerald-700">
-                      {formatPrice(order.remaining_amount)} · {formatDate(order.remaining_paid_at)}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">{formatPrice(order.remaining_amount)} · offen</span>
-                  )
-                }
-              />
+              {isShop ? (
+                <Row
+                  label="Vollzahlung (100%)"
+                  value={
+                    order.deposit_paid_at ? (
+                      <span className="text-emerald-700">
+                        {formatPrice(order.total_price)} · {formatDate(order.deposit_paid_at)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">{formatPrice(order.total_price)} · offen</span>
+                    )
+                  }
+                />
+              ) : (
+                <>
+                  <Row
+                    label="Anzahlung (30%)"
+                    value={
+                      order.deposit_paid_at ? (
+                        <span className="text-emerald-700">
+                          {formatPrice(order.deposit_amount)} · {formatDate(order.deposit_paid_at)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">{formatPrice(order.deposit_amount)} · offen</span>
+                      )
+                    }
+                  />
+                  <Row
+                    label="Restbetrag (70%)"
+                    value={
+                      order.remaining_paid_at ? (
+                        <span className="text-emerald-700">
+                          {formatPrice(order.remaining_amount)} · {formatDate(order.remaining_paid_at)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">{formatPrice(order.remaining_amount)} · offen</span>
+                      )
+                    }
+                  />
+                </>
+              )}
               <p className="pt-1 text-xs text-muted-foreground">
                 Zahlungsstatus wird automatisch durch Stripe gesetzt (nur Referenz).
               </p>

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ProductGallery } from '@/components/shop/product-gallery'
 import { InquiryForm } from '@/components/shop/inquiry-form'
+import { AddToCartButton } from '@/components/shop/add-to-cart-button'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -20,6 +21,7 @@ type ShopDetailPageProps = {
 }
 
 type ShopDetail = {
+  source: 'product' | 'arc'
   code: string
   name: string
   category: ProductCategory
@@ -36,6 +38,7 @@ type ShopDetail = {
 function fromProduct(p: Product): ShopDetail {
   const hasDims = p.width_cm != null && p.height_cm != null && p.depth_cm != null && p.weight_grams != null
   return {
+    source: 'product',
     code: p.product_code,
     name: p.name,
     category: p.category,
@@ -54,6 +57,7 @@ function fromProduct(p: Product): ShopDetail {
 
 function fromArc(a: Arc): ShopDetail {
   return {
+    source: 'arc',
     code: a.serial_number,
     name: `Arc ${a.serial_number}`,
     category: 'leuchten',
@@ -162,9 +166,7 @@ export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
             ) : isInquiry ? (
               <InquiryForm productCode={detail.code} productName={detail.name} />
             ) : (
-              <Button asChild size="lg" className="w-full text-xs tracking-[0.15em] uppercase">
-                <Link href={`/shop/checkout/${detail.code}`}>Jetzt kaufen</Link>
-              </Button>
+              <AddToCartButton source={detail.source} code={detail.code} />
             )}
             {!detail.isSold && (
               <p className="text-xs text-muted-foreground text-center mt-3">

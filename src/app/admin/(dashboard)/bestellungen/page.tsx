@@ -9,12 +9,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { OrderStatusBadge } from '@/components/admin/order-status-badge'
+import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
-import type { OrderStatus } from '@/types'
+import type { OrderStatus, OrderType } from '@/types'
 
 interface OrderListRow {
   id: string
   order_number: string
+  order_type: OrderType
   total_price: number
   status: OrderStatus
   deposit_paid_at: string | null
@@ -22,6 +24,7 @@ interface OrderListRow {
   created_at: string
   customers: { name: string | null } | null
   arcs: { serial_number: string }[] | null
+  order_items: { id: string }[] | null
 }
 
 function paymentLabel(row: OrderListRow): string {
@@ -35,7 +38,7 @@ export default async function OrdersListPage() {
   const { data } = await supabase
     .from('orders')
     .select(
-      'id, order_number, total_price, status, deposit_paid_at, remaining_paid_at, created_at, customers(name), arcs(serial_number)',
+      'id, order_number, order_type, total_price, status, deposit_paid_at, remaining_paid_at, created_at, customers(name), arcs(serial_number), order_items(id)',
     )
     .order('created_at', { ascending: false })
   const orders = (data ?? []) as unknown as OrderListRow[]
@@ -57,8 +60,9 @@ export default async function OrdersListPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Bestellnr.</TableHead>
+                <TableHead>Typ</TableHead>
                 <TableHead>Kunde</TableHead>
-                <TableHead>Arc</TableHead>
+                <TableHead>Artikel</TableHead>
                 <TableHead className="text-right">Gesamt</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Zahlung</TableHead>
@@ -72,9 +76,20 @@ export default async function OrdersListPage() {
                       {order.order_number}
                     </Link>
                   </TableCell>
+                  <TableCell>
+                    {order.order_type === 'SHOP' ? (
+                      <Badge className="text-[10px] uppercase tracking-[0.1em]">Shop</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] uppercase tracking-[0.1em]">
+                        Pre-Order
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{order.customers?.name ?? '—'}</TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">
-                    {order.arcs?.[0]?.serial_number ?? '—'}
+                    {order.order_type === 'SHOP'
+                      ? `${order.order_items?.length ?? 0} Stück`
+                      : order.arcs?.[0]?.serial_number ?? '—'}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatPrice(order.total_price)}

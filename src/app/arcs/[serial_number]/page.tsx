@@ -38,6 +38,7 @@ export default async function ArcDetailPage({ params }: ArcDetailPageProps) {
     .from('arcs')
     .select('*, drops(id, title, status)')
     .eq('serial_number', serial_number)
+    .eq('status', 'READY') // FIXED-Arcs haben ihre Detailseite im Shop (PROJ-9)
     .single()
 
   if (!arc) notFound()

@@ -17,6 +17,7 @@ export default async function ArcsPage({ searchParams }: ArcsPageProps) {
   const { data: arcs } = await supabase
     .from('arcs')
     .select('*, drops(id, title, status)')
+    .eq('status', 'READY') // FIXED-Arcs gehören in den Shop, nicht in den Katalog (PROJ-9)
     .order('base_price', { ascending: sortValue === 'price_asc' })
     .order('serial_number', { ascending: true })
 
