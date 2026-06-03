@@ -1,6 +1,6 @@
 # PROJ-9: Shop (fertige Produkte)
 
-## Status: Approved
+## Status: Deployed
 **Created:** 2026-06-03
 **Last Updated:** 2026-06-03
 
@@ -496,4 +496,11 @@ Beim erneuten Absenden schlug `tryHold` für die bereits (vom eigenen Vorlauf) g
 - **Atomare Doppelverkauf-Race** (zwei echt parallele Käufer) weiterhin nur per Code-Review verifiziert.
 
 ## Deployment
-_To be added by /deploy_
+
+**Deployed:** 2026-06-03 · **Production:** https://arc-one-seven.vercel.app · **Tag:** `v1.9.0-PROJ-9`
+
+- Auto-Deploy via Push auf `main` (Vercel, Commit `f3bb5b3`). Build grün (Production Ready in ~43s).
+- **Produktiv-Migrationen angewendet:** `010_shop.sql` + `011_shop_hold_by.sql` (vor dem Deploy bestätigt).
+- **Pre-Deploy-Checks:** `npm run build` grün, `npm run lint` Exit 0, QA Approved (keine Critical/High), keine Secrets committet, Security-Header in `next.config.ts` vorhanden.
+- **Post-Deploy-Verifikation (read-only):** `/`, `/shop`, `/warenkorb`, `/shop/checkout`, `/arcs` → 200; `/shop/<unbekannt>` → 404; `/api/shop/cart/resolve` liefert gültiges JSON (Shop-Tabellen + Server-Code live, keine 500er). Mutierende Pfade (Checkout/Anfrage gegen Live-Stripe/DB) bewusst nicht in Produktion getriggert.
+- **Hinweise:** Shop zeigt aktuell den Leerzustand, bis im Admin (`/admin/shop`) Produkte angelegt/veröffentlicht bzw. Arcs auf `FIXED` gesetzt werden. E-Mail-Benachrichtigungen (Anfrage/Kaufbestätigung) bleiben PROJ-7.
