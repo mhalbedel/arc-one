@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe-server'
@@ -42,13 +41,15 @@ const bodySchema = z.object({
 type Supa = ReturnType<typeof createAdminClient>
 
 /**
- * Versucht, eine Position atomar zu sperren. Erfolg nur, wenn das Unikat
- * verfügbar und nicht bereits anderweitig gesperrt ist.
+ * Versucht, eine Position atomar zu sperren. Erfolg, wenn das Unikat verfügbar
+ * und entweder ungesperrt, abgelaufen **oder bereits vom selben Käufer gesperrt**
+ * ist (`owner` = Käufer-E-Mail) — so sperrt sich ein Käufer beim erneuten Absenden
+ * des Checkouts nicht selbst aus (SHOP-L2).
  */
 async function tryHold(
   supabase: Supa,
   item: ServerCartItem,
-  holdToken: string,
+  owner: string,
 ): Promise<boolean> {
   const nowIso = new Date().toISOString()
   const untilIso = new Date(Date.now() + HOLD_MS).toISOString()
@@ -56,10 +57,10 @@ async function tryHold(
   if (item.display.source === 'product') {
     const { data } = await supabase
       .from('products')
-      .update({ held_until: untilIso } as unknown as never)
+      .update({ held_until: untilIso, held_by: owner } as unknown as never)
       .eq('id', item.id)
       .eq('status', 'AVAILABLE')
-      .or(`held_until.is.null,held_until.lt.${nowIso}`)
+      .or(`held_until.is.null,held_until.lt.${nowIso},held_by.eq.${owner}`)
       .select('id')
       .maybeSingle()
     return !!data
@@ -67,11 +68,11 @@ async function tryHold(
 
   const { data } = await supabase
     .from('arcs')
-    .update({ reserved_until: untilIso, reserved_by: holdToken } as unknown as never)
+    .update({ reserved_until: untilIso, reserved_by: owner } as unknown as never)
     .eq('id', item.id)
     .eq('status', 'FIXED')
     .is('order_id', null)
-    .or(`reserved_until.is.null,reserved_until.lt.${nowIso}`)
+    .or(`reserved_until.is.null,reserved_until.lt.${nowIso},reserved_by.eq.${owner}`)
     .select('id')
     .maybeSingle()
   return !!data
@@ -87,7 +88,9 @@ export async function POST(req: NextRequest) {
   const { refs, contactData } = parsed.data
   const country = contactData.country as ShippingCountry
   const supabase = createAdminClient()
-  const holdToken = randomUUID()
+  // Sperr-Eigentümer = Käufer-E-Mail: erlaubt die Wiederaufnahme der eigenen
+  // Sperre beim erneuten Absenden (SHOP-L2), statt 15 min Selbst-Aussperrung.
+  const holdOwner = contactData.email
 
   const resolved = await resolveCartItems(supabase, refs)
 
@@ -95,7 +98,7 @@ export async function POST(req: NextRequest) {
   const held: ServerCartItem[] = []
   const removed: { source: string; code: string; name: string }[] = []
   for (const item of resolved) {
-    if (item.display.available && (await tryHold(supabase, item, holdToken))) {
+    if (item.display.available && (await tryHold(supabase, item, holdOwner))) {
       held.push(item)
     } else {
       removed.push({ source: item.display.source, code: item.display.code, name: item.display.name })

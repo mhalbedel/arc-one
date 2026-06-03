@@ -35,13 +35,24 @@ export async function saveArc(input: ArcInput): Promise<{ error?: string; id?: s
   const supabase = await createClient()
   const { id, ...fields } = input
 
-  // FIXED (Shop) ist nur aus READY (oder bereits FIXED) erreichbar — nie aus
-  // RESERVED/ORDERED o. Ä. (PROJ-9 Edge Case: aktive Reservierung/Bestellung).
-  if (id && fields.status === 'FIXED') {
-    const { data: current } = await supabase.from('arcs').select('status').eq('id', id).maybeSingle()
-    const status = (current as { status: ArcStatus } | null)?.status
-    if (status && status !== 'READY' && status !== 'FIXED') {
-      return { error: 'Auf FIXED nur aus dem Status READY umstellbar.' }
+  // Statuswechsel rund um FIXED (Shop) absichern (PROJ-9 Edge Cases).
+  if (id) {
+    const { data: current } = await supabase
+      .from('arcs')
+      .select('status, order_id')
+      .eq('id', id)
+      .maybeSingle()
+    const cur = current as { status: ArcStatus; order_id: string | null } | null
+    if (cur) {
+      // → FIXED nur aus READY (oder bereits FIXED), nie aus RESERVED/ORDERED o. Ä.
+      if (fields.status === 'FIXED' && cur.status !== 'READY' && cur.status !== 'FIXED') {
+        return { error: 'Auf FIXED nur aus dem Status READY umstellbar.' }
+      }
+      // FIXED → anderer Status nur, wenn der Arc nicht bereits (im Shop) verkauft ist
+      // (SHOP-L3: verkauftes Unikat darf nicht zurück in Konfigurator/Katalog).
+      if (cur.status === 'FIXED' && fields.status !== 'FIXED' && cur.order_id != null) {
+        return { error: 'Ein verkaufter Shop-Arc kann nicht zurückgesetzt werden.' }
+      }
     }
   }
 

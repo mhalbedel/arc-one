@@ -91,7 +91,7 @@ export function InquiryForm({ productCode, productName }: InquiryFormProps) {
               <DialogTitle className="font-serif text-xl font-normal">Danke für Ihre Anfrage</DialogTitle>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
-              Wir melden uns in Kürze bei Ihnen zu „{productName}".
+              Wir melden uns in Kürze bei Ihnen zu „{productName}&rdquo;.
             </p>
             <Button
               variant="outline"
@@ -104,7 +104,7 @@ export function InquiryForm({ productCode, productName }: InquiryFormProps) {
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="font-serif text-xl font-normal">Anfrage zu „{productName}"</DialogTitle>
+              <DialogTitle className="font-serif text-xl font-normal">Anfrage zu „{productName}&rdquo;</DialogTitle>
               <DialogDescription>
                 Hinterlassen Sie Ihre Kontaktdaten — wir beraten Sie persönlich zu diesem Einzelstück.
               </DialogDescription>

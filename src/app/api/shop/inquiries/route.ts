@@ -30,11 +30,14 @@ export async function POST(req: NextRequest) {
   const { productCode, name, email, phone, message } = parsed.data
   const supabase = createAdminClient()
 
-  // Produkt auflösen — nur Anfrage-Produkte sind anfragefähig
+  // Produkt auflösen — nur sichtbare (veröffentlichte, nicht archivierte)
+  // Anfrage-Produkte sind anfragefähig (SHOP-L1: Sichtbarkeit serverseitig prüfen).
   const { data: productData } = await supabase
     .from('products')
-    .select('id, purchase_mode')
+    .select('id, purchase_mode, is_published, status')
     .eq('product_code', productCode)
+    .eq('is_published', true)
+    .neq('status', 'ARCHIVED')
     .maybeSingle()
 
   const product = productData as Pick<Product, 'id' | 'purchase_mode'> | null

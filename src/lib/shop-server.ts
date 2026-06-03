@@ -153,7 +153,7 @@ export async function finalizeShopOrder(
     if (item.product_id) {
       const { data } = await supabase
         .from('products')
-        .update({ status: 'SOLD', held_until: null } as unknown as never)
+        .update({ status: 'SOLD', held_until: null, held_by: null } as unknown as never)
         .eq('id', item.product_id)
         .eq('status', 'AVAILABLE')
         .select('id')

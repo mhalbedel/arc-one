@@ -152,7 +152,7 @@ export function ProductForm({ product }: { product?: Product }) {
     setSaving(true)
     try {
       const folder = slugify(name)
-      let allPhotos = [...photos]
+      const allPhotos = [...photos]
       let nextScan = scanUrl
       try {
         for (const file of newPhotos) {

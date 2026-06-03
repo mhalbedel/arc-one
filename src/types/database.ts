@@ -232,6 +232,8 @@ export interface ProductRow {
   is_published: boolean
   /** Kurzzeit-Sperre für die atomare Kaufsicherung */
   held_until: string | null
+  /** Eigentümer der Kurzzeit-Sperre (Käufer-E-Mail) — erlaubt Wiederaufnahme beim Re-Submit */
+  held_by: string | null
   created_at: string
   updated_at: string
 }

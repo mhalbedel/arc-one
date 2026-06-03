@@ -449,7 +449,7 @@ Vervollständigt die kundenseitige Kauf-/Anfrage-Strecke und die komplette Admin
 
 ### Zusammenfassung
 - **Akzeptanzkriterien:** 40+ AC geprüft — kein Verstoß gefunden. Die kundenseitige Kauf-Happy-Path (Add-to-Cart → Checkout → Stripe-Zahlung → Bestätigung) und die FIXED-Arc-Admin-Umschaltung wurden **per Code-Review** verifiziert, **nicht live ausgeführt** (keine Seed-Produkte in der angebundenen DB; Stripe-Charge nicht durchgespielt).
-- **Bugs:** 0 Critical · 0 High · 1 Medium (**SHOP-M1 behoben**) · 4 Low/Informational (offen).
+- **Bugs:** 0 Critical · 0 High · 1 Medium (**SHOP-M1 behoben**) · 4 Low/Informational (**alle behoben**: SHOP-L1–L4).
 - **Automatisierte Tests:** `npm test` → **52 passed** (11 neu: Shop-Mapping + Rate-Limit). `npm run build` → grün (auch nach SHOP-M1-Fix). PROJ-2-E2E-Regression → **21 passed** (READY-Filter bricht Katalog/Home/Detail nicht).
 - **Production-Ready:** Keine Critical/High; das einzige Medium (SHOP-M1) ist behoben. **Empfehlung vor Deploy:** eine echte Stripe-Test-Mode-Bestellung durchspielen (Geld-Pfad wurde nicht live ausgeführt).
 
@@ -474,17 +474,17 @@ Atomare Kaufsicherung (bedingtes `held_until`/`reserved_until`-Update nur wenn v
 `finalizeShopOrder` markierte Positionen mit bedingtem Update als verkauft (`WHERE status = AVAILABLE` bzw. `order_id IS NULL`), ohne zu prüfen, ob die Zeile getroffen wurde. Die Checkout-Sperre (`held_until`/`reserved_until`) gilt 15 min. Braucht ein Kunde **länger als 15 min** auf der Stripe-Zahlungsseite, läuft die Sperre ab; ein zweiter Käufer kann dasselbe Unikat kaufen. Schloss der erste Kunde danach die Zahlung ab, wurde die Order auf `CONFIRMED` gesetzt und **voll belastet**, das bedingte `SOLD`-Update traf aber 0 Zeilen → der Kunde zahlte für ein bereits anderweitig verkauftes Unikat, **ohne Erkennung/Hinweis/Refund**.
 *Fix:* `finalizeShopOrder` wertet jetzt das Ergebnis jedes bedingten Updates aus (`.select('id').maybeSingle()`). Nicht beanspruchte Positionen (`unclaimed`) werden gesammelt; die Order wird klar per `admin_notes` (`[ACHTUNG] … Rückerstattung prüfen: …`) für die manuelle Erstattung markiert und in `FinalizeResult` zurückgegeben. Die Bestätigungsseite weist den Kunden auf das vergebene Stück und die kommende Rückerstattung hin. **Offen/Folgeschritt:** Die Rückerstattung erfolgt manuell durch den Admin (Stripe-Refund-API-Automatisierung ist bewusst nicht Teil dieses Fixes); Hold-Fenster an die Stripe-Session-Lebensdauer koppeln wäre eine ergänzende Härtung.
 
-**SHOP-L1 (Low) — Anfrage-Endpoint ignoriert Sichtbarkeit/Status**
-`POST /api/shop/inquiries` prüft nur `purchase_mode === 'inquiry'`, nicht `is_published`/`status <> ARCHIVED`. Wer einen Produktcode kennt, kann Anfragen zu ausgeblendeten/archivierten Anfrage-Produkten senden. Geringe Wirkung (Anfragen nur Admin-sichtbar, rate-limited), aber inkonsistent zum Storefront-Sichtbarkeitsmodell.
+**SHOP-L1 (Low) — Anfrage-Endpoint ignoriert Sichtbarkeit/Status — ✅ BEHOBEN (2026-06-03)**
+`POST /api/shop/inquiries` prüfte nur `purchase_mode === 'inquiry'`, nicht `is_published`/`status <> ARCHIVED`. *Fix:* Die Produktauflösung filtert jetzt zusätzlich `.eq('is_published', true).neq('status', 'ARCHIVED')` — Anfragen zu ausgeblendeten/archivierten Produkten liefern 404 (konsistent zum Storefront-Sichtbarkeitsmodell).
 
-**SHOP-L2 (Low) — Re-Submit im Checkout sperrt den Käufer 15 min aus**
-Submit der Checkout-Formularphase erzeugt Hold + Order + PaymentIntent. Geht der Käufer zurück und submittet erneut (z. B. Adresskorrektur), schlägt `tryHold` für die bereits (vom eigenen Vorlauf) gehaltenen Positionen fehl → 409 „Keines der Stücke ist mehr verfügbar." Der Käufer kann erst nach Ablauf der 15-min-Sperre kaufen; pro Submit entstehen außerdem verwaiste `PENDING_CONFIRMATION`-Orders + PaymentIntents. Workaround: warten.
+**SHOP-L2 (Low) — Re-Submit im Checkout sperrt den Käufer 15 min aus — ✅ BEHOBEN (2026-06-03)**
+Beim erneuten Absenden schlug `tryHold` für die bereits (vom eigenen Vorlauf) gehaltenen Positionen fehl → 409. *Fix:* Die Kurzzeit-Sperre erhält einen **Eigentümer** (Käufer-E-Mail). Neue Spalte `products.held_by` (Migration `011_shop_hold_by.sql`, analog zu `arcs.reserved_by`); `tryHold` erlaubt die Sperre nun bei verfügbar **und** (ungesperrt ∨ abgelaufen ∨ `held_by`/`reserved_by` = eigene E-Mail). Derselbe Käufer nimmt seine Sperre wieder auf, statt sich auszusperren. *Rest:* verwaiste `PENDING_CONFIRMATION`-Orders pro Submit bleiben (harmlos, nie bestätigt; nur Daten-Hygiene) — als kleines Folge-Cleanup vermerkt.
 
-**SHOP-L3 (Low) — `FIXED → READY` auch für verkauften FIXED-Arc erlaubt**
-Der Guard in `saveArc` sichert nur den Übergang **nach** FIXED. Ein verkaufter FIXED-Arc (`order_id` gesetzt) kann zurück auf `READY` gestellt werden und landet damit wieder im Konfigurator/Katalog (verkauftes Unikat erneut konfigurierbar). Admin-only, eng.
+**SHOP-L3 (Low) — `FIXED → READY` auch für verkauften FIXED-Arc erlaubt — ✅ BEHOBEN (2026-06-03)**
+*Fix:* `saveArc` lädt jetzt `status` **und** `order_id` und blockiert den Übergang `FIXED → anderer Status`, wenn der Arc bereits verkauft ist (`order_id != null`) — Fehlermeldung „Ein verkaufter Shop-Arc kann nicht zurückgesetzt werden." Der bestehende `→ FIXED`-Guard (nur aus `READY`/`FIXED`) bleibt erhalten.
 
-**SHOP-L4 (Informational) — `npm run lint` ist defekt**
-`next lint` wurde in Next 16 entfernt; das Script bricht mit „Invalid project directory … /lint" ab. Vorbestehend (nicht PROJ-9), aber Linting läuft im Repo aktuell nicht. TypeScript-Prüfung erfolgt über `npm run build` (grün).
+**SHOP-L4 (Informational) — `npm run lint` ist defekt — ✅ BEHOBEN (2026-06-03)**
+`next lint` wurde in Next 16 entfernt. *Fix:* Flat-Config `eslint.config.mjs` (eslint-config-next 16 `core-web-vitals` + `typescript`, via `createRequire`); Script auf `eslint .` umgestellt. `npm run lint` läuft jetzt und endet mit Exit 0. PROJ-9-Lint-Fehler behoben (unescaped quotes, `prefer-const`). Die neu gebündelten React-Compiler-Regeln (`set-state-in-effect`, `purity`, `incompatible-library`), die auch deployten und vendorten shadcn-Code treffen, sind bewusst auf `warn` gesetzt (schrittweise Adoption statt Big-Bang).
 
 ### Nicht abgedeckt / Empfohlene Folgeschritte
 - **Live-Stripe-Test-Mode-Bestellung** durch den kompletten Mehr-Artikel-Checkout inkl. `confirm`/Bestätigungsseite (Geld-Pfad + atomare `SOLD`-Markierung) — vor Deploy empfohlen.
