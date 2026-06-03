@@ -24,14 +24,16 @@
 | PROJ-6 | Drop & Warteliste | Roadmap | — | 2026-05-26 |
 | PROJ-7 | E-Mail-System (Resend) | Roadmap | — | 2026-05-26 |
 | PROJ-8 | B2B-Portal | Roadmap | — | 2026-05-26 |
-| PROJ-9 | Art Tier | Roadmap | — | 2026-05-26 |
+| PROJ-9 | Shop (fertige Produkte) | Planned | [PROJ-9](PROJ-9-shop.md) | 2026-05-26 |
 | PROJ-10 | SEO & Performance | Roadmap | — | 2026-05-26 |
 | PROJ-11 | Die Manufaktur (Content-Seiten) | Roadmap | — | 2026-06-02 |
-| PROJ-12 | Kollektionen / Showcase (Nicht-Arc-Objekte) | Roadmap | — | 2026-06-02 |
+| PROJ-12 | Kollektionen / Showcase → **Merged in PROJ-9** | Merged | — | 2026-06-02 |
 | PROJ-13 | Service & Rechtliches (FAQ, Versand, Kontakt, Impressum, Datenschutz) | Roadmap | — | 2026-06-02 |
 
 <!-- Add features above this line -->
 
-> Hinweis: PROJ-12 ist eine **Showcase-/Anfrage-Seite für fertige Nicht-Arc-Objekte** (Tischlampen-Produkt, Möbel, Tische, Schalen) — kein Konfigurator, kein Stripe. Lampen-„Series" (Tisch/Decke/Cluster) bleiben dagegen Montage-Varianten konfigurierbarer Arcs und werden später als Filter im Arc-Katalog (PROJ-2) abgebildet.
+> Hinweis: **PROJ-9 ist der Shop** für *fertige, nicht-konfigurierbare Produkte mit Festpreis* — fertige Lampen, **fertige Arcs** (nur als-ist kaufbar, nicht mehr konfigurierbar), Schalen, Tische, Stühle u. a. aus der Schreinerei; teils auch auf Anfrage. **Datenmodell (Union):** fertige Arcs bleiben in der `arcs`-Tabelle (Flag/Status „finished/fixed"), Nicht-Arc-Objekte in eigener `products`-Tabelle — der Shop zeigt eine **Vereinigung** beider. Konfigurator/Arc-Katalog laden weiterhin nur **konfigurierbare** Arcs. **Dual-Kaufmodus:** Direktkauf via Stripe (100 %, abgeleitet aus PROJ-4) bzw. **Anfrage-Flow** für Premium-/Art-Objekte. Kategorien/Tiers heben Premium-/Kunst-Objekte hervor (ersetzt die frühere „Art Tier"-Idee). Direkter Shop-CTA auf der Hero-Seite neben dem Arc-CTA. PROJ-12 (Showcase/Anfrage) ist hierin aufgegangen.
+>
+> Lampen-„Series" (Tisch/Decke/Cluster) bleiben dagegen Montage-Varianten konfigurierbarer Arcs und werden später als Filter im Arc-Katalog (PROJ-2) abgebildet.
 
 ## Next Available ID: PROJ-14
