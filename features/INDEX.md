@@ -24,7 +24,7 @@
 | PROJ-6 | Drop & Warteliste | Roadmap | — | 2026-05-26 |
 | PROJ-7 | E-Mail-System (Resend) | Roadmap | — | 2026-05-26 |
 | PROJ-8 | B2B-Portal | Roadmap | — | 2026-05-26 |
-| PROJ-9 | Shop (fertige Produkte) | In Review | [PROJ-9](PROJ-9-shop.md) | 2026-05-26 |
+| PROJ-9 | Shop (fertige Produkte) | Approved | [PROJ-9](PROJ-9-shop.md) | 2026-05-26 |
 | PROJ-10 | SEO & Performance | Roadmap | — | 2026-05-26 |
 | PROJ-11 | Die Manufaktur (Content-Seiten) | Roadmap | — | 2026-06-02 |
 | PROJ-12 | Kollektionen / Showcase → **Merged in PROJ-9** | Merged | — | 2026-06-02 |

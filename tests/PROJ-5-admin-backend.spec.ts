@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { ADMIN, ARC } from './fixtures/seed'
+import { clearOrders } from './fixtures/db'
 
 // next dev kompiliert Admin-Routen beim ersten Aufruf (langsam) → groesseres Limit.
 test.setTimeout(60_000)
@@ -160,7 +161,10 @@ test('a READY arc becomes visible in the public catalog', async ({ page }) => {
 // ── Bestellverwaltung ────────────────────────────────────────
 
 test('orders list shows an empty state when there are no orders', async ({ page }) => {
+  // Precondition-Isolation: andere Specs (PROJ-9 Shop-Checkout) können parallel
+  // Orders anlegen. Direkt vor der Navigation auf 0 Orders stellen (kleines Fenster).
   await login(page)
+  await clearOrders()
   await page.goto('/admin/bestellungen')
   await expect(page.getByText('Noch keine Bestellungen eingegangen.')).toBeVisible()
 })

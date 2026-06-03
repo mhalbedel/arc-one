@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { ADMIN, ARCS, DROP, NONEXISTENT_ID, PRICING_RULES, PRICING_SETTINGS } from './fixtures/seed'
+import { ADMIN, ARCS, DROP, NONEXISTENT_ID, PRICING_RULES, PRICING_SETTINGS, PRODUCTS } from './fixtures/seed'
 
 /**
  * Legt den Test-Admin idempotent an: vorhandenen User per E-Mail loeschen
@@ -50,17 +50,25 @@ export default async function globalSetup() {
 
   const supabase = createClient(url, serviceKey, { auth: { persistSession: false } })
 
-  // Reihenfolge wegen Foreign Keys: arcs ist Kind von drops (drop_id) und
-  // orders (order_id) → arcs zuerst loeschen, dann die Eltern.
+  // Reihenfolge wegen Foreign Keys: order_items/product_inquiries sind Kinder von
+  // orders/products/arcs → zuerst loeschen. arcs ist Kind von drops (drop_id) und
+  // orders (order_id) → vor den Eltern loeschen. products zuletzt.
+  await supabase.from('order_items').delete().neq('id', NONEXISTENT_ID)
+  await supabase.from('product_inquiries').delete().neq('id', NONEXISTENT_ID)
   await supabase.from('arcs').delete().neq('id', NONEXISTENT_ID)
   await supabase.from('orders').delete().neq('id', NONEXISTENT_ID)
   await supabase.from('drops').delete().neq('id', NONEXISTENT_ID)
+  await supabase.from('products').delete().neq('id', NONEXISTENT_ID)
 
   const { error: dropError } = await supabase.from('drops').insert(DROP)
   if (dropError) throw new Error(`Seed drops fehlgeschlagen: ${dropError.message}`)
 
   const { error: arcError } = await supabase.from('arcs').insert(ARCS)
   if (arcError) throw new Error(`Seed arcs fehlgeschlagen: ${arcError.message}`)
+
+  // Shop-Produkte (PROJ-9)
+  const { error: productError } = await supabase.from('products').insert(PRODUCTS)
+  if (productError) throw new Error(`Seed products fehlgeschlagen: ${productError.message}`)
 
   // Preismatrix (PROJ-3a) deterministisch setzen
   await supabase.from('pricing_rules').delete().neq('id', NONEXISTENT_ID)
@@ -72,5 +80,5 @@ export default async function globalSetup() {
 
   await seedAdmin(supabase)
 
-  console.log(`[global-setup] Test-DB zurückgesetzt: ${ARCS.length} Arcs, 1 Drop, ${PRICING_RULES.length} Preisregeln, 1 Admin.`)
+  console.log(`[global-setup] Test-DB zurückgesetzt: ${ARCS.length} Arcs, ${PRODUCTS.length} Produkte, 1 Drop, ${PRICING_RULES.length} Preisregeln, 1 Admin.`)
 }

@@ -3,7 +3,8 @@
  * Single Source of Truth für globalSetup (Reset der Test-DB) und die Specs.
  *
  * 10 READY-Arcs (ARV-0001..0010) für Katalog/Konfigurator + 1 reservierter
- * Arc (ARV-0011) für die Checkout-Tests. Browse filtert READY → zeigt 10.
+ * Arc (ARV-0011) für die Checkout-Tests + 1 FIXED-Arc (ARV-0012) für den Shop
+ * (PROJ-9). Browse filtert READY → zeigt 10 (RESERVED + FIXED ausgeschlossen).
  */
 
 export const DROP = {
@@ -98,6 +99,12 @@ export const ARCS: ArcSeed[] = [
     reserved_until: '2099-01-01 00:00:00+00',
     reserved_by: '00000000-0000-0000-0000-0000000000aa',
   }),
+  // FIXED-Arc für den Shop (PROJ-9): erscheint im Shop, NICHT in Katalog/Konfigurator
+  arc({
+    id: uuid(12), serial_number: 'ARV-0012', base_price: 90000,
+    character: 'Fertiger Arc — nur als-ist im Shop kaufbar.',
+    status: 'FIXED',
+  }),
 ]
 
 /** Stabile Referenzen für die Specs. */
@@ -109,9 +116,72 @@ export const ARC = {
   ARV_0008: ARCS[7],
   ARV_0010: ARCS[9],
   RESERVED: ARCS[10], // ARV-0011
+  FIXED: ARCS[11], // ARV-0012 (Shop)
 }
 
 export const NONEXISTENT_ID = '00000000-0000-0000-0000-000000000000'
+
+// ── Shop-Produkte (PROJ-9) ────────────────────────────────────
+// Nicht-Arc-Objekte. Fotos bewusst leer ([]), damit next/image keine
+// externen Domains braucht (Storefront zeigt dann den "Kein Foto"-Platzhalter).
+
+type ProductSeed = {
+  id: string
+  product_code: string
+  name: string
+  description: string
+  category: 'leuchten' | 'schalen_accessoires' | 'tische_moebel'
+  tier: 'standard' | 'premium_art'
+  purchase_mode: 'direct' | 'inquiry'
+  price_cents: number | null
+  shipping_override_cents: number | null
+  photos: string[]
+  status: 'AVAILABLE' | 'SOLD' | 'ARCHIVED'
+  is_published: boolean
+}
+
+const puuid = (n: number) => `a3000000-0000-0000-0000-0000000000${String(n).padStart(2, '0')}`
+
+function product(
+  p: Partial<ProductSeed> & Pick<ProductSeed, 'id' | 'product_code' | 'name' | 'category'>,
+): ProductSeed {
+  return {
+    description: 'Fertiges Einzelstück aus der Manufaktur.',
+    tier: 'standard',
+    purchase_mode: 'direct',
+    price_cents: 12000,
+    shipping_override_cents: null,
+    photos: [],
+    status: 'AVAILABLE',
+    is_published: true,
+    ...p,
+  }
+}
+
+export const PRODUCTS: ProductSeed[] = [
+  product({ id: puuid(1), product_code: 'P-DIR001', name: 'Tischleuchte Eukalyptus', category: 'leuchten', price_cents: 12000 }),
+  product({ id: puuid(2), product_code: 'P-DIR002', name: 'Schale Wurzelholz', category: 'schalen_accessoires', price_cents: 8000, shipping_override_cents: 15000 }),
+  product({ id: puuid(3), product_code: 'P-SOLD01', name: 'Beistelltisch Olive', category: 'tische_moebel', price_cents: 30000, status: 'SOLD' }),
+  product({ id: puuid(4), product_code: 'P-INQ001', name: 'Monumentale Tischplatte', category: 'tische_moebel', tier: 'premium_art', purchase_mode: 'inquiry', price_cents: null }),
+  product({ id: puuid(5), product_code: 'P-HIDDEN', name: 'Versteckte Leuchte', category: 'leuchten', price_cents: 5000, is_published: false }),
+  product({ id: puuid(6), product_code: 'P-ARCH01', name: 'Archivierte Schale', category: 'schalen_accessoires', price_cents: 5000, status: 'ARCHIVED' }),
+  // Dedizierte Produkte für mutierende Checkout-Tests (Hold/Order) — je Test ein eigenes Stück,
+  // damit parallele Tests sich nicht über dieselbe Sperre in die Quere kommen.
+  product({ id: puuid(7), product_code: 'P-CHK01', name: 'Checkout Testleuchte 1', category: 'leuchten', price_cents: 20000 }),
+  product({ id: puuid(8), product_code: 'P-CHK02', name: 'Checkout Testleuchte 2', category: 'leuchten', price_cents: 25000 }),
+]
+
+/** Stabile Produkt-Referenzen für die Specs. */
+export const PRODUCT = {
+  DIRECT: PRODUCTS[0], // P-DIR001 — Direktkauf, verfügbar
+  OVERRIDE: PRODUCTS[1], // P-DIR002 — mit Versand-Override
+  SOLD: PRODUCTS[2], // P-SOLD01 — verkauft
+  INQUIRY: PRODUCTS[3], // P-INQ001 — Premium/Art, Anfrage
+  HIDDEN: PRODUCTS[4], // P-HIDDEN — ausgeblendet
+  ARCHIVED: PRODUCTS[5], // P-ARCH01 — archiviert
+  CHK1: PRODUCTS[6], // P-CHK01 — Checkout-Mutationstest
+  CHK2: PRODUCTS[7], // P-CHK02 — Checkout-Mutationstest
+}
 
 // ── Test-Admin (PROJ-5) ───────────────────────────────────────
 // Wird von global-setup angelegt: auth.users mit app_metadata.role='admin'
