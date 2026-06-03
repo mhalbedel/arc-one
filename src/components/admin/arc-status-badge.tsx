@@ -12,6 +12,7 @@ const STATUS_STYLES: Record<ArcStatus, string> = {
   SHIPPED: 'bg-cyan-100 text-cyan-900',
   SOLD: 'bg-stone-200 text-stone-700',
   ARCHIVED: 'bg-stone-200 text-stone-500',
+  FIXED: 'bg-violet-100 text-violet-900',
 }
 
 export function ArcStatusBadge({ status }: { status: ArcStatus }) {

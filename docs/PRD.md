@@ -42,7 +42,7 @@ Kleines Team (1-3 Personen), das Arcs erfasst, Bestellungen verwaltet, Drops pla
 ## Constraints
 
 - Kleines Team: Entwicklung durch 1 Person + Claude Code
-- Alle Arcs sind Unikate — kein Warenkorb, kein Bestandsmanagement im klassischen Sinne
+- Alle Objekte sind Unikate (Menge 1) — kein Bestandsmanagement im klassischen Sinne. Arc-Konfigurator/Pre-Order (PROJ-3/4) bleibt Einzelstück-Reservierung ohne Warenkorb; der Shop (PROJ-9) erlaubt einen Warenkorb für mehrere fertige Unikate mit kombiniertem Versand (Menge je Stück bleibt 1)
 - Nur Deutsch in v1 (Mehrsprachigkeit later)
 - Versand nur DE/AT/CH in v1
 - Kein Kundenkonto (Gast-Checkout)

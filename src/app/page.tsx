@@ -62,9 +62,19 @@ export default async function HomePage() {
           Handgefertigte Eukalyptus-Leuchten aus den Wäldern bei Monchique —
           entstanden durch das Zusammenspiel von Natur, Zeit und Handwerk.
         </p>
-        <Button asChild size="lg" className="text-xs tracking-[0.15em] uppercase px-8">
-          <Link href="/arcs">Alle Arcs entdecken</Link>
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild size="lg" className="text-xs tracking-[0.15em] uppercase px-8">
+            <Link href="/arcs">Alle Arcs entdecken</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="text-xs tracking-[0.15em] uppercase px-8"
+          >
+            <Link href="/shop">Zum Shop</Link>
+          </Button>
+        </div>
       </section>
 
       {/* Brand Statement */}

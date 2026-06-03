@@ -21,12 +21,18 @@ export function SiteHeader() {
             Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur
           </span>
         </Link>
-        <nav>
+        <nav className="flex items-center gap-6">
           <Link
             href="/arcs"
             className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors"
           >
             Arcs
+          </Link>
+          <Link
+            href="/shop"
+            className="text-xs tracking-[0.15em] uppercase text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Shop
           </Link>
         </nav>
       </div>

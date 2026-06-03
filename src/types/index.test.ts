@@ -51,9 +51,9 @@ describe('Enum completeness', () => {
   it('ArcStatus covers complete lifecycle', () => {
     const allStatuses: ArcStatus[] = [
       'RAW', 'IN_PROGRESS', 'READY', 'RESERVED',
-      'ORDERED', 'IN_PRODUCTION', 'SHIPPED', 'SOLD', 'ARCHIVED',
+      'ORDERED', 'IN_PRODUCTION', 'SHIPPED', 'SOLD', 'ARCHIVED', 'FIXED',
     ]
-    expect(allStatuses).toHaveLength(9)
+    expect(allStatuses).toHaveLength(10)
   })
 
   it('OrderStatus covers complete payment lifecycle', () => {

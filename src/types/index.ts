@@ -6,6 +6,12 @@ export type {
   DropStatus,
   ProjectStatus,
   AdminRole,
+  ProductCategory,
+  ProductTier,
+  PurchaseMode,
+  ProductStatus,
+  InquiryStatus,
+  OrderType,
   ArcRow as Arc,
   OrderRow as Order,
   DropRow as Drop,
@@ -14,6 +20,8 @@ export type {
   B2BAccountRow as B2BAccount,
   ProjectRow as Project,
   AdminProfileRow as AdminProfile,
+  ProductRow as Product,
+  ProductInquiryRow as ProductInquiry,
   Database,
 } from './database'
 
@@ -102,4 +110,42 @@ export const SHIPPING_PRICES: Record<ShippingCountry, number> = {
   DE: 2900,
   AT: 4900,
   CH: 4900,
+}
+
+// ── Shop (PROJ-9) ──────────────────────────────────────────
+
+import type { ProductCategory, ProductTier, PurchaseMode } from './database'
+
+/** Reihenfolge + Anzeigenamen der festen Shop-Kategorien (kein Admin-CRUD). */
+export const PRODUCT_CATEGORIES: { value: ProductCategory; label: string }[] = [
+  { value: 'leuchten', label: 'Leuchten' },
+  { value: 'schalen_accessoires', label: 'Schalen & Accessoires' },
+  { value: 'tische_moebel', label: 'Tische & Möbel' },
+]
+
+export const PRODUCT_CATEGORY_LABELS: Record<ProductCategory, string> = {
+  leuchten: 'Leuchten',
+  schalen_accessoires: 'Schalen & Accessoires',
+  tische_moebel: 'Tische & Möbel',
+}
+
+/**
+ * Vereinheitlichte Anzeige-Form für die Shop-Übersicht und -Detailseite.
+ * Bildet sowohl `products`-Zeilen als auch `FIXED`-Arcs auf eine gemeinsame Form ab.
+ */
+export interface ShopItem {
+  /** Herkunft der Zeile — bestimmt Checkout-/Detail-Logik */
+  source: 'product' | 'arc'
+  /** URL-Segment: product_code bzw. serial_number → /shop/[code] */
+  code: string
+  name: string
+  category: ProductCategory
+  tier: ProductTier
+  purchaseMode: PurchaseMode
+  /** Festpreis in Cent; null bei Anfrage-Produkten */
+  priceCents: number | null
+  /** Vorschaubild für die Karte */
+  imageUrl: string | null
+  /** true = verkauft (sichtbar, nicht kaufbar) */
+  isSold: boolean
 }

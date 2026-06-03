@@ -12,6 +12,8 @@ export type ArcStatus =
   | 'SHIPPED'
   | 'SOLD'
   | 'ARCHIVED'
+  /** Fertiger Arc, nur als-ist im Shop (PROJ-9) — verlässt Konfigurator + Katalog */
+  | 'FIXED'
 
 export type OrderStatus =
   | 'PENDING_CONFIRMATION'
@@ -36,6 +38,21 @@ export type ProjectStatus =
   | 'REJECTED'
 
 export type AdminRole = 'SUPER_ADMIN' | 'EDITOR' | 'VIEWER'
+
+// ── Shop Enums (PROJ-9) ────────────────────────────────────
+
+export type ProductCategory = 'leuchten' | 'schalen_accessoires' | 'tische_moebel'
+
+export type ProductTier = 'standard' | 'premium_art'
+
+export type PurchaseMode = 'direct' | 'inquiry'
+
+export type ProductStatus = 'AVAILABLE' | 'SOLD' | 'ARCHIVED'
+
+export type InquiryStatus = 'NEU' | 'KONTAKTIERT' | 'ABGESCHLOSSEN'
+
+/** Unterscheidet Arc-Pre-Orders (PROJ-4) von Shop-Direktkäufen (PROJ-9). */
+export type OrderType = 'ARC_PREORDER' | 'SHOP'
 
 // ── Row Types ──────────────────────────────────────────────
 
@@ -110,6 +127,8 @@ export interface OrderRow {
   stripe_deposit_id: string | null
   stripe_remain_id: string | null
   status: OrderStatus
+  /** ARC_PREORDER (Standard) | SHOP — PROJ-9. Shop-Positionen liegen in `order_items`. */
+  order_type: OrderType
   admin_notes: string | null
   confirmed_at: string | null
   confirmed_by: string | null
@@ -186,6 +205,48 @@ export interface AdminProfileRow {
   created_at: string
 }
 
+// ── Shop Row Types (PROJ-9) ────────────────────────────────
+
+export interface ProductRow {
+  id: string
+  /** Kurzer eindeutiger Code für die URL (z. B. P-7F3K2) → /shop/[code] */
+  product_code: string
+  name: string
+  description: string
+  category: ProductCategory
+  tier: ProductTier
+  purchase_mode: PurchaseMode
+  /** Festpreis in Cent; Pflicht bei Direktkauf, null bei Anfrage */
+  price_cents: number | null
+  /** Fester Versandpreis in Cent (Override, z. B. Spedition); null = Standard-Versand je Land */
+  shipping_override_cents: number | null
+  /** Bild-URLs (mindestens eine) */
+  photos: string[]
+  model_3d_url: string | null
+  width_cm: number | null
+  height_cm: number | null
+  depth_cm: number | null
+  weight_grams: number | null
+  status: ProductStatus
+  /** Sichtbarkeit im Shop, unabhängig vom Verkaufsstatus */
+  is_published: boolean
+  /** Kurzzeit-Sperre für die atomare Kaufsicherung */
+  held_until: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductInquiryRow {
+  id: string
+  product_id: string
+  name: string
+  email: string
+  phone: string | null
+  message: string
+  status: InquiryStatus
+  created_at: string
+}
+
 export interface PricingRuleRow {
   id: string
   /** schliff | finish | mounting | light */
@@ -254,6 +315,7 @@ export interface Database {
           sanding_price?: number
           shipping_price?: number
           status?: OrderStatus
+          order_type?: OrderType
           created_at?: string
           updated_at?: string
         }
@@ -318,6 +380,36 @@ export interface Database {
         }
         Update: Partial<AdminProfileRow>
       }
+      products: {
+        Row: ProductRow
+        Insert: Omit<ProductRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          price_cents?: number | null
+          shipping_override_cents?: number | null
+          photos?: string[]
+          model_3d_url?: string | null
+          width_cm?: number | null
+          height_cm?: number | null
+          depth_cm?: number | null
+          weight_grams?: number | null
+          status?: ProductStatus
+          is_published?: boolean
+          held_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<ProductRow>
+      }
+      product_inquiries: {
+        Row: ProductInquiryRow
+        Insert: Omit<ProductInquiryRow, 'id' | 'created_at'> & {
+          id?: string
+          phone?: string | null
+          status?: InquiryStatus
+          created_at?: string
+        }
+        Update: Partial<ProductInquiryRow>
+      }
       pricing_rules: {
         Row: PricingRuleRow
         Insert: Omit<PricingRuleRow, 'id' | 'created_at' | 'updated_at'> & {
@@ -350,6 +442,12 @@ export interface Database {
       drop_status: DropStatus
       project_status: ProjectStatus
       admin_role: AdminRole
+      product_category: ProductCategory
+      product_tier: ProductTier
+      purchase_mode: PurchaseMode
+      product_status: ProductStatus
+      inquiry_status: InquiryStatus
+      order_type: OrderType
     }
     CompositeTypes: Record<string, never>
   }
