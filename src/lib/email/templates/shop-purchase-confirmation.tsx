@@ -22,7 +22,7 @@ export interface ShopPurchaseConfirmationProps {
   customerName?: string | null
   items: ShopPurchaseItem[]
   totalFormatted: string
-  address: Address
+  address?: Address | null
 }
 
 export function ShopPurchaseConfirmationEmail({
@@ -51,10 +51,13 @@ export function ShopPurchaseConfirmationEmail({
       <Hr style={{ borderColor: colors.border, margin: '16px 0' }} />
       <InfoRow label="Gesamt (bezahlt)" value={totalFormatted} strong />
 
-      <Hr style={{ borderColor: colors.border, margin: '28px 0' }} />
-
-      <Eyebrow>Lieferadresse</Eyebrow>
-      <AddressBlock address={address} />
+      {address && (
+        <>
+          <Hr style={{ borderColor: colors.border, margin: '28px 0' }} />
+          <Eyebrow>Lieferadresse</Eyebrow>
+          <AddressBlock address={address} />
+        </>
+      )}
 
       <Section style={{ marginTop: '24px' }}>
         <Panel title="Wie geht es weiter?">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit, clientIp } from '@/lib/rate-limit'
+import { sendInquiryEmails } from '@/lib/email/senders'
 import type { Product } from '@/types'
 
 const bodySchema = z.object({
@@ -34,13 +35,13 @@ export async function POST(req: NextRequest) {
   // Anfrage-Produkte sind anfragefähig (SHOP-L1: Sichtbarkeit serverseitig prüfen).
   const { data: productData } = await supabase
     .from('products')
-    .select('id, purchase_mode, is_published, status')
+    .select('id, name, purchase_mode, is_published, status')
     .eq('product_code', productCode)
     .eq('is_published', true)
     .neq('status', 'ARCHIVED')
     .maybeSingle()
 
-  const product = productData as Pick<Product, 'id' | 'purchase_mode'> | null
+  const product = productData as Pick<Product, 'id' | 'name' | 'purchase_mode'> | null
   if (!product) {
     return NextResponse.json({ error: 'Produkt nicht gefunden.' }, { status: 404 })
   }
@@ -60,6 +61,9 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: 'Anfrage konnte nicht gespeichert werden.' }, { status: 500 })
   }
+
+  // Benachrichtigung (#3 Atelier) + Eingangsbestaetigung (#4 Kunde) — nicht-blockierend.
+  await sendInquiryEmails({ productName: product.name, name, email, phone, message })
 
   return NextResponse.json({ success: true })
 }

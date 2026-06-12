@@ -1,7 +1,9 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getStripe } from '@/lib/stripe-server'
-import type { CartRef, Database, Product, Arc, Order, OrderItem, ResolvedCartItem } from '@/types'
+import { claimOrderEmail } from '@/lib/email/guard'
+import { sendShopOrderEmails, type EmailCustomer } from '@/lib/email/senders'
+import type { CartRef, Database, Product, Arc, Order, OrderItem, ResolvedCartItem, Address } from '@/types'
 
 type Db = SupabaseClient<Database>
 
@@ -132,7 +134,8 @@ export async function finalizeShopOrder(
     .eq('order_id', order.id)
   const items = (itemsData as OrderItem[] | null) ?? []
 
-  const customerEmail = await loadCustomerEmail(supabase, order.customer_id)
+  const customer = await loadCustomer(supabase, order.customer_id)
+  const customerEmail = customer?.email ?? null
 
   // Bereits abgeschlossen → idempotent dieselbe Zusammenfassung.
   if (order.status !== 'PENDING_CONFIRMATION') {
@@ -191,11 +194,23 @@ export async function finalizeShopOrder(
     } as unknown as never)
     .eq('id', order.id)
 
+  // Bestaetigungsmails (Kunde #2 + Atelier #5) — genau einmal, nicht-blockierend.
+  if (customer && (await claimOrderEmail(supabase, order.id))) {
+    const confirmed: Order = { ...order, status: 'CONFIRMED', deposit_paid_at: now, remaining_paid_at: now }
+    await sendShopOrderEmails(confirmed, items, customer)
+  }
+
   return { orderNumber: order.order_number, total: order.total_price, shipping: order.shipping_price, items, customerEmail, unclaimed }
 }
 
-async function loadCustomerEmail(supabase: Db, customerId: string | null): Promise<string | null> {
+async function loadCustomer(supabase: Db, customerId: string | null): Promise<EmailCustomer | null> {
   if (!customerId) return null
-  const { data } = await supabase.from('customers').select('email').eq('id', customerId).maybeSingle()
-  return (data as { email: string } | null)?.email ?? null
+  const { data } = await supabase
+    .from('customers')
+    .select('name, email, address')
+    .eq('id', customerId)
+    .maybeSingle()
+  const row = data as { name: string | null; email: string; address: unknown } | null
+  if (!row) return null
+  return { email: row.email, name: row.name, address: row.address as Address | null }
 }

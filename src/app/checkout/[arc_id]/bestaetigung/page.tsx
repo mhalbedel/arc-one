@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStripe } from '@/lib/stripe-server'
 import { OrderConfirmation } from '@/components/checkout/order-confirmation'
-import type { Arc, Order, Customer } from '@/types'
+import { claimOrderEmail } from '@/lib/email/guard'
+import { sendPreOrderEmails } from '@/lib/email/senders'
+import type { Address, Arc, Order, Customer } from '@/types'
 
 type BestaetigungPageProps = {
   params: Promise<{ arc_id: string }>
@@ -43,16 +45,17 @@ export default async function BestaetigungPage({ params, searchParams }: Bestaet
     notFound()
   }
 
-  // Fetch customer email for confirmation display
-  let customerEmail: string | null = null
+  // Fetch customer for confirmation display + E-Mail-Versand
+  let customer: Pick<Customer, 'name' | 'email' | 'address'> | null = null
   if (order.customer_id) {
     const { data: customerData } = await supabase
       .from('customers')
-      .select('email')
+      .select('name, email, address')
       .eq('id', order.customer_id)
       .single()
-    customerEmail = (customerData as Pick<Customer, 'email'> | null)?.email ?? null
+    customer = (customerData as Pick<Customer, 'name' | 'email' | 'address'> | null) ?? null
   }
+  const customerEmail = customer?.email ?? null
 
   // Verify with Stripe and update statuses (idempotent)
   if (order.status === 'PENDING_CONFIRMATION') {
@@ -73,6 +76,15 @@ export default async function BestaetigungPage({ params, searchParams }: Bestaet
       // Reflect updated values in the rendered page
       order.status = 'CONFIRMED'
       order.deposit_paid_at = new Date().toISOString()
+
+      // Bestaetigungsmails (Kunde #1 + Atelier #5) — genau einmal, nicht-blockierend.
+      if (customerEmail && (await claimOrderEmail(supabase, order.id))) {
+        await sendPreOrderEmails(order, arc, {
+          email: customerEmail,
+          name: customer?.name,
+          address: customer?.address as Address | null,
+        })
+      }
     }
   }
 

@@ -207,6 +207,23 @@ Status: **In Progress** (Vorlagen fertig; Versand-Verdrahtung + Migration folgen
 - Vorlagen sind **reine Präsentation**: sie erhalten anzeige-fertige Props (vorformatierte Preise als Strings). Das DB→View-Mapping übernehmen die Sender im Backend-Schritt.
 - `npx tsc --noEmit` ist für alle PROJ-7-Dateien fehlerfrei (verbleibende tsc-Fehler liegen in vorbestehenden Testdateien `shop.test.ts`/`index.test.ts` und sind unabhängig von diesem Feature).
 
+### Backend (Versand + Verdrahtung) — 2026-06-12
+Status: **In Progress** (Versand vollständig verdrahtet; bereit für `/qa`).
+
+- Paket `resend` installiert.
+- **Migration** `db/migrations/012_orders_email_sent.sql`: neue Spalte `orders.confirmation_email_sent_at` (TIMESTAMPTZ) als „genau-einmal"-Sperre. Auch in `db/schema.sql` und im Typ `OrderRow` (`src/types/database.ts`) ergänzt. **Muss im Supabase-SQL-Editor ausgeführt werden** (siehe Deployment).
+- **`src/lib/email/`**:
+  - `config.ts` — Absender `bestellung@arc-one.de`, Reply-To/Atelier `kontakt@arc-one.de`.
+  - `client.ts` — `sendEmail()`-Wrapper: lazy Resend-Singleton, Best-Effort, fängt alle Fehler ab, wirft nie, gibt `boolean` zurück.
+  - `guard.ts` — `claimOrderEmail()`: bedingtes Update (`confirmation_email_sent_at` NULL → jetzt); nur der erste Aufruf gewinnt.
+  - `senders.tsx` — Komposit-Sender: `sendPreOrderEmails` (#1+#5), `sendShopOrderEmails` (#2+#5), `sendInquiryEmails` (#3+#4). Mapping DB→Props + Formatierung (`formatPrice`, de-DE-Datum). Anfrage-Mail an Atelier setzt `replyTo` auf die Kunden-Adresse.
+- **Verdrahtung in bestehende Flows:**
+  - `src/app/checkout/[arc_id]/bestaetigung/page.tsx` — lädt jetzt Kundenname+Adresse; nach Zahlungserfolg `claimOrderEmail` + `sendPreOrderEmails`.
+  - `src/lib/shop-server.ts` (`finalizeShopOrder`) — `loadCustomer` (Name+Adresse); nach Order-Abschluss `claimOrderEmail` + `sendShopOrderEmails`. Greift für beide Abschluss-Pfade (Confirm-Route + Bestätigungsseite).
+  - `src/app/api/shop/inquiries/route.ts` — lädt Produktnamen; nach Insert `sendInquiryEmails`.
+- **Tests:** `client.test.ts` (Best-Effort: kein Werfen bei Fehler/Exception, korrekte From/Reply-To) und `guard.test.ts` (genau einmal). `server-only` in `vitest.config.ts` auf einen Leer-Stub gemappt. Gesamte Suite grün (60 Tests). `npm run build` erfolgreich; `tsc` für alle PROJ-7-Dateien fehlerfrei.
+- **Benötigte Env-Var:** `RESEND_API_KEY` (geheim) — muss in Vercel und lokal gesetzt werden. (`.env.local.example` ist tool-seitig nicht beschreibbar; bitte manuell ergänzen.)
+
 ## QA Test Results
 _To be added by /qa_
 

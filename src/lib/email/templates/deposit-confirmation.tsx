@@ -26,7 +26,7 @@ export interface DepositConfirmationProps {
   totalFormatted: string
   depositFormatted: string
   remainingFormatted: string
-  address: Address
+  address?: Address | null
 }
 
 export function DepositConfirmationEmail({
@@ -76,10 +76,13 @@ export function DepositConfirmationEmail({
       <InfoRow label="Bezahlt (30% Anzahlung)" value={depositFormatted} strong />
       <InfoRow label="Ausstehend (vor Versand)" value={remainingFormatted} />
 
-      <Hr style={{ borderColor: colors.border, margin: '28px 0' }} />
-
-      <Eyebrow>Lieferadresse</Eyebrow>
-      <AddressBlock address={address} />
+      {address && (
+        <>
+          <Hr style={{ borderColor: colors.border, margin: '28px 0' }} />
+          <Eyebrow>Lieferadresse</Eyebrow>
+          <AddressBlock address={address} />
+        </>
+      )}
 
       <Section style={{ marginTop: '24px' }}>
         <Panel title="Wie geht es weiter?">

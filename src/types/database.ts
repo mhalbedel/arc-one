@@ -132,6 +132,8 @@ export interface OrderRow {
   admin_notes: string | null
   confirmed_at: string | null
   confirmed_by: string | null
+  /** PROJ-7: gesetzt, sobald die Bestaetigungsmails versendet wurden ("genau einmal"). */
+  confirmation_email_sent_at: string | null
   created_at: string
   updated_at: string
 }

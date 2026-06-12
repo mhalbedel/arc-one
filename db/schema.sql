@@ -201,6 +201,7 @@ CREATE TABLE orders (
   admin_notes       TEXT,
   confirmed_at      TIMESTAMPTZ,
   confirmed_by      TEXT,
+  confirmation_email_sent_at TIMESTAMPTZ,
   created_at        TIMESTAMPTZ DEFAULT NOW(),
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
