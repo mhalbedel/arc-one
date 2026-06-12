@@ -3,7 +3,7 @@
 | Feld | Wert |
 |------|------|
 | **ID** | PROJ-14 |
-| **Status** | In Progress |
+| **Status** | Deployed |
 | **Erstellt** | 2026-06-12 |
 | **Quelle** | Design-Handoff-Bundle "ARC-ONE Design System" (Claude Design, claude.ai/design) |
 
@@ -50,3 +50,13 @@ sind bereits live (`globals.css`: `--accent: 17 50% 54%` = Clay, Paper, Espresso
   Verifiziert via Browser-Messung: arcWidth 60, A_width 15, overhang L/R je 22, center 48=48.
 - `site-header.tsx`: Text-Wortmarke durch `<Wordmark />` ersetzt; umgebender `Link` unveraendert.
 - `src/app/icon.svg`: nur die zwei Farben angepasst (Geometrie war bereits identisch).
+
+## Deployment
+
+- **Production URL:** https://arc-one-seven.vercel.app
+- **Deployed:** 2026-06-12 (Vercel, target production, `dpl_6eRreMvLNW9akgVvy1DKaJ9YLdUQ`)
+- **Tag:** `v1.10.0-PROJ-14`
+- **Post-Deploy verifiziert:** Homepage HTTP 200; Favicon liefert Espresso-Kachel + Clay-Bogen;
+  Header-Bogen rendert in Produktion identisch zu lokal (arcWidth 60, Clay `rgb(196,112,79)`,
+  22px Ueberhang je Seite, mittig). Kein formales `/qa` durchlaufen — manuelle Verifikation
+  (Build, Lint, Browser-Messung) bei rein visueller Aenderung ohne Logik/Daten/Auth.
