@@ -54,8 +54,8 @@ Pro Sektion wird einer von vier Befunden vergeben:
 | Unikat-Katalog (Browser, Filter, Detail, 3D) | PROJ-2 | In Progress | Ja (`/arcs`) | **Abgedeckt** (Filter + 3D-Viewer in PROJ-2 als „Out of Scope/deferred" markiert) |
 | Konfigurator (Befestigung/Finish/Licht/Kalkulation/Pre-Order) | PROJ-3 + PROJ-3a | Deployed | Ja (`/konfigurator`) | **Abgedeckt**, aber **Ergänzen** bei Optionen/Copy (siehe C1–C3) |
 | Drops & Warteliste | PROJ-6 | Roadmap | Nein | **Fehlt (geplant)** — Copy + Sitemap als Vorlage |
-| Kollektionen (Series) | — | — | Nein | **Fehlt** → Vorschlag PROJ-12 (oder bewusst streichen) |
-| Art Tier (Wurzelholz) | PROJ-9 | Roadmap | Nein | **Fehlt (geplant)** — Copy vorhanden |
+| Kollektionen (Series) | PROJ-9 *(via 9.6)* | Roadmap | Nein | **Fehlt (geplant)** → fertige Nicht-Arc-Objekte = **Shop PROJ-9**; Lampen-Series = Filter PROJ-2 (deferred) |
+| Art Tier (Wurzelholz) | PROJ-9 | Roadmap | Nein | **Fehlt (geplant)** — Copy vorhanden; via 9.6 = **Premium-Kategorie im Shop PROJ-9** (Anfrage-Kaufmodus) |
 | B2B / Architekt-Portal | PROJ-8 | Roadmap | Nein | **Fehlt (geplant)** — Copy + Sitemap als Vorlage |
 | Service & Rechtliches (FAQ, Versand, Kontakt, Impressum, Datenschutz) | — | — | Nein | **Fehlt** → Vorschlag PROJ-13 (Impressum/Datenschutz rechtlich verpflichtend) |
 
@@ -76,7 +76,7 @@ Pro Sektion wird einer von vier Befunden vergeben:
 | Vorschlag | Sektion | Inhalt (aus Copy/Sitemap) | Priorität | Begründung |
 |-----------|---------|---------------------------|-----------|------------|
 | **PROJ-11** | Die Manufaktur | Geschichte & Herkunft (Monchique), Material (Eukalyptus), Prozess („Zwei Stunden Schliff"), Schellack („Concert Grade"), Werkstatt-Einblicke (Film) | Mittel | Markenkern & Vertrauenssignal; vollständiger Copy liegt vor, aber weder Spec noch Route. Liefert auch den Manufaktur-Teaser für die Home. |
-| **PROJ-12** | Kollektionen / Showcase | Fertige Nicht-Arc-Objekte: Tischlampen-Produkt, Möbel, Tische, Schalen & Accessoires | Niedrig | **Showcase-/Anfrage-Seite** (kein Konfigurator, kein Stripe) für Objekte, die nicht aus der `arcs`-Tabelle stammen. Hält den Arc-Katalog/Konfigurator strikt Arc-only. *(präzisiert 2026-06-02, siehe 9.4)* |
+| ~~**PROJ-12**~~ → **PROJ-9** | Kollektionen / Showcase → **Shop** | Fertige Nicht-Arc-Objekte: Tischlampen-Produkt, Möbel, Tische, Schalen & Accessoires | Niedrig | **Überholt durch 9.6 (2026-06-03):** in **PROJ-9 (Shop)** aufgegangen. Union-Datenmodell (fertige Arcs in `arcs` + Nicht-Arc-Objekte in `products`), Dual-Kaufmodus (Direktkauf via Stripe / Anfrage für Premium). Konfigurator bleibt strikt Arc-only. *(ursprünglich präzisiert 2026-06-02, siehe 9.4 → ersetzt durch 9.6)* |
 | **PROJ-13** | Service & Rechtliches | FAQ & Pflege, Versand & Lieferzeit, Kontakt/Atelier, **Impressum & Datenschutz** | **Hoch** | **Impressum + Datenschutzerklärung sind in DE/AT rechtlich verpflichtend** für eine kommerzielle Website. Sollte vor Public-Launch existieren. FAQ-Copy liegt vollständig vor. |
 
 > **Lampen-„Series" (Tischlampe/Hängeleuchte/Cluster)** sind hingegen nur Montage-Varianten konfigurierbarer Arcs (Standfuß/Decke/Spinne) → **Filter im Arc-Katalog (PROJ-2)**, nicht PROJ-12. Filter ist bewusst deferred.
@@ -106,7 +106,7 @@ Diese Features sind bereits als „Roadmap" geplant, haben aber noch keine Spec.
 | **PROJ-6 Drop & Warteliste** | Sitemap (Aktuelle/Kommende Drops, Warteliste beitreten, Drop-Archiv) + vollständiger Copy (Warteliste-Formular, Bestätigungstext, Archiv-Intro) |
 | **PROJ-7 E-Mail (Resend)** | Copy für Drop-Alert, Warteliste-Bestätigung, Pre-Order-Bestätigung (24-h-Zusage aus Konfigurator-Copy) |
 | **PROJ-8 B2B-Portal** | Sitemap-Sektion + Copy: CAD `.dxf`/`.step`/`.pdf`, DALI/KNX, Brandschutz/CE, Projektanfrage ab 5 Pendeln, Zugangserklärung |
-| **PROJ-9 Art Tier** | Copy: Wurzelholz-Ornamentik, monumentale Tischplatten, „Ab 10.000 €", Anfrage-Flow, Galerie-Intro |
+| **PROJ-9 Shop** *(ehem. Art Tier, Merge 9.6)* | Copy: Wurzelholz-Ornamentik, monumentale Tischplatten, „Ab 10.000 €", Anfrage-Flow, Galerie-Intro — liefert die **Premium-/Art-Kategorie** des Shops (Anfrage-Kaufmodus). Plus generische Produkt-Copy für Schalen/Lampen/Möbel (Direktkauf-Kaufmodus). |
 | **PROJ-10 SEO & Performance** | Voraussetzung: Markenname-/Domain-Entscheidung (C4) muss vorher fallen |
 
 ---
@@ -149,8 +149,9 @@ Diese Features sind bereits als „Roadmap" geplant, haben aber noch keine Spec.
 | 9.3 | Preisdarstellung im Copy | **Gar keine Beträge** (Preise sind dynamisch) | Feste Beträge (+45/+180/+65/+320 €) aus dem Copy entfernen — keine „ab"-Werte. Preislogik bleibt vollständig PROJ-3a. |
 | 9.4 | Kollektionen / Series | **Aufgeteilt (präzisiert 2026-06-02):** Lampen-Varianten = Filter; fertige Nicht-Arc-Objekte = eigene Showcase-Seite | **Lampen-„Series" (Tischlampe/Hängeleuchte/Cluster)** sind nur Montage-Varianten konfigurierbarer Arcs → Filter im Arc-Katalog (PROJ-2), deferred. **Fertige Nicht-Arc-Objekte (Tischlampen-Produkt, Möbel, Tische, Schalen)** sind nicht konfigurierbar → **eigene Showcase-/Anfrage-Seite PROJ-12** (kein Konfigurator, kein Stripe). Begründung: Der Konfigurator lädt nur aus der `arcs`-Tabelle; Nicht-Arc-Produkte dürfen nicht in den Katalog/Konfigurator geraten. |
 | 9.5 | Schliff im Konfigurator | **Bestehende Lösung beibehalten** | Schliff-Schritt (Rohling vs. geschliffen) + „Unbehandelt" bleiben wie in PROJ-3 deployt. Copy an den bestehenden Flow anpassen. |
+| 9.6 | Zusammenführung PROJ-9 + PROJ-12 (2026-06-03) | **Merge zu einem Shop** mit Dual-Kaufmodus und Union-Datenmodell — **überschreibt 9.4** | PROJ-9 wird zum **Shop für fertige, nicht-konfigurierbare Produkte mit Festpreis**: fertige Lampen, **fertige Arcs** (nur als-ist kaufbar), Schalen, Tische, Stühle u. a. aus der Schreinerei; teils auf Anfrage. *(Keine „Äxte" — es gibt nur Arcs + Schreinerei-Objekte.)* **PROJ-12 (Showcase) geht darin auf.** **Datenmodell (Union, präzisiert 2026-06-03):** fertige **Arcs** bleiben in der `arcs`-Tabelle mit Flag/Status „finished/fixed" (raus aus Konfigurator/Arc-Katalog, rein in den Shop) — keine Datendopplung; **Nicht-Arc-Objekte** in eigener `products`-Tabelle; der Shop zeigt die **Vereinigung** beider. Kategorien/Tiers — die frühere **„Art Tier"-Idee wird zur Premium-Kategorie im Shop** statt eines eigenen Features. **Dual-Kaufmodus:** normale Produkte → **Direktkauf via Stripe** (100 %, abgeleitet aus PROJ-4, vereinfacht ohne 30/70-Split); Premium-/Art-Objekte (z. B. Wurzelholz, „ab ~10.000 €") → **Anfrage-Flow** statt Stripe. Korrigiert 9.4: die dort vorgesehene Showcase-Seite **ohne** Stripe wird zum Shop **mit** (teilweise) Stripe; der Konfigurator lädt weiterhin nur **konfigurierbare** Arcs. Lampen-„Series" bleiben unverändert Filter im Arc-Katalog (PROJ-2, deferred). |
 
-> Diese Entscheidungen lösen die Findings C1–C5 (Abschnitt 5) auf. Die Tabellen in Abschnitt 4, 5, 7 und 8 sind unten entsprechend aktualisiert.
+> Diese Entscheidungen lösen die Findings C1–C5 (Abschnitt 5) auf. Die Tabellen in Abschnitt 4, 5, 7 und 8 sind unten entsprechend aktualisiert. **9.6 (2026-06-03) überholt Teile von 9.4** und die PROJ-9/PROJ-12-Zeilen in Abschnitt 3, 4, 6 und 10 — diese sind als Snapshot vom 2026-06-02 zu lesen und durch 9.6 ersetzt.
 
 ---
 
@@ -161,8 +162,9 @@ Diese Features sind bereits als „Roadmap" geplant, haben aber noch keine Spec.
 1. **Copy-Überarbeitung (auf Basis 9.1–9.5):** „ARCO ONE" → **ARC-ONE**, feste Preise entfernen, Lichtsystem auf 4-Wege-Modell, Finish um „Unbehandelt"/Schliff ergänzen. Betrifft das Copy-Deck, nicht den Code.
 2. `/refine PROJ-2` für C5 (zusätzliche Home-Sektionen) **erledigt am 2026-06-02**; Series-/Montage-Filter dort bewusst **deferred** dokumentiert.
 3. `/refine PROJ-3` / `/refine PROJ-3a` nur falls Spec-Texte die alte Licht-/Preisdarstellung erwähnen — **Code bleibt unverändert** (9.2/9.3/9.5 = bestehende Lösung).
-4. `/write-spec` für **PROJ-13 (Service & Recht — hoch, rechtlich)**, **PROJ-11 (Manufaktur)** und **PROJ-12 (Kollektionen/Showcase)**.
-5. Beim späteren `/write-spec` von PROJ-6/7/8/9 die vorhandenen Copy-/Sitemap-Vorlagen nutzen.
+4. `/write-spec` für **PROJ-13 (Service & Recht — hoch, rechtlich)**, **PROJ-11 (Manufaktur)** und **PROJ-9 (Shop)** *(zuvor „PROJ-12 Kollektionen/Showcase" — durch 9.6 in PROJ-9 aufgegangen, mit Dual-Kaufmodus)*.
+5. Beim späteren `/write-spec` von PROJ-6/7/8 die vorhandenen Copy-/Sitemap-Vorlagen nutzen. Für **PROJ-9 (Shop)** die Art-Tier-Copy als Premium-Kategorie (Anfrage-Kaufmodus) einbinden.
 6. **Folgeaktion (erledigt 2026-06-02):** `INDEX.md` um **PROJ-11**, **PROJ-12** und **PROJ-13** ergänzt. Nächste freie ID: PROJ-14.
+7. **Folgeaktion (erledigt 2026-06-03, Entscheidung 9.6):** `INDEX.md` — **PROJ-9** umgewidmet zu „Shop (fertige Produkte)", **PROJ-12** als „Merged in PROJ-9" markiert. Nächste freie ID bleibt PROJ-14.
 
 > Dieses Dokument ist eine Analyse-Vorlage. Es wurden **keine** Specs, kein Code und kein `INDEX.md` geändert.
