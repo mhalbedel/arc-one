@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { CartIndicator } from '@/components/shop/cart-indicator'
+import { Wordmark } from './wordmark'
 
 export function SiteHeader() {
   const pathname = usePathname()
@@ -15,9 +16,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-sm">
       <div className="mx-auto max-w-6xl px-6 flex items-center justify-between h-16">
         <Link href="/" className="flex items-baseline gap-4">
-          <span className="font-serif text-lg tracking-[0.18em] font-medium uppercase">
-            ARC-ONE
-          </span>
+          <Wordmark />
           <span className="hidden sm:block text-[12px] tracking-[0.12em] uppercase text-muted-foreground">
             Exklusive Eukalyptus-Lichtarchitektur & Unikat-Manufaktur
           </span>

@@ -30,6 +30,7 @@ Kleines Team (1-3 Personen), das Arcs erfasst, Bestellungen verwaltet, Drops pla
 | P2 | B2B-Portal (Architekten) | Roadmap |
 | P2 | Shop fertige Produkte (inkl. Premium/Art — vormals Art Tier, PROJ-9) | Planned |
 | P2 | SEO & Performance | Roadmap |
+| P2 | Brand Logo (Arc Initial) & Clay Favicon (PROJ-14) | In Progress |
 
 ## Success Metrics
 
