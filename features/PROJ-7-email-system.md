@@ -225,7 +225,81 @@ Status: **In Progress** (Versand vollständig verdrahtet; bereit für `/qa`).
 - **Benötigte Env-Var:** `RESEND_API_KEY` (geheim) — muss in Vercel und lokal gesetzt werden. (`.env.local.example` ist tool-seitig nicht beschreibbar; bitte manuell ergänzen.)
 
 ## QA Test Results
-_To be added by /qa_
+
+**Datum:** 2026-06-12 · **Tester:** QA (Code-Audit + Testsuiten)
+
+### Testbarkeit / Umgebung (wichtig)
+PROJ-7 ist eine serverseitige Versand-Schicht ohne eigenes UI. **Echte Mailzustellung
+ist in dieser Umgebung nicht verifizierbar** — es fehlen `RESEND_API_KEY`, die
+verifizierte Domain `arc-one.de` und eine erreichbare DB mit angewandter Migration 012.
+Diese QA basiert daher auf: Unit-Tests (60/60 grün), `npm run build` (erfolgreich),
+`tsc` (für alle PROJ-7-Dateien fehlerfrei) und einem zeilenweisen Code-Audit der
+Auslöser, Vorlagen-Inhalte und des Versand-Wrappers. **Ein Live-Smoke-Test mit echtem
+Resend-Key bleibt für `/deploy` offen** (siehe Checkliste unten).
+
+### Akzeptanzkriterien
+
+| # | Kriterium | Ergebnis | Methode |
+|---|-----------|----------|---------|
+| #1a | Anzahlung bezahlt → genau eine Mail an Kunde | ✅ PASS | Code: Guard `claimOrderEmail` + Versand nur im PENDING→CONFIRMED-Zweig |
+| #1b | Mail enthält Bestellnr., Arc+Konfig, Anzahlung, Restbetrag, Lieferadresse | ✅ PASS | Code: `DepositConfirmationEmail` + `sendPreOrderEmails`-Mapping |
+| #1c | Absender `bestellung@arc-one.de`, Reply-To `kontakt@arc-one.de` | ✅ PASS | Unit-Test `client.test.ts` |
+| #2a | Shop-Kauf 100 % bezahlt → genau eine Mail an Kunde | ✅ PASS | Code: Guard im `finalizeShopOrder` |
+| #2b | Mail enthält Bestellnr., alle Stücke, Gesamtbetrag, Lieferadresse | ✅ PASS | Code (Bug #2 behoben — nicht-beanspruchte Positionen ausgeschlossen) |
+| #3 | Neue Anfrage → Atelier-Mail mit Produkt/Name/E-Mail/Telefon/Nachricht/Datum | ✅ PASS | Code: `sendInquiryEmails` → `InquiryAtelierEmail` |
+| #4 | Neue Anfrage → Eingangsbestätigung an Kunde | ✅ PASS | Code: `InquiryReceiptEmail` |
+| #5 | Bestellung abgeschlossen → interne Atelier-Mail (Nr./Typ/Betrag/Kunde) | ✅ PASS | Code: `sendNewOrderNotification` in beiden Flows |
+| R1 | Versand-Fehler **(Error)** → Bestellung gültig, Seite rendert, geloggt | ✅ PASS | Unit-Test (kein Werfen) + Code |
+| R1 | Versand-**Timeout/Hänger** → Seite wird normal angezeigt | ✅ PASS | Unit-Test `client.test.ts` (Bug #1 behoben — 5s-Timeout) |
+| R2 | Reload / Webhook-Replay → genau einmal | ✅ PASS | Unit-Test `guard.test.ts` + Code |
+
+### Security-Audit (Red Team)
+- **Secret-Exposure:** `RESEND_API_KEY` nur serverseitig (`client.ts` ist `server-only`, kein `NEXT_PUBLIC_`). Kein Leak. ✅
+- **XSS in Mailinhalten:** Anfrage-Nachricht/Name werden als JSX-Textknoten (React Email) gerendert → automatisch escaped, kein `dangerouslySetInnerHTML`. ✅
+- **Header-Injection über Reply-To (Kunden-E-Mail bei #3):** Wert ist Zod-`.email()`-validiert; Resend nimmt JSON statt roher SMTP-Header → keine Injection. ✅
+- **Rate-Limit Anfragen:** unverändert aus PROJ-9 (5/10 min pro IP) — begrenzt auch die ausgelösten Mails. ✅
+- **Mail-Bombing über Bestätigungsseite:** durch Guard auf genau eine Mail pro Order begrenzt. ✅
+
+### Bugs (alle behoben 2026-06-12)
+
+**Bug #1 (High) — ✅ BEHOBEN — Kein Timeout beim Versand; hängender Resend-Call blockiert die Bestätigungsseite**
+- **Kriterium:** R1 nennt ausdrücklich „läuft in einen Timeout … dann wird die Bestätigungsseite normal angezeigt".
+- **Steps:** Resend-Endpoint antwortet nicht (Netz-Stall). `sendEmail` `await`et `emails.send` ohne Timeout; der Aufruf steht in `bestaetigung/page.tsx` bzw. der Inquiry-Route im Render-/Response-Pfad.
+- **Erwartet:** Versand bricht nach kurzer Frist ab (→ `false`, geloggt), Seite/Response kommt durch.
+- **Tatsächlich:** Seite/Response hängt, bis der zugrunde liegende fetch (ohne gesetztes Timeout) irgendwann abbricht.
+- **Root Cause:** `client.ts` setzt kein `AbortSignal`/Timeout; der Wrapper fängt zwar Fehler, aber nicht das Hängen.
+- **Fix:** `sendEmail` rennt `emails.send` gegen ein 5s-`Promise.race`-Timeout; bei Hänger/Fehler `false` (geloggt), `await` bleibt. Abgesichert durch Unit-Test (Fake-Timer).
+
+**Bug #2 (Medium) — ✅ BEHOBEN — Shop-Kaufbestätigung listet zu erstattende Positionen als gekauft**
+- **Steps:** Warenkorb mit Unikat, dessen Kurzzeit-Sperre während der Zahlung abläuft und das anderweitig verkauft wird (`unclaimed` in `finalizeShopOrder`). Kunde zahlt, Position wird zur Rückerstattung markiert.
+- **Erwartet:** Bestätigungsmail führt nur tatsächlich erhaltene Stücke (bzw. weist die Erstattung aus).
+- **Tatsächlich:** `sendShopOrderEmails(confirmed, items, customer)` übergibt **alle** `items`; die Mail sagt „… gehört nun dir" auch für nicht lieferbare Stücke.
+- **Root Cause:** `unclaimed` wird berechnet, aber nicht aus der Mailliste/Summe ausgeschlossen.
+- **Fix:** `finalizeShopOrder` filtert `unclaimed` aus der Kundenmail-Liste und reduziert den angezeigten Gesamtbetrag um die Erstattung (Gesamt = belastet − erstattet; bei keinem unclaimed unverändert).
+
+**Bug #3 (Low) — ✅ BEHOBEN — Zeilenumbrüche in der Anfrage-Nachricht gehen in der Atelier-Mail verloren**
+- **Steps:** Anfrage mit mehrzeiliger Nachricht senden.
+- **Tatsächlich:** `InquiryAtelierEmail` rendert die Nachricht über `Paragraph` ohne `whiteSpace: pre-wrap`; Umbrüche kollabieren zu einem Fließtext.
+- **Fix:** Nachricht in `inquiry-atelier.tsx` mit `whiteSpace: 'pre-wrap'` gerendert.
+
+### Automatisierte Tests
+- `npm test` → **61/61 grün** (inkl. `client.test.ts` 6 Fälle mit Timeout-Test, `guard.test.ts` 3 Fälle).
+- `npm run build` → erfolgreich (alle Routen kompilieren).
+- **E2E (Playwright):** bewusst nicht erstellt — echte Mailzustellung ist ohne Mail-Sink/Live-Key nicht sinnvoll E2E-prüfbar; ein E2E-Test würde nur PROJ-4/9-Seitenverhalten abdecken, nicht den Versand. Stattdessen Live-Smoke-Test bei `/deploy` (siehe unten).
+
+### Offener Live-Smoke-Test (bei `/deploy`, mit echtem Key)
+1. Domain `arc-one.de` in Resend verifiziert (DKIM/SPF grün); `RESEND_API_KEY` gesetzt; Migration 012 angewandt.
+2. Test-Pre-Order durchführen → Kunde erhält #1, `kontakt@` erhält #5.
+3. Test-Shop-Kauf → Kunde erhält #2, `kontakt@` erhält #5.
+4. Test-Anfrage → `kontakt@` erhält #3 (Reply-To = Kunde), Kunde erhält #4.
+5. Bestätigungsseite neu laden → keine zweite Mail (Guard).
+
+### Production-Ready: **JA** (nach Fixes)
+Alle drei Bugs (1×High, 1×Medium, 1×Low) wurden in dieser Session behoben und durch
+Tests/Build abgesichert (61/61 grün, `npm run build` erfolgreich, `tsc` sauber). Alle
+Akzeptanzkriterien erfüllt; keine offenen Critical/High-Bugs. **Vor dem Live-Gang bleibt
+der Resend-Smoke-Test (oben) bei `/deploy` durchzuführen** (echter Key, verifizierte
+Domain, Migration 012 angewandt).
 
 ## Deployment
 _To be added by /deploy_

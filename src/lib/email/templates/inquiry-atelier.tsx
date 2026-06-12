@@ -1,13 +1,6 @@
 /** #3 Interne Benachrichtigung an das Atelier bei einer neuen Produkt-Anfrage (PROJ-9). */
-import { Hr, Section } from '@react-email/components'
-import {
-  Eyebrow,
-  EmailLayout,
-  Heading,
-  InfoRow,
-  Paragraph,
-  colors,
-} from './_layout'
+import { Hr, Section, Text } from '@react-email/components'
+import { Eyebrow, EmailLayout, Heading, InfoRow, Paragraph, colors } from './_layout'
 
 export interface InquiryAtelierProps {
   productName: string
@@ -49,7 +42,17 @@ export function InquiryAtelierEmail({
           padding: '16px 20px',
         }}
       >
-        <Paragraph>{message}</Paragraph>
+        <Text
+          style={{
+            fontSize: '14px',
+            lineHeight: '22px',
+            color: colors.text,
+            margin: 0,
+            whiteSpace: 'pre-wrap',
+          }}
+        >
+          {message}
+        </Text>
       </Section>
     </EmailLayout>
   )

@@ -195,9 +195,22 @@ export async function finalizeShopOrder(
     .eq('id', order.id)
 
   // Bestaetigungsmails (Kunde #2 + Atelier #5) — genau einmal, nicht-blockierend.
+  // Nicht beanspruchte Positionen werden erstattet und duerfen nicht als gekauft
+  // erscheinen: aus Liste und Summe der Kundenmail herausnehmen (Gesamt = belastet
+  // minus Erstattung; bei keinem unclaimed unveraendert).
   if (customer && (await claimOrderEmail(supabase, order.id))) {
-    const confirmed: Order = { ...order, status: 'CONFIRMED', deposit_paid_at: now, remaining_paid_at: now }
-    await sendShopOrderEmails(confirmed, items, customer)
+    const refundedCents = unclaimed.reduce((s, i) => s + i.price_cents, 0)
+    const claimedItems = refundedCents
+      ? items.filter((i) => !unclaimed.some((u) => u.id === i.id))
+      : items
+    const confirmed: Order = {
+      ...order,
+      status: 'CONFIRMED',
+      deposit_paid_at: now,
+      remaining_paid_at: now,
+      total_price: order.total_price - refundedCents,
+    }
+    await sendShopOrderEmails(confirmed, claimedItems, customer)
   }
 
   return { orderNumber: order.order_number, total: order.total_price, shipping: order.shipping_price, items, customerEmail, unclaimed }

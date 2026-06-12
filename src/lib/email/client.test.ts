@@ -51,4 +51,13 @@ describe('sendEmail (best-effort, nicht-blockierend)', () => {
     await sendEmail({ to: 'atelier@arc-one.de', subject: 's', react, replyTo: 'kunde@x.de' })
     expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({ replyTo: 'kunde@x.de' }))
   })
+
+  it('gibt false zurueck (ohne zu blockieren), wenn der Versand haengt (Timeout)', async () => {
+    vi.useFakeTimers()
+    sendMock.mockReturnValue(new Promise(() => {})) // loest nie auf
+    const pending = sendEmail({ to: 'a@b.de', subject: 's', react })
+    await vi.advanceTimersByTimeAsync(5000)
+    await expect(pending).resolves.toBe(false)
+    vi.useRealTimers()
+  })
 })
