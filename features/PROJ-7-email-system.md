@@ -113,13 +113,86 @@ PROJ-7 macht diesen Versand real. Reine Transaktionsmails (kein Marketing).
 <!-- Added by /architecture -->
 | Decision | Rationale | Date |
 |----------|-----------|------|
-| _To be added by /architecture (Resend + React Email laut Tech-Stack)_ | | |
+| Versand über Resend SDK; Vorlagen mit React Email | Projekt-Tech-Stack; React Email erlaubt komponierbare, getestete HTML-Mails statt String-Templates | 2026-06-12 |
+| Zentrales Modul `src/lib/email/` (server-only): Versand-Wrapper + Vorlagen + Sender-Funktionen | Eine Quelle der Wahrheit; alle Aufrufer (Bestätigungsseiten, Anfrage-Endpoint) rufen nur eine Sender-Funktion auf | 2026-06-12 |
+| Versand-Wrapper fängt Fehler ab und wirft nie zum Aufrufer | Erzwingt das nicht-blockierende Best-Effort-Verhalten direkt an der Quelle | 2026-06-12 |
+| Send-once-Guard über neue Spalte `orders.confirmation_email_sent_at` (bedingtes Update NULL → Zeitstempel) | Race-sicher: beim Shop laufen zwei Abschluss-Pfade (Confirm-Route + Bestätigungsseite) gegen dieselbe Order — nur der erste Aufruf, der den Zeitstempel setzt, versendet | 2026-06-12 |
+| Kein Guard-Flag für Anfragen (#3/#4) | Der Anfrage-Endpoint ist ein POST, der je Aufruf genau eine Zeile anlegt; Doppel-Submit ist bereits durch Button-Sperre + Rate-Limit abgedeckt — pro Insert genau ein Mail-Paar | 2026-06-12 |
+| Mail #1 + #5 (Pre-Order) bzw. #2 + #5 (Shop) werden gemeinsam unter demselben Guard ausgelöst | Kunde- und Atelier-Mail gehören zu einem Vorgang; ein gemeinsamer Guard verhindert, dass eine ohne die andere doppelt versendet | 2026-06-12 |
+| Absenderadressen als Konstanten im Code, nur `RESEND_API_KEY` als Secret-Env-Var | Adressen sind fix (`arc-one.de` verifiziert); kein Grund, sie zu konfigurieren — hält die Einrichtung einfach | 2026-06-12 |
 
 ---
 <!-- Sections below are added by subsequent skills -->
 
 ## Tech Design (Solution Architect)
-_To be added by /architecture_
+
+### Überblick
+PROJ-7 ist eine reine Backend-/Versand-Schicht — **keine neuen Seiten, kein neues UI**.
+Die Mails werden serverseitig genau dort ausgelöst, wo die bestehenden Abschluss-Flows
+(PROJ-4 Pre-Order, PROJ-9 Shop, PROJ-9 Anfrage) heute schon laufen. Ein zentrales
+E-Mail-Modul kapselt Versand und Vorlagen; die Aufrufer rufen nur eine Sender-Funktion auf.
+
+### A) Struktur (E-Mail-Modul + Integrationspunkte)
+```
+src/lib/email/                (neu, server-only)
++-- client            Resend-Instanz + Versand-Wrapper (Best-Effort, loggt Fehler, wirft nie)
++-- config            Absender-/Reply-To-/Atelier-Adressen (Konstanten)
++-- senders           Eine Funktion je Anwendungsfall:
+|     +-- Anzahlungsbestätigung (#1)
+|     +-- Shop-Kaufbestätigung   (#2)
+|     +-- Anfrage an Atelier     (#3)
+|     +-- Anfrage-Eingangsbestätigung (#4)
+|     +-- Interne Bestellbenachrichtigung (#5)
++-- templates         React-Email-Vorlagen (eine je Mail) + gemeinsames Marken-Layout
+
+Auslöser (bestehende Dateien, je um einen Sender-Aufruf ergänzt):
++-- checkout/[arc_id]/bestaetigung/page.tsx   -> #1 + #5  (beim Übergang PENDING -> CONFIRMED)
++-- lib/shop-server.ts  (finalizeShopOrder)   -> #2 + #5  (nach Order-Abschluss)
++-- api/shop/inquiries/route.ts               -> #3 + #4  (nach erfolgreichem Insert)
+```
+
+### B) Datenmodell (Klartext)
+Eine einzige Schema-Änderung:
+```
+Tabelle orders — neue Spalte:
+- confirmation_email_sent_at  (Zeitstempel, anfangs leer)
+  Wird beim ersten erfolgreichen Abschluss gesetzt und dient als „genau-einmal"-Sperre.
+  Solange leer -> Mail darf raus; das Setzen geschieht als bedingtes Update
+  (nur wenn noch leer), damit bei zwei parallelen Abschluss-Pfaden nur einer gewinnt.
+```
+- `product_inquiries` bekommt **keine** neue Spalte — jeder Anfrage-POST legt genau eine
+  Zeile an und löst genau ein Mail-Paar aus; ein Reload kann den Versand nicht wiederholen.
+- Mail-Inhalte werden zur Laufzeit aus den vorhandenen Daten (`orders`, `order_items`,
+  `customers`, `arcs`/`products`, `product_inquiries`) gelesen — **nichts wird zusätzlich gespeichert**.
+
+### C) Tech-Entscheidungen (für PM, das Warum)
+- **Resend + React Email** — der projektweite Tech-Stack. React Email lässt die Vorlagen aus
+  wiederverwendbaren Bausteinen zusammensetzen (gemeinsames Marken-Layout, getestet), statt
+  HTML als rohen Text zusammenzukleben.
+- **Ein zentrales Modul statt verstreutem Versand** — alle Aufrufer rufen genau eine
+  Sender-Funktion auf. Absenderadressen, Marken-Layout und Fehlerbehandlung liegen an einer
+  Stelle; spätere Mails (z. B. PROJ-6 Warteliste) docken hier an.
+- **Versand kann nie etwas kaputt machen** — der Versand-Wrapper fängt jeden Fehler ab und
+  meldet ihn nur ins Log. Eine bezahlte Bestellung bleibt bezahlt, die Bestätigungsseite lädt
+  normal, auch wenn Resend ausfällt.
+- **„Genau einmal" über einen Zeitstempel in der Bestellung** — der Shop schließt eine
+  Bestellung über zwei mögliche Wege ab (Confirm-Aufruf des Browsers **und** die
+  Bestätigungsseite). Der Zeitstempel sorgt dafür, dass nur der erste Weg die Mail auslöst —
+  auch bei Reload oder wiederholter Zustellung.
+
+### D) Dependencies (Pakete)
+- `resend` — offizielles SDK für den Mailversand
+- `react-email` (Dev/Tooling: Vorschau) und `@react-email/components` — Vorlagen-Bausteine
+
+### E) Environment-Variablen
+- `RESEND_API_KEY` — geheim, serverseitig; in `.env.local.example` mit Dummy dokumentieren.
+- Produktiver Versand erfordert die in Resend verifizierte Domain `arc-one.de` (DNS/DKIM)
+  — eine einmalige Einrichtung, kein Code.
+
+### F) Was NICHT gebaut wird (Architektur-seitig)
+- Keine neue Tabelle, kein Mail-Log in der DB (Fehler gehen ins Anwendungs-Log).
+- Kein Hintergrund-Job / keine Queue / kein Retry.
+- Keine neue API-Route allein für E-Mail — der Versand hängt sich in bestehende Flows ein.
 
 ## QA Test Results
 _To be added by /qa_
