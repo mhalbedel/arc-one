@@ -26,7 +26,7 @@ Kleines Team (1-3 Personen), das Arcs erfasst, Bestellungen verwaltet, Drops pla
 | P0 (MVP) | Pre-Order & Stripe (30%/70%-Split) | Deployed |
 | P0 (MVP) | Admin-Backend (verstecktes CMS — inkl. Pflege Preismatrix PROJ-3a) | Planned |
 | P1 | Drop & Warteliste | Roadmap |
-| P1 | E-Mail-System (Resend) | Roadmap |
+| P1 | E-Mail-System (Resend) | Planned |
 | P2 | B2B-Portal (Architekten) | Roadmap |
 | P2 | Shop fertige Produkte (inkl. Premium/Art — vormals Art Tier, PROJ-9) | Planned |
 | P2 | SEO & Performance | Roadmap |
