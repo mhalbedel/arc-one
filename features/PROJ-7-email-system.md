@@ -194,6 +194,19 @@ Tabelle orders — neue Spalte:
 - Kein Hintergrund-Job / keine Queue / kein Retry.
 - Keine neue API-Route allein für E-Mail — der Versand hängt sich in bestehende Flows ein.
 
+## Implementation Notes
+
+### Frontend (E-Mail-Vorlagen) — 2026-06-12
+Status: **In Progress** (Vorlagen fertig; Versand-Verdrahtung + Migration folgen in `/backend`).
+
+- Paket `@react-email/components@^1.0.12` installiert. (`resend` SDK kommt im Backend-Schritt; auf das optionale `react-email`-Preview-CLI bewusst verzichtet — schlanke Deps.)
+- Alle Vorlagen unter `src/lib/email/templates/`:
+  - `_layout.tsx` — Marken-Layout (Wortmarke `ARC·ONE` + Clay-Balken, Footer) und wiederverwendbare Bausteine (`Eyebrow`, `Heading`, `Paragraph`, `InfoRow`, `Panel`, `AddressBlock`). Markenfarben als feste Hex-Werte aus `globals.css` (Clay `#C4704F`), da E-Mail-Clients keine CSS-Variablen unterstützen.
+  - `deposit-confirmation.tsx` (#1), `shop-purchase-confirmation.tsx` (#2), `inquiry-atelier.tsx` (#3), `inquiry-receipt.tsx` (#4), `new-order-atelier.tsx` (#5).
+  - `index.ts` — Barrel-Export der Vorlagen + Props für die Sender.
+- Vorlagen sind **reine Präsentation**: sie erhalten anzeige-fertige Props (vorformatierte Preise als Strings). Das DB→View-Mapping übernehmen die Sender im Backend-Schritt.
+- `npx tsc --noEmit` ist für alle PROJ-7-Dateien fehlerfrei (verbleibende tsc-Fehler liegen in vorbestehenden Testdateien `shop.test.ts`/`index.test.ts` und sind unabhängig von diesem Feature).
+
 ## QA Test Results
 _To be added by /qa_
 

@@ -22,7 +22,7 @@
 | PROJ-4 | Pre-Order & Stripe | Deployed | [PROJ-4](PROJ-4-pre-order-stripe.md) | 2026-05-26 |
 | PROJ-5 | Admin-Backend | Deployed | [PROJ-5](PROJ-5-admin-backend.md) | 2026-05-26 |
 | PROJ-6 | Drop & Warteliste | Roadmap | — | 2026-05-26 |
-| PROJ-7 | E-Mail-System (Resend) | Architected | [PROJ-7](PROJ-7-email-system.md) | 2026-05-26 |
+| PROJ-7 | E-Mail-System (Resend) | In Progress | [PROJ-7](PROJ-7-email-system.md) | 2026-05-26 |
 | PROJ-8 | B2B-Portal | Roadmap | — | 2026-05-26 |
 | PROJ-9 | Shop (fertige Produkte) | Deployed | [PROJ-9](PROJ-9-shop.md) | 2026-05-26 |
 | PROJ-10 | SEO & Performance | Roadmap | — | 2026-05-26 |
