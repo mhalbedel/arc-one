@@ -302,4 +302,22 @@ der Resend-Smoke-Test (oben) bei `/deploy` durchzuführen** (echter Key, verifiz
 Domain, Migration 012 angewandt).
 
 ## Deployment
-_To be added by /deploy_
+
+**Deployed:** 2026-06-12 · **Production:** https://arc-one-seven.vercel.app · **Tag:** `v1.11.0-PROJ-7`
+
+- Push von `main` (Commits `e54283c`…`1f007e3`) → Vercel Production-Auto-Deploy.
+- Pre-Deploy: `npm run build` erfolgreich, `npm run lint` 0 Fehler, QA Approved (keine Critical/High), 61/61 Tests grün.
+
+### Prerequisiten (vom Betreiber vor Go-Live eingerichtet)
+- **Supabase:** Migration `db/migrations/012_orders_email_sent.sql` angewandt (`orders.confirmation_email_sent_at`).
+- **Vercel:** Env-Var `RESEND_API_KEY` (Production) gesetzt.
+- **Resend:** Domain `arc-one.de` verifiziert (DKIM/SPF).
+
+### Hinweis Robustheit
+Fehlt eine Prerequisite, schlägt der Versand still fehl (geloggt) — Bestellungen/Anfragen
+funktionieren weiter; es gehen lediglich keine Mails raus (`sendEmail` ist best-effort,
+`claimOrderEmail` fällt bei fehlender Spalte auf `false` zurück).
+
+### Offen: Live-Smoke-Test (durch Betreiber)
+Die 5 Schritte aus dem QA-Abschnitt mit echtem Key gegen Production verifizieren
+(#1 Pre-Order, #2 Shop-Kauf, #3/#4 Anfrage, #5 intern, Reload-Dedup).
