@@ -2,12 +2,13 @@ import 'server-only'
 import { formatPrice } from '@/lib/utils'
 import type { Address, Arc, Order, OrderItem } from '@/types'
 import { sendEmail } from './client'
-import { ATELIER_INBOX } from './config'
+import { ATELIER_INBOX, ORDER_INBOX } from './config'
 import {
   DepositConfirmationEmail,
   InquiryAtelierEmail,
   InquiryReceiptEmail,
-  NewOrderAtelierEmail,
+  OrderFulfillmentEmail,
+  type OrderFulfillmentItem,
   ShopPurchaseConfirmationEmail,
 } from './templates'
 
@@ -31,29 +32,47 @@ function configFromOrder(order: Order) {
   }
 }
 
-/** #5 — interne Bestellbenachrichtigung an das Atelier. */
-async function sendNewOrderNotification(
+/** #5 — detaillierte Auftragsmail an die Auftragsabwicklung (auftrag@). */
+async function sendOrderFulfillment(
   order: Order,
   typeLabel: 'Pre-Order' | 'Shop-Kauf',
+  items: OrderFulfillmentItem[],
   customer: EmailCustomer,
 ) {
   await sendEmail({
-    to: ATELIER_INBOX,
-    subject: `Neue Bestellung ${order.order_number} (${typeLabel})`,
+    to: ORDER_INBOX,
+    subject: `Neuer Auftrag ${order.order_number} (${typeLabel})`,
     react: (
-      <NewOrderAtelierEmail
+      <OrderFulfillmentEmail
         orderNumber={order.order_number}
         typeLabel={typeLabel}
+        dateFormatted={formatDate()}
+        items={items}
+        shippingCountry={customer.address?.country ?? null}
+        shippingFormatted={formatPrice(order.shipping_price)}
         totalFormatted={formatPrice(order.total_price)}
         customerName={customer.name}
         customerEmail={customer.email}
-        dateFormatted={formatDate()}
+        address={customer.address}
       />
     ),
   })
 }
 
-/** #1 Anzahlungsbestaetigung (Kunde) + #5 Atelier — fuer eine abgeschlossene Pre-Order. */
+/** Detailzeilen einer Arc-Position fuer die Auftragsmail (Maße + Konfiguration). */
+function arcDetailRows(arc: Arc, order: Order): OrderFulfillmentItem['details'] {
+  const c = configFromOrder(order)
+  const rows: { label: string; value: string }[] = [
+    { label: 'Maße', value: `${arc.width_cm} × ${arc.height_cm} cm` },
+  ]
+  if (c.oberflaeche) rows.push({ label: 'Oberflaeche', value: c.oberflaeche })
+  if (c.befestigung) rows.push({ label: 'Befestigung', value: c.befestigung })
+  if (c.finish) rows.push({ label: 'Finish', value: c.finish })
+  if (c.licht) rows.push({ label: 'Licht', value: c.licht })
+  return rows
+}
+
+/** #1 Anzahlungsbestaetigung (Kunde) + #5 Auftragsmail — fuer eine abgeschlossene Pre-Order. */
 export async function sendPreOrderEmails(order: Order, arc: Arc, customer: EmailCustomer) {
   await Promise.all([
     sendEmail({
@@ -73,7 +92,18 @@ export async function sendPreOrderEmails(order: Order, arc: Arc, customer: Email
         />
       ),
     }),
-    sendNewOrderNotification(order, 'Pre-Order', customer),
+    sendOrderFulfillment(
+      order,
+      'Pre-Order',
+      [
+        {
+          name: `Arc ${arc.serial_number}`,
+          details: arcDetailRows(arc, order),
+          priceFormatted: formatPrice(order.total_price - order.shipping_price),
+        },
+      ],
+      customer,
+    ),
   ])
 }
 
@@ -100,7 +130,15 @@ export async function sendShopOrderEmails(
         />
       ),
     }),
-    sendNewOrderNotification(order, 'Shop-Kauf', customer),
+    sendOrderFulfillment(
+      order,
+      'Shop-Kauf',
+      items.map((i) => ({
+        name: i.name_snapshot,
+        priceFormatted: formatPrice(i.price_cents),
+      })),
+      customer,
+    ),
   ])
 }
 

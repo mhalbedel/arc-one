@@ -7,4 +7,8 @@ export {
 } from './shop-purchase-confirmation'
 export { InquiryAtelierEmail, type InquiryAtelierProps } from './inquiry-atelier'
 export { InquiryReceiptEmail, type InquiryReceiptProps } from './inquiry-receipt'
-export { NewOrderAtelierEmail, type NewOrderAtelierProps } from './new-order-atelier'
+export {
+  OrderFulfillmentEmail,
+  type OrderFulfillmentProps,
+  type OrderFulfillmentItem,
+} from './order-fulfillment'

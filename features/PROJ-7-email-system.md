@@ -22,11 +22,12 @@ PROJ-7 macht diesen Versand real. Reine Transaktionsmails (kein Marketing).
 | 2 | Shop-Direktkauf (100 %) erfolgreich bezahlt | Kunde | PROJ-9 |
 | 3 | Neue Produkt-Anfrage eingegangen | Atelier (`kontakt@arc-one.de`) | PROJ-9 |
 | 4 | Anfrage-Eingangsbestätigung | Kunde | PROJ-9 |
-| 5 | Neue Bestellung eingegangen (Pre-Order oder Shop-Kauf) | Atelier (`kontakt@arc-one.de`) | operativ (neu) |
+| 5 | Neue Bestellung eingegangen (Pre-Order oder Shop-Kauf) — **detaillierte Auftragsmail** | Auftragsabwicklung (`auftrag@arc-one.de`) | operativ |
 
 **Adressierung:**
 - Kundenmails (#1, #2, #4): From `ARC ONE <bestellung@arc-one.de>`, Reply-To `kontakt@arc-one.de`
-- Atelier-Mails (#3, #5): To `kontakt@arc-one.de` (ein gemeinsamer Team-Posteingang)
+- Anfrage-Mail (#3): To `kontakt@arc-one.de` (gemeinsamer Team-Posteingang)
+- Auftragsmail (#5): To `auftrag@arc-one.de` (Auftragsabwicklung) — siehe Implementation Note 2026-06-13
 - Sprache: ausschließlich Deutsch (v1)
 
 ## User Stories
@@ -51,7 +52,7 @@ PROJ-7 macht diesen Versand real. Reine Transaktionsmails (kein Marketing).
 - **#2 Shop-Kaufbestätigung:** Anrede, Bestellnummer, Liste aller gekauften Stücke, gezahlter Gesamtbetrag (100 %), Lieferadresse, Reply-To.
 - **#3 Atelier — neue Anfrage:** Produktname, Kundenname, E-Mail, Telefon (falls angegeben), Nachricht, Datum.
 - **#4 Anfrage-Eingangsbestätigung:** Bestätigung des Eingangs, betroffenes Produkt, persönlicher Hinweis "Wir melden uns persönlich bei dir" (ohne harte Frist-Zusage).
-- **#5 Atelier — neue Bestellung:** Bestellnummer, Typ (Pre-Order / Shop-Kauf), Betrag, Kundenname + E-Mail, Datum.
+- **#5 Auftragsmail (`auftrag@`) — neue Bestellung:** Bestellnummer, Typ (Pre-Order / Shop-Kauf), Datum, bestellte Ware mit allen Details (Arc: Maße + Konfiguration; Shop: alle Positionen), Lieferung (Versandland + Versandkosten), Gesamtbetrag, Lieferadresse, Kundenname + E-Mail.
 
 ## Acceptance Criteria
 
@@ -321,3 +322,25 @@ funktionieren weiter; es gehen lediglich keine Mails raus (`sendEmail` ist best-
 ### Offen: Live-Smoke-Test (durch Betreiber)
 Die 5 Schritte aus dem QA-Abschnitt mit echtem Key gegen Production verifizieren
 (#1 Pre-Order, #2 Shop-Kauf, #3/#4 Anfrage, #5 intern, Reload-Dedup).
+
+## Nachtrag — Detaillierte Auftragsmail (#5) an auftrag@arc-one.de — 2026-06-13
+
+Erweiterung nach Go-Live: Die interne Bestellbenachrichtigung (#5) wurde von einer knappen
+Mail an `kontakt@arc-one.de` zu einer **detaillierten Auftragsmail an `auftrag@arc-one.de`**
+ausgebaut. `kontakt@` erhält keine Bestellbenachrichtigung mehr (nur noch die Anfrage-Mail #3).
+
+- **`config.ts`**: neue Konstante `ORDER_INBOX = 'auftrag@arc-one.de'`.
+- **Vorlage**: `templates/new-order-atelier.tsx` ersetzt durch `templates/order-fulfillment.tsx`
+  (`OrderFulfillmentEmail`). Inhalt: Auftragsnummer, Typ, Datum, **bestellte Ware** (Pre-Order:
+  Arc mit Maßen + Konfigurationszeilen; Shop: alle Positionen mit Einzelpreis), **Lieferung**
+  (Versandland aus der Adresse + Versandkosten `order.shipping_price`), Gesamtbetrag,
+  **Lieferadresse**, Kundenname + E-Mail.
+- **`senders.tsx`**: `sendNewOrderNotification` → `sendOrderFulfillment` (an `ORDER_INBOX`).
+  Pre-Order übergibt eine Arc-Position (Positionspreis = `total_price − shipping_price`),
+  Shop die `order_items`. Shop-Liste erbt den Bug-#2-Filter (nicht-beanspruchte Positionen
+  bereits in `finalizeShopOrder` ausgeschlossen).
+- **Liefer-Infos** (Produktentscheidung): Versandland + Versandkosten. Lieferzeit
+  (`estimated_days`) und Telefonnummer bewusst nicht aufgenommen.
+- Tests grün (9/9 Email-Suite), `npm run build` erfolgreich, `tsc` für die Email-Dateien sauber.
+- **Voraussetzung Betrieb**: Postfach `auftrag@arc-one.de` muss existieren/überwacht werden
+  (verifizierte Domain `arc-one.de` deckt den Versand bereits ab).

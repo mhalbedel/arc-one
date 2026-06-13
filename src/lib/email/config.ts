@@ -6,3 +6,5 @@
 export const EMAIL_FROM = 'ARC ONE <bestellung@arc-one.de>'
 export const EMAIL_REPLY_TO = 'kontakt@arc-one.de'
 export const ATELIER_INBOX = 'kontakt@arc-one.de'
+/** Auftragsabwicklung — erhaelt die detaillierte Auftragsmail je Bestellung. */
+export const ORDER_INBOX = 'auftrag@arc-one.de'
