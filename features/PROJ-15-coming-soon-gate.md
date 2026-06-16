@@ -1,6 +1,6 @@
 # PROJ-15: Coming-Soon-PIN-Tor (nur auf Vercel)
 
-## Status: In Progress
+## Status: Deployed
 **Created:** 2026-06-16
 **Last Updated:** 2026-06-16
 
@@ -74,3 +74,13 @@ bleibt die Seite voll offen zum Testen/Verifizieren.
 - PIN-UI: shadcn `Input` (numerisch, Auto-Submit bei 6 Stellen) + `Button`; Logo
   (`Wordmark`) als Trigger. Kein neues Paket.
 - Verifikation: siehe Plan — lokal `VERCEL=1 ARC_GATE_PIN=… ARC_GATE_TOKEN=… npm run dev`.
+
+### Deployment — 2026-06-16
+- Commit `6c313a4` auf `main` → Vercel Production-Auto-Deploy (Ready).
+- Env-Vars `ARC_GATE_PIN`, `ARC_GATE_TOKEN`, `ARC_GATE_ENABLED` vom Betreiber in Vercel
+  (Production) gesetzt.
+- Live verifiziert auf https://arc-one-seven.vercel.app: `/` und `/shop` zeigen
+  Coming-Soon, `/admin` erreichbar (307 → /admin/login), falscher PIN → 401.
+- Hinweis: Env-Vars bisher nur im **Production**-Scope. Preview-Deploys haben das Tor
+  aktiv (VERCEL gesetzt), aber ohne PIN/Token → für nutzbare Previews die drei Vars auch
+  dem Preview-Scope hinzufügen (oder dort `ARC_GATE_ENABLED=false`).
