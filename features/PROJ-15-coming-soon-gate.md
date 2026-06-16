@@ -81,6 +81,7 @@ bleibt die Seite voll offen zum Testen/Verifizieren.
   (Production) gesetzt.
 - Live verifiziert auf https://arc-one-seven.vercel.app: `/` und `/shop` zeigen
   Coming-Soon, `/admin` erreichbar (307 → /admin/login), falscher PIN → 401.
-- Hinweis: Env-Vars bisher nur im **Production**-Scope. Preview-Deploys haben das Tor
-  aktiv (VERCEL gesetzt), aber ohne PIN/Token → für nutzbare Previews die drei Vars auch
-  dem Preview-Scope hinzufügen (oder dort `ARC_GATE_ENABLED=false`).
+- Env-Vars `ARC_GATE_PIN`, `ARC_GATE_TOKEN`, `ARC_GATE_ENABLED` in **Production** und
+  **Preview** (alle Preview-Branches) gesetzt. Preview-Token ist ein eigener Zufallswert
+  (muss nicht mit Production übereinstimmen); der PIN ist identisch. Greift erst für
+  **neue** Preview-Deploys (Env-Änderungen wirken nicht rückwirkend auf bestehende).
