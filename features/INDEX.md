@@ -30,6 +30,7 @@
 | PROJ-12 | Kollektionen / Showcase → **Merged in PROJ-9** | Merged | — | 2026-06-02 |
 | PROJ-13 | Service & Rechtliches (FAQ, Versand, Kontakt, Impressum, Datenschutz) | Roadmap | — | 2026-06-02 |
 | PROJ-14 | Brand Logo (Arc Initial) & Clay Favicon | Deployed | [PROJ-14](PROJ-14-brand-logo-favicon.md) | 2026-06-12 |
+| PROJ-15 | Coming-Soon-PIN-Tor (nur auf Vercel) | In Progress | [PROJ-15](PROJ-15-coming-soon-gate.md) | 2026-06-16 |
 
 <!-- Add features above this line -->
 
@@ -37,4 +38,4 @@
 >
 > Lampen-„Series" (Tisch/Decke/Cluster) bleiben dagegen Montage-Varianten konfigurierbarer Arcs und werden später als Filter im Arc-Katalog (PROJ-2) abgebildet.
 
-## Next Available ID: PROJ-15
+## Next Available ID: PROJ-16
